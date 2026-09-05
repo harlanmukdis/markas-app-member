@@ -1,6 +1,12 @@
 import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
 import 'package:navy_wear/core/data/repositories/auth_repository_impl.dart';
+import 'package:navy_wear/core/data/repositories/catalog_repository_impl.dart';
+import 'package:navy_wear/core/data/repositories/reference_repository_impl.dart';
 import 'package:navy_wear/core/domain/repositories/auth_repository.dart';
+import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
+import 'package:navy_wear/core/domain/repositories/reference_repository.dart';
 import 'package:navy_wear/core/services/token_store.dart';
 import 'package:navy_wear/di/injector.dart';
 
@@ -40,5 +46,13 @@ void initializeRepository() {
       injector<AuthService>(),
       injector<TokenStore>(),
     ),
+  );
+
+  injector.registerLazySingleton<CatalogRepository>(
+    () => CatalogRepositoryImpl(injector<CatalogService>()),
+  );
+
+  injector.registerLazySingleton<ReferenceRepository>(
+    () => ReferenceRepositoryImpl(injector<ReferenceService>()),
   );
 }

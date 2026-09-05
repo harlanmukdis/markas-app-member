@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:navy_wear/config/network/dio_client.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
 import 'package:navy_wear/di/injector.dart';
 
 /// Pendaftaran seluruh `*Service` (lapisan yang benar-benar memanggil HTTP).
@@ -38,7 +40,11 @@ import 'package:navy_wear/di/injector.dart';
 /// Keduanya dibiarkan tidak ada dengan sengaja, bukan sekadar tidak dipakai —
 /// method yang ada di repository cepat atau lambat akan dipanggil orang.
 void initializeService() {
-  injector.registerLazySingleton<AuthService>(
-    () => AuthService(injector<Dio>(instanceName: DioClient.api)),
+  final api = injector<Dio>(instanceName: DioClient.api);
+
+  injector.registerLazySingleton<AuthService>(() => AuthService(api));
+  injector.registerLazySingleton<CatalogService>(() => CatalogService(api));
+  injector.registerLazySingleton<ReferenceService>(
+    () => ReferenceService(api),
   );
 }

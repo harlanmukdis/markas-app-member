@@ -1,0 +1,21 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # Field camelCase otomatis dipetakan ke snake_case JSON:
+          # `priceTiers` -> `price_tiers`.
+          #
+          # Tanpa ini, field yang lupa diberi @JsonKey akan GAGAL SENYAP —
+          # json_serializable mencari key persis nama Dart-nya, tidak
+          # menemukannya, lalu memakai nilai default. Tidak ada error, tidak
+          # ada warning; datanya cuma hilang. `OfferModel.priceTiers` kena
+          # tepat seperti itu dan baru tertangkap oleh test integrasi.
+          #
+          # @JsonKey eksplisit tetap menang, jadi pemetaan yang tidak sekadar
+          # snake_case (mis. `photos` -> `photos_json`) tetap perlu ditulis.
+          field_rename: snake
+
+          # Nilai yang bentuknya tidak terduga tidak boleh menjatuhkan seluruh
+          # parsing; converter di lib/util/json_converters.dart sudah toleran.
+          create_to_json: true
