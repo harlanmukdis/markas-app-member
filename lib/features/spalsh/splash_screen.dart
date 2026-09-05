@@ -37,7 +37,6 @@ class _SplashBodyState extends State<_SplashBody>
     with TickerProviderStateMixin {
   Timer? _minimumDisplay;
   bool _minimumDisplayElapsed = false;
-  AuthState _authState = const AuthState.initial();
   bool _navigated = false;
 
   late final AnimationController _colorController;
@@ -106,7 +105,17 @@ class _SplashBodyState extends State<_SplashBody>
   void _navigateIfReady() {
     if (_navigated || !mounted || !_minimumDisplayElapsed) return;
 
-    final destination = switch (_authState) {
+    // State dibaca langsung dari cubit, BUKAN dari salinan yang diisi
+    // listener.
+    //
+    // `BlocListener` hanya bereaksi pada perubahan SETELAH ia berlangganan,
+    // dan tidak memutar ulang state yang sudah ada. `restoreSession()` pada
+    // kasus "belum pernah login" memanggil `emit(unauthenticated)` secara
+    // sinkron di dalam `BlocProvider.create` — jadi emit itu terjadi sebelum
+    // listener terpasang, listener tidak pernah menerimanya, dan splash macet
+    // selamanya di `initial()`. Membaca state hidup membuat urutan pemasangan
+    // listener tidak lagi berpengaruh.
+    final destination = switch (context.read<AuthCubit>().state) {
       AuthAuthenticated() => AppRoutes.homeLayout,
 
       // Sesi berakhir atau dicabut: langsung ke login, bukan mengulang
@@ -137,10 +146,9 @@ class _SplashBodyState extends State<_SplashBody>
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        _authState = state;
-        _navigateIfReady();
-      },
+      // Listener hanya dipakai sebagai pemicu ulang; tujuannya dihitung dari
+      // state hidup di `_navigateIfReady()`.
+      listener: (context, state) => _navigateIfReady(),
       child: _buildSplash(context),
     );
   }
