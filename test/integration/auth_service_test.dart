@@ -11,6 +11,7 @@
 /// didokumentasikan di `AuthSessionModel`.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:navy_wear/config/env/env.dart';
 import 'package:navy_wear/config/network/api_exception.dart';
@@ -45,7 +46,13 @@ void main() {
 
   test(
     'GET /auth/me mem-parse id String jadi int',
-    skip: 'DIBLOKIR BUG BACKEND: endpoint terproteksi hanya menerima nama '
+    // Dijalankan di web, di-skip di native. Bug backend-nya hanya menjegal
+    // klien native: Dart dart:io me-lowercase nama header, sedangkan adapter
+    // browser mengirimnya sesuai ejaan yang ditulis.
+    //   flutter test --platform chrome test/integration/
+    skip: kIsWeb
+        ? false
+        : 'DIBLOKIR BUG BACKEND (native saja): endpoint terproteksi hanya menerima nama '
         'header dengan ejaan persis `Authorization`. Dart selalu me-lowercase '
         'nama header (`authorization`), sehingga SEMUA request terautentikasi '
         'dari klien native Dart/Flutter balik 401. Dibuktikan: curl dengan '
@@ -53,7 +60,7 @@ void main() {
         'HttpHeaders.set(..., preserveHeaderCase: true) -> 200 sementara '
         'default -> 401. Perbaikannya di BE (baca header case-insensitive, '
         'mis. lewat \$_SERVER[HTTP_AUTHORIZATION]). Hapus skip ini setelah '
-        'diperbaiki.',
+        'diperbaiki. Test ini LOLOS di --platform chrome.',
     () async {
     final session = await service.login(phone: _phone, password: _password);
 

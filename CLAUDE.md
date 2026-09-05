@@ -141,7 +141,16 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 >
 > **Fix belongs in the backend** — read the header case-insensitively (`$_SERVER['HTTP_AUTHORIZATION']` is populated regardless of the incoming case; an exact-key lookup into `apache_request_headers()` is not). A client-side workaround exists but needs a custom `HttpClientAdapter` (~80 lines, platform-conditional) versus a one-line backend change, so it was deliberately not built.
 >
-> **Impact by platform:** Android/iOS/desktop are unusable for anything past login. Flutter **web** is probably unaffected — the browser XHR adapter sends the field name as written — but that has **not** been verified in a browser. The `GET /auth/me` contract test in `test/integration/auth_service_test.dart` is `skip`ped for this reason; remove the skip once the backend is fixed.
+> **Impact by platform — verified in a real browser:** Flutter **web is unaffected**. Dio's browser adapter sends the field name as written, so the capital `Authorization` set by `AuthInterceptor` arrives intact. Proven by running the real stack in Chrome:
+>
+> ```bash
+> flutter test --platform chrome test/integration/   # 6/6 pass, incl. GET /auth/me
+> flutter test test/integration/                     # GET /auth/me skipped on native
+> ```
+>
+> A standalone browser probe confirmed the same at the transport level: XHR and `fetch` both return **200** with `Authorization` and **401** with `authorization`.
+>
+> **Android/iOS/desktop remain unusable for anything past login.** The `GET /auth/me` contract test carries a `skip: kIsWeb ? false : '…'` so it runs on web and is skipped on native; drop the condition once the backend is fixed.
 
 **Status: foundation (steps 1-5) plus the auth domain implemented.** What exists today:
 
