@@ -1,0 +1,121 @@
+import 'package:intl/intl.dart';
+
+/// Selisih waktu server terhadap UTC.
+///
+/// Backend mengirim timestamp **tanpa penanda timezone**
+/// (`"2026-09-06 14:00:00"`), yang berarti waktu dinding server. Server berada
+/// di WIB, dan Indonesia tidak memakai DST — jadi offset tetap +07:00 memang
+/// benar sepanjang tahun, bukan penyederhanaan yang akan salah di musim lain.
+///
+/// Kalau backend nanti dipindah ke UTC, cukup ubah nilai ini.
+const Duration kServerUtcOffset = Duration(hours: 7);
+
+/// Mengubah timestamp server jadi **instan UTC yang benar**.
+///
+/// Kenapa tidak `DateTime.parse` saja: `DateTime.parse("2026-09-06 14:00:00")`
+/// menghasilkan `DateTime` bertipe *local*, artinya Dart menganggap 14:00 itu
+/// waktu perangkat. Padahal 14:00 itu waktu server (WIB). Di perangkat yang
+/// timezone-nya bukan WIB — emulator sering UTC, dan di web ikut timezone OS —
+/// hitung mundur batas bayar jadi melenceng berjam-jam, dan user bisa
+/// kehilangan pesanan karena countdown-nya bohong.
+///
+/// Mengembalikan `null` untuk input null/kosong/tidak terbaca, supaya satu
+/// field tanggal yang aneh tidak menggagalkan seluruh parsing model.
+DateTime? parseServerInstant(String? raw) {
+  if (raw == null) return null;
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty || trimmed == '0000-00-00 00:00:00') return null;
+
+  // Dibaca sebagai UTC dulu (suffix Z) supaya angka jamnya tidak digeser oleh
+  // timezone perangkat, lalu digeser sendiri sesuai offset server.
+  final asUtc = DateTime.tryParse('${trimmed.replaceFirst(' ', 'T')}Z');
+  if (asUtc == null) return null;
+
+  return asUtc.subtract(kServerUtcOffset);
+}
+
+/// Kebalikan [parseServerInstant] — untuk field tanggal yang dikirim ke server
+/// (mis. `scheduled_date` pada batch kontrak).
+String? formatForServer(DateTime? instant) {
+  if (instant == null) return null;
+  final serverWallClock = instant.toUtc().add(kServerUtcOffset);
+  return DateFormat('yyyy-MM-dd HH:mm:ss').format(serverWallClock);
+}
+
+/// Hanya bagian tanggal, `YYYY-MM-DD` — format yang diminta field seperti
+/// `scheduled_date`.
+String? formatDateForServer(DateTime? instant) {
+  if (instant == null) return null;
+  final serverWallClock = instant.toUtc().add(kServerUtcOffset);
+  return DateFormat('yyyy-MM-dd').format(serverWallClock);
+}
+
+/// Sisa waktu sampai [deadline]. Negatif berarti sudah lewat.
+///
+/// Selalu bandingkan dalam UTC supaya timezone perangkat tidak ikut campur.
+Duration? remainingUntil(DateTime? deadline) {
+  if (deadline == null) return null;
+  return deadline.toUtc().difference(DateTime.now().toUtc());
+}
+
+bool isPast(DateTime? deadline) {
+  final left = remainingUntil(deadline);
+  return left != null && left.isNegative;
+}
+
+/// Hitung mundur ringkas untuk UI: `"2 hari 3 jam"`, `"5 jam 12 menit"`,
+/// `"8 menit"`, atau `"Waktu habis"`.
+///
+/// Batas yang bersatuan "jam kerja" (mis. konfirmasi toko 1×24 jam kerja)
+/// **tidak boleh dihitung di app** karena melewatkan akhir pekan dan libur
+/// nasional. Pakai field deadline yang dikirim server — `payment_deadline`,
+/// `seller_confirm_deadline`, `expires_at` — lalu format dengan fungsi ini.
+String formatCountdown(Duration? left) {
+  if (left == null) return '-';
+  if (left.isNegative) return 'Waktu habis';
+
+  final days = left.inDays;
+  final hours = left.inHours % 24;
+  final minutes = left.inMinutes % 60;
+
+  if (days > 0) return '$days hari $hours jam';
+  if (left.inHours > 0) return '${left.inHours} jam $minutes menit';
+  if (left.inMinutes > 0) return '${left.inMinutes} menit';
+  return 'kurang dari 1 menit';
+}
+
+final DateFormat _dateTimeDisplay = DateFormat('d MMM yyyy, HH:mm', 'id');
+final DateFormat _dateDisplay = DateFormat('d MMMM yyyy', 'id');
+
+/// Tampilan tanggal-waktu dalam **waktu server (WIB)**, bukan waktu perangkat.
+///
+/// Disengaja: nomor surat jalan, batas bayar, dan jadwal kirim semuanya
+/// disepakati dalam WIB antara pembeli dan toko. Menampilkannya dalam timezone
+/// perangkat justru membingungkan kalau user sedang di luar negeri.
+String formatServerDateTime(DateTime? instant, {String fallback = '-'}) {
+  if (instant == null) return fallback;
+  return '${_dateTimeDisplay.format(instant.toUtc().add(kServerUtcOffset))} WIB';
+}
+
+String formatServerDate(DateTime? instant, {String fallback = '-'}) {
+  if (instant == null) return fallback;
+  return _dateDisplay.format(instant.toUtc().add(kServerUtcOffset));
+}
+
+final NumberFormat _rupiah = NumberFormat.currency(
+  locale: 'id_ID',
+  symbol: 'Rp ',
+  decimalDigits: 0,
+);
+
+/// Format nominal jadi `"Rp 6.500.000"`.
+///
+/// **Hanya memformat, tidak pernah menghitung.** Subtotal, ongkir, diskon, dan
+/// total selalu datang jadi dari server (aturan §10.4 spec: tidak boleh ada
+/// perhitungan uang di sisi tampilan). Kalau sebuah angka terasa perlu
+/// dijumlahkan di app, itu tanda field-nya belum ada di respons — minta ke BE,
+/// jangan hitung sendiri, karena hasilnya akan berbeda dari yang ditagih.
+String formatRupiah(num? amount, {String fallback = '-'}) {
+  if (amount == null) return fallback;
+  return _rupiah.format(amount);
+}

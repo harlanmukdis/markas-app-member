@@ -38,7 +38,14 @@ Regenerate localizations after editing `lib/l10n/*.arb`:
 dart run intl_utils:generate          # requires: dart pub global activate intl_utils (not a declared dev_dependency)
 ```
 
-There is **no `build_runner` step in this repo** — no `freezed`, `json_serializable`, or `envied` is installed. See Part 2.
+`build_runner` **is now installed and required** for `lib/config/env/env.g.dart`:
+
+```bash
+dart run build_runner build          # after editing .env or any freezed/json model
+dart run build_runner watch          # while iterating
+```
+
+Note: `build_runner` 2.15 **removed `--delete-conflicting-outputs`** — passing it prints a warning and is ignored. Drop the flag.
 
 ## Architecture
 
@@ -108,6 +115,8 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 - `test/widget_test.dart` is still the unmodified Flutter counter template and **fails** — it pumps `MyApp` and looks for a `+` icon. Replace it before treating `flutter test` as a signal.
 - Stale `*.dart~` backup files litter `lib/` (and `android/`). They are not compiled but **do show up in grep results** — always confirm a hit isn't in a `~` file before editing.
 - `lib/features/my_cart/presentation/views/map_screen.dart` is 100% commented out, and the `com.google.android.geo.API_KEY` meta-data in `android/app/src/main/AndroidManifest.xml` is commented out too. Restoring the map needs both, plus an iOS key. Location permissions are already declared in the manifest.
+- **The app cannot be built at all until assets are restored.** `flutter build web` fails on three missing entries declared in `pubspec.yaml`: the directories `assets/images/` and `assets/icon/`, and the file `assets/fonts/Hanimation_Arabic_Regular.otf`. Dart compilation itself succeeds — this is purely asset bundling. The UI kit's asset folders were never copied into this repo.
+- Android `usesCleartextTraffic` / iOS ATS are **not** configured, so the `http://` base URL will fail on mobile. Not needed for the current web target; required before the first Android/iOS run.
 - `DevicePreview` wraps the app when `kDebugMode`, so debug builds render inside a simulated device frame — layout that looks wrong in debug may be the preview frame, not the code.
 - Orientation is locked to portrait in `main()`.
 - `flutter_launcher_icons` and `flutter_native_splash` config blocks in `pubspec.yaml` are commented out, though `flutter_launcher_icons.yaml` / `flutter_native_splash.yaml` exist at the root.
@@ -116,7 +125,23 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 
 # Part 2 — Target architecture
 
-**Status: not implemented.** Nothing below exists in this repo yet — verified: no `freezed`/`json_serializable`/`build_runner`/`envied` in `pubspec.yaml`; no `lib/config/`, `lib/di/`, `lib/ui/`, `lib/core/data/`, `lib/core/domain/`; no `.env`, `firebase.json`, or `lib/firebase_options.dart`; zero `*.freezed.dart` / `*.g.dart` files. `dio` and `get_it` are declared but unimported.
+**Status: foundation implemented (steps 1-5), feature layers not yet.** What exists today:
+
+- `lib/config/env/env.dart` + `.env` + `.env.example` (envied; `API_BASE_URL`)
+- `lib/config/network/` — `dio_client.dart` (named `"api"` Dio), `api_envelope.dart`, `api_exception.dart`, `token_refresher.dart`, `interceptors/{auth,logging}_interceptor.dart`
+- `lib/core/data_state.dart` — `DataState<T>` union
+- `lib/core/services/` — `token_store.dart`, `auth_events.dart`
+- `lib/util/` — `format_helper.dart`, `json_converters.dart`
+- `lib/di/` — `injector.dart` (called from `main.dart` before `runApp`), `injector_service.dart`, `injector_repository.dart` (both still empty)
+- Empty-but-created: `lib/core/data/datasources/remote/service/`, `lib/core/data/repositories/`, `lib/core/domain/{model,repositories}/`
+
+Still absent: `lib/ui/` (presentation is still `lib/features/`), any `*Service`/`*RepositoryImpl`/freezed model, Firebase, `lib/firebase_options.dart`.
+
+**Backend contract**: the member app talks to Markas Bangunan (CodeIgniter 3 + JWT). The API is documented in `API-MEMBER-APP.md` — ask the user for it if it is not in the repo root. Three deviations from the generic plan below were forced by that API and are deliberate:
+
+1. **`DataSuccess` carries `meta` and `statusCode`.** The API puts business decisions in `meta` (`forced_bank_transfer` decides which payment methods may render; `note` explains an auto-rejected return), and uses **200 vs 201** to distinguish "returned the existing record" from "created a new one" (`POST /payments/initiate`, `POST /chat/threads`). A repository that forwards only `data` loses both.
+2. **Every numeric and boolean model field must use a converter from `lib/util/json_converters.dart`.** The same logical field arrives as a number from one endpoint and a string from another (`"grand_total": 6500000` from `POST /checkout`, `"grand_total": "6500000"` from `GET /orders/{id}`), and `tinyint` booleans arrive as `"0"`/`"1"`.
+3. **Two endpoints must never get a service method** — `GET /shipments` (no id; unfiltered, leaks every buyer's shipments platform-wide) and `POST /vouchers/apply` (no auth check, trusts client-supplied `discount_amount`). See `lib/di/injector_service.dart` for the note that keeps this decision discoverable.
 
 This is the layering the project is being moved toward: **data → domain → presentation** per feature, wired with `get_it` for DI and `go_router` for navigation.
 
@@ -167,11 +192,12 @@ lib/
 
 Derived from the gap between Part 1 and Part 2; no step is started yet.
 
-1. Add `freezed_annotation`, `json_annotation`, `envied` to dependencies and `build_runner`, `freezed`, `json_serializable`, `envied_generator` to dev_dependencies.
-2. Create `lib/config/env/env.dart` + `.env` with `API_BASE_URL`; add `.env` to `.gitignore`.
-3. Create `lib/config/network/dio_client.dart` with the named `"api"` Dio singleton — `dio` is already in `pubspec.yaml`, just unused.
-4. Add `lib/core/data_state.dart` with the `DataState<T>` union.
-5. Build `lib/di/{injector,injector_service,injector_repository}.dart` and call `initialize()` before `runApp` in [main.dart](lib/main.dart), where `CachedHelper.init()` already runs — `get_it` is already in `pubspec.yaml`, just unused.
+0. ~~Unblock `flutter pub get`: `intl` was constrained to `^0.19.0` while `flutter_localizations` on Flutter 3.41 requires `0.20.2`, so the project could not resolve at all.~~ **Done** — bumped to `^0.20.2`.
+1. ~~Add `freezed_annotation`, `json_annotation`, `envied` to dependencies and `build_runner`, `freezed`, `json_serializable`, `envied_generator` to dev_dependencies.~~ **Done** (also `flutter_secure_storage` for tokens).
+2. ~~Create `lib/config/env/env.dart` + `.env` with `API_BASE_URL`; add `.env` to `.gitignore`.~~ **Done.** `.env.example` lists the base URL per target; current target is **Flutter web on Chrome** (`http://localhost/markas/api/v1`).
+3. ~~Create `lib/config/network/dio_client.dart` with the named `"api"` Dio singleton.~~ **Done**, plus auth/refresh/logging interceptors.
+4. ~~Add `lib/core/data_state.dart` with the `DataState<T>` union.~~ **Done** — see deviation 1 above.
+5. ~~Build `lib/di/{injector,injector_service,injector_repository}.dart` and call `initialize()` before `runApp`.~~ **Done**; service/repository registries are still empty stubs.
 6. Move the hardcoded lists out of cubits (`HomePageCubit.productsTShirt` and friends) behind a `*Service` + `*RepositoryImpl` pair. `ProductModel.fromJson` already exists as a starting point.
 7. Convert marker states to `@freezed` unions, one feature at a time, and switch cubits from public mutable fields to emitted state data.
 8. Split [app_routes.dart](lib/core/utils/app_routes.dart) into per-domain route files under `lib/config/route/`.

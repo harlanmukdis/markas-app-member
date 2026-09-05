@@ -44,6 +44,11 @@ app.*.map.json
 .env.*
 !.env.example
 
+# Hasil envied. Nilai dari .env ditanam sebagai string literal di sini, jadi
+# begitu ada API key di .env, file ini ikut membocorkannya. Digenerate ulang
+# dengan `dart run build_runner build` — tidak perlu masuk repo.
+lib/config/env/env.g.dart
+
 # ---- Android ----
 .gradle/
 **/android/.gradle/
@@ -101,7 +106,6 @@ GoogleService-Info.plist
 **/linux/flutter/ephemeral/
 
 # ---- Web ----
-lib/generated_plugin_registrant.dart
 
 # ---- Aset promo UI kit (48MB, tidak direferensikan kode) ----
 assets/screen_shot/

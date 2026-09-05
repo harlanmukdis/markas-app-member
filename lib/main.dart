@@ -11,12 +11,17 @@ import 'core/utils/bloc_observer.dart';
 import 'core/utils/constant.dart';
 import 'core/utils/local_network.dart';
 import 'core/utils/localizations.dart';
+import 'di/injector.dart';
 import 'generated/l10n.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await CachedHelper.init();
+
+  // Harus setelah CachedHelper.init() (TokenStore membaca identitas user
+  // dari SharedPreferences secara sinkron) dan sebelum runApp.
+  await initialize();
   Bloc.observer = MyBlocObserver();
 
   final appTheme = CachedHelper.getData(kAppTheme);
