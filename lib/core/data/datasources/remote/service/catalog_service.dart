@@ -19,8 +19,17 @@ class CatalogService {
   /// berubah.
   final Map<int, SkuModel> _skuCache = {};
 
+  /// Cache penawaran **lengkap** (yang sudah punya `price_tiers`) per id.
+  ///
+  /// Dibutuhkan karena bentuk LIST dari `/offers` tidak memuat `price_tiers`
+  /// sama sekali — lihat [withPriceTiers].
+  final Map<int, OfferModel> _offerCache = {};
+
   /// Kosongkan saat pull-to-refresh, supaya user punya cara memaksa data baru.
-  void clearCache() => _skuCache.clear();
+  void clearCache() {
+    _skuCache.clear();
+    _offerCache.clear();
+  }
 
   /// `GET /categories` — tanpa [parentId] mengembalikan kategori level 1.
   Future<ApiEnvelope<List<CategoryModel>>> categories({int? parentId}) {
@@ -112,22 +121,74 @@ class CatalogService {
     };
   }
 
-  /// `GET /offers` — penawaran **ACTIVE** untuk satu SKU dari berbagai toko,
-  /// atau seluruh penawaran satu toko.
-  Future<ApiEnvelope<List<OfferModel>>> offers({int? skuId, int? sellerId}) {
+  /// `GET /offers` — penawaran **ACTIVE**, disaring per SKU, per toko, atau
+  /// per kategori.
+  ///
+  /// > **Perhatian: hasilnya TIDAK memuat `price_tiers`.** Sudah diverifikasi
+  /// > ke backend — bentuk list mengembalikan `price_tiers: []` untuk semua
+  /// > penawaran, sementara `price_tiers` hanya terisi di `GET /offers/{id}`.
+  /// > Menampilkan kartu produk langsung dari hasil ini membuat semua harga
+  /// > tampil "belum tersedia". Lengkapi dengan [withPriceTiers].
+  /// >
+  /// > Info toko dan ongkir (`seller_name`, `ongkir_mulai_dari`) juga tidak
+  /// > ada di sini — hanya `GET /search` yang membawanya.
+  Future<ApiEnvelope<List<OfferModel>>> offers({
+    int? skuId,
+    int? sellerId,
+    int? categoryId,
+  }) {
     assert(
-      skuId != null || sellerId != null,
-      'GET /offers butuh sku_id atau seller_id',
+      skuId != null || sellerId != null || categoryId != null,
+      'GET /offers butuh sku_id, seller_id, atau category_id',
     );
     return _list(
       path: '/offers',
       query: {
         if (skuId != null) 'sku_id': skuId,
         if (sellerId != null) 'seller_id': sellerId,
+        if (categoryId != null) 'category_id': categoryId,
       },
       fromJson: OfferModel.fromJson,
       context: 'GET /offers',
     );
+  }
+
+  /// Melengkapi penawaran dengan `price_tiers` dari `GET /offers/{id}`.
+  ///
+  /// Field yang sudah ada di [offers] dipertahankan — khususnya info toko dan
+  /// ongkir dari `GET /search`, yang **tidak** dikembalikan endpoint detail.
+  /// Jadi hasilnya gabungan keduanya, bukan sekadar timpa.
+  ///
+  /// Dipotong jadi batch supaya membuka kategori berisi 20 penawaran tidak
+  /// membuka 20 koneksi bersamaan. Penawaran yang gagal diambil tetap
+  /// dikembalikan apa adanya (tanpa tier) daripada menghilang dari daftar.
+  Future<List<OfferModel>> withPriceTiers(
+    List<OfferModel> offers, {
+    int batchSize = 6,
+  }) async {
+    final needsTiers =
+        offers.where((o) => o.priceTiers.isEmpty).map((o) => o.id).toSet();
+    final missing =
+        needsTiers.where((id) => !_offerCache.containsKey(id)).toList();
+
+    for (var i = 0; i < missing.length; i += batchSize) {
+      await Future.wait(
+        missing.skip(i).take(batchSize).map((id) async {
+          try {
+            final detail = await offerDetail(id);
+            _offerCache[id] = detail.data;
+          } on ApiException {
+            // Biarkan penawaran ini tanpa tier.
+          }
+        }),
+      );
+    }
+
+    return offers.map((offer) {
+      if (offer.priceTiers.isNotEmpty) return offer;
+      final tiers = _offerCache[offer.id]?.priceTiers;
+      return tiers == null ? offer : offer.copyWith(priceTiers: tiers);
+    }).toList();
   }
 
   /// `GET /offers/{id}` — penawaran + `price_tiers[]`.

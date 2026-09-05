@@ -30,6 +30,10 @@ sealed class CatalogHomeState with _$CatalogHomeState {
     /// sendiri tidak membawa nama SKU, hanya `sku_id`.
     @Default(<int, SkuModel>{}) Map<int, SkuModel> skus,
 
+    /// Nama toko per id, untuk penawaran yang tidak membawa `seller_name`
+    /// (semua hasil `GET /offers`; hanya `GET /search` yang memuatnya).
+    @Default(<int, String>{}) Map<int, String> sellers,
+
     CategoryModel? activeCategory,
     @Default('') String keyword,
 
@@ -57,6 +61,11 @@ sealed class CatalogHomeState with _$CatalogHomeState {
     final sku = offer.skuId == null ? null : skus[offer.skuId];
     return sku?.name ?? 'Produk #${offer.skuId ?? offer.id}';
   }
+
+  /// Nama toko yang layak ditampilkan, dari respons penawaran kalau ada,
+  /// kalau tidak dari direktori toko.
+  String? sellerNameFor(OfferModel offer) =>
+      offer.sellerName ?? sellers[offer.sellerId];
 
   /// Satuan jual bawaan SKU, untuk label "/ sak", "/ dus".
   String? offerUnit(OfferModel offer) {

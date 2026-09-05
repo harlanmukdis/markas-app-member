@@ -308,6 +308,7 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
         return CatalogProductItem(
           offer: offer,
           title: state.offerTitle(offer),
+          sellerName: state.sellerNameFor(offer),
           unitName: state.offerUnit(offer),
           isB2B: cubit.isB2B,
         );

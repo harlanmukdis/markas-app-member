@@ -197,6 +197,81 @@ void main() {
     });
   });
 
+  group('batasan: endpoint list tidak membawa harga', () {
+    test('/offers?category_id= mengembalikan price_tiers KOSONG', () async {
+      final env = await catalog.offers(categoryId: 1);
+
+      expect(env.data, isNotEmpty,
+          reason: 'category_id memang didukung — satu panggilan cukup');
+
+      // Ini batasan backend yang sudah diverifikasi. Kalau suatu hari BE
+      // menyertakan harga di respons list, test ini akan GAGAL — dan itu
+      // sinyal yang benar: pelengkapan withPriceTiers bisa dihapus.
+      expect(
+        env.data.every((o) => o.priceTiers.isEmpty),
+        isTrue,
+        reason: 'kalau ini gagal, BE sudah menyertakan harga di list — '
+            'hapus withPriceTiers dan test ini',
+      );
+    });
+
+    test('/search juga tanpa harga, tapi PUNYA info toko dan ongkir',
+        () async {
+      final env = await catalog.search('semen');
+      expect(env.data, isNotEmpty);
+
+      expect(env.data.every((o) => o.priceTiers.isEmpty), isTrue);
+
+      // Yang ini justru ada — jadi hanya harga yang perlu dilengkapi.
+      expect(env.data.first.sellerName, isNotEmpty);
+      expect(env.data.first.ongkirMulaiDari, isNotNull);
+    });
+
+    test('withPriceTiers melengkapi harga tanpa menghapus info toko',
+        () async {
+      final env = await catalog.search('semen');
+      final enriched = await catalog.withPriceTiers(env.data);
+
+      expect(enriched, hasLength(env.data.length));
+      expect(
+        enriched.any((o) => o.priceTiers.isNotEmpty),
+        isTrue,
+        reason: 'tanpa ini semua kartu produk menampilkan '
+            '"Harga belum tersedia"',
+      );
+
+      // Penggabungan, bukan penimpaan: info toko dari /search harus selamat
+      // karena endpoint detail tidak mengembalikannya.
+      final first = enriched.first;
+      expect(first.sellerName, isNotEmpty);
+      expect(first.ongkirMulaiDari, isNotNull);
+      expect(first.lowestVisiblePrice(isB2B: false), isNotNull);
+    });
+
+    test('satu SKU dijual beberapa toko — inti perbandingan harga', () async {
+      // Semen (sku 1) dijual 2 toko menurut data uji.
+      final env = await catalog.offers(skuId: 1);
+      expect(env.data.length, greaterThanOrEqualTo(2));
+      expect(env.data.map((o) => o.sellerId).toSet().length,
+          greaterThanOrEqualTo(2));
+    });
+
+    test('keramik sku 6 punya 3 satuan dengan konversi yang benar', () async {
+      final sku = (await catalog.skuDetail(6)).data;
+
+      expect(sku.units.length, 3);
+      final byName = {for (final u in sku.units) u.unitName: u};
+      expect(byName['pcs']!.conversionFactorToBase, 1);
+      expect(byName['dus']!.conversionFactorToBase, 25);
+      expect(byName['m2']!.conversionFactorToBase, 6.25);
+
+      // "1 dus = 25 pcs = 4 m²" — bahan pemilih satuan.
+      final pcsPerDus = byName['dus']!.conversionFactorToBase;
+      final pcsPerM2 = byName['m2']!.conversionFactorToBase;
+      expect(pcsPerDus / pcsPerM2, 4);
+    });
+  });
+
   group('referensi', () {
     test('zones hierarkis dan di-cache', () async {
       final env = await reference.zones();

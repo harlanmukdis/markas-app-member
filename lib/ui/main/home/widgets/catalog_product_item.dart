@@ -30,6 +30,7 @@ class CatalogProductItem extends StatelessWidget {
     required this.offer,
     required this.title,
     required this.isB2B,
+    this.sellerName,
     this.unitName,
     this.onTap,
   });
@@ -37,6 +38,11 @@ class CatalogProductItem extends StatelessWidget {
   final OfferModel offer;
   final String title;
   final bool isB2B;
+
+  /// Diteruskan terpisah karena `GET /offers` tidak memuat `seller_name` —
+  /// hanya `GET /search` yang punya, sisanya diambil dari direktori toko.
+  final String? sellerName;
+
   final String? unitName;
   final VoidCallback? onTap;
 
@@ -136,9 +142,9 @@ class CatalogProductItem extends StatelessWidget {
               color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
             ),
           ),
-          if (offer.sellerName != null)
+          if (sellerName != null)
             Text(
-              offer.sellerName!,
+              sellerName!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppStyles.styleRegular10(context)

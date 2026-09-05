@@ -5,7 +5,9 @@ import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
+import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
 import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
+import 'package:navy_wear/core/domain/repositories/reference_repository.dart';
 import 'package:navy_wear/core/services/token_store.dart';
 import 'package:navy_wear/di/injector.dart';
 
@@ -21,12 +23,14 @@ part 'catalog_home_state.dart';
 class CatalogHomeCubit extends Cubit<CatalogHomeState> {
   CatalogHomeCubit()
       : _repository = injector<CatalogRepository>(),
+        _reference = injector<ReferenceRepository>(),
         _tokens = injector<TokenStore>(),
         super(const CatalogHomeState());
 
   static CatalogHomeCubit get(BuildContext context) => BlocProvider.of(context);
 
   final CatalogRepository _repository;
+  final ReferenceRepository _reference;
   final TokenStore _tokens;
 
   /// Penentu apakah tier harga `PROJECT` boleh dirender (aturan PRD-06).
@@ -79,10 +83,15 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
     await _applyOfferResult(result);
   }
 
-  /// Membuka satu kategori: SKU-nya diambil, lalu penawaran untuk SKU itu.
+  /// Membuka satu kategori.
   ///
-  /// Dua tahap dengan sengaja, karena API-nya memang begitu — `/offers`
-  /// berkunci `sku_id`, tidak ada endpoint "penawaran per kategori".
+  /// Memakai `GET /offers?category_id=` — **satu** panggilan, bukan
+  /// mengambil SKU lalu penawaran per SKU. Versi sebelumnya melakukan itu
+  /// karena saya keliru mengira `/offers` hanya berkunci `sku_id`.
+  ///
+  /// Nama SKU dan nama toko diambil terpisah karena respons `/offers` tidak
+  /// memuat keduanya, dan harga dilengkapi lewat `offersWithPrices` karena
+  /// bentuk list `/offers` mengembalikan `price_tiers` kosong.
   Future<void> openCategory(CategoryModel category) async {
     emit(state.copyWith(
       mode: CatalogHomeMode.categoryOffers,
@@ -94,41 +103,9 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
       offers: const [],
     ));
 
-    final skuResult = await _repository.skus(categoryId: category.id);
+    final result = await _repository.offersWithPrices(categoryId: category.id);
     if (isClosed) return;
-
-    switch (skuResult) {
-      case DataFailed(:final error):
-        emit(state.copyWith(isLoadingOffers: false, error: error));
-        return;
-      case DataEmpty():
-        emit(state.copyWith(isLoadingOffers: false, isEmptyResult: true));
-        return;
-      case DataLoading():
-        return;
-      case DataSuccess(:final data):
-        // Dibatasi supaya membuka kategori besar tidak memicu puluhan
-        // request. Sisanya menyusul saat paginasi ditambahkan.
-        final skus = data.take(_skuPreviewLimit).toList();
-        final collected = <OfferModel>[];
-
-        for (final sku in skus) {
-          final offerResult = await _repository.offers(skuId: sku.id);
-          if (isClosed) return;
-          if (offerResult case DataSuccess(data: final list)) {
-            collected.addAll(list.where((o) => o.isActive));
-          }
-          // Kategori yang salah satu SKU-nya gagal tetap menampilkan sisanya —
-          // lebih baik daripada seluruh layar jadi error.
-        }
-
-        emit(state.copyWith(
-          isLoadingOffers: false,
-          offers: collected,
-          skus: {for (final s in skus) s.id: s},
-          isEmptyResult: collected.isEmpty,
-        ));
-    }
+    await _applyOfferResult(result);
   }
 
   void showBrowse() {
@@ -187,10 +164,25 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
           isLoadingOffers: false,
           offers: data,
           skus: skus,
+          sellers: await _sellerNames(),
           isEmptyResult: data.isEmpty,
         ));
     }
   }
 
-  static const _skuPreviewLimit = 8;
+  /// Nama toko per id.
+  ///
+  /// `GET /offers` tidak memuat `seller_name` (hanya `GET /search` yang
+  /// punya), jadi untuk penelusuran per kategori namanya diambil dari
+  /// direktori toko — satu panggilan yang di-cache service, bukan satu
+  /// panggilan per penawaran.
+  Future<Map<int, String>> _sellerNames() async {
+    if (state.sellers.isNotEmpty) return state.sellers;
+
+    final result = await _reference.sellerDirectory(limit: 50);
+    if (result case DataSuccess<List<SellerModel>>(data: final list)) {
+      return {for (final s in list) s.id: s.name};
+    }
+    return state.sellers;
+  }
 }

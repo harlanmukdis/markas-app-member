@@ -16,7 +16,24 @@ abstract interface class CatalogRepository {
   /// Beberapa SKU sekaligus, memanfaatkan cache dan dipotong jadi batch.
   Future<DataState<Map<int, SkuModel>>> skusByIds(Iterable<int> ids);
 
-  Future<DataState<List<OfferModel>>> offers({int? skuId, int? sellerId});
+  /// Penawaran per SKU / toko / kategori.
+  ///
+  /// **Hasilnya tidak memuat `price_tiers`** (batasan backend, sudah
+  /// diverifikasi). Untuk menampilkan harga, lanjutkan dengan
+  /// [offersWithPrices] atau panggil [offerDetail].
+  Future<DataState<List<OfferModel>>> offers({
+    int? skuId,
+    int? sellerId,
+    int? categoryId,
+  });
+
+  /// Sama seperti [offers], tapi sudah dilengkapi `price_tiers` sehingga
+  /// langsung bisa dirender jadi kartu produk berharga.
+  Future<DataState<List<OfferModel>>> offersWithPrices({
+    int? skuId,
+    int? sellerId,
+    int? categoryId,
+  });
   Future<DataState<OfferModel>> offerDetail(int id);
 
   /// Hasilnya penawaran + info toko + estimasi ongkir.

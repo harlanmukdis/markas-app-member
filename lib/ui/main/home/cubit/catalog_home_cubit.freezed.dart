@@ -26,6 +26,10 @@ mixin _$CatalogHomeState {
   /// Nama SKU per id, untuk menamai penawaran jalur `MASTER` — `OfferModel`
   /// sendiri tidak membawa nama SKU, hanya `sku_id`.
   Map<int, SkuModel> get skus;
+
+  /// Nama toko per id, untuk penawaran yang tidak membawa `seller_name`
+  /// (semua hasil `GET /offers`; hanya `GET /search` yang memuatnya).
+  Map<int, String> get sellers;
   CategoryModel? get activeCategory;
   String get keyword;
   bool get isLoadingCategories;
@@ -56,6 +60,7 @@ mixin _$CatalogHomeState {
                 .equals(other.categories, categories) &&
             const DeepCollectionEquality().equals(other.offers, offers) &&
             const DeepCollectionEquality().equals(other.skus, skus) &&
+            const DeepCollectionEquality().equals(other.sellers, sellers) &&
             (identical(other.activeCategory, activeCategory) ||
                 other.activeCategory == activeCategory) &&
             (identical(other.keyword, keyword) || other.keyword == keyword) &&
@@ -75,6 +80,7 @@ mixin _$CatalogHomeState {
       const DeepCollectionEquality().hash(categories),
       const DeepCollectionEquality().hash(offers),
       const DeepCollectionEquality().hash(skus),
+      const DeepCollectionEquality().hash(sellers),
       activeCategory,
       keyword,
       isLoadingCategories,
@@ -84,7 +90,7 @@ mixin _$CatalogHomeState {
 
   @override
   String toString() {
-    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, isEmptyResult: $isEmptyResult)';
+    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, isEmptyResult: $isEmptyResult)';
   }
 }
 
@@ -99,6 +105,7 @@ abstract mixin class $CatalogHomeStateCopyWith<$Res> {
       List<CategoryModel> categories,
       List<OfferModel> offers,
       Map<int, SkuModel> skus,
+      Map<int, String> sellers,
       CategoryModel? activeCategory,
       String keyword,
       bool isLoadingCategories,
@@ -126,6 +133,7 @@ class _$CatalogHomeStateCopyWithImpl<$Res>
     Object? categories = null,
     Object? offers = null,
     Object? skus = null,
+    Object? sellers = null,
     Object? activeCategory = freezed,
     Object? keyword = null,
     Object? isLoadingCategories = null,
@@ -150,6 +158,10 @@ class _$CatalogHomeStateCopyWithImpl<$Res>
           ? _self.skus
           : skus // ignore: cast_nullable_to_non_nullable
               as Map<int, SkuModel>,
+      sellers: null == sellers
+          ? _self.sellers
+          : sellers // ignore: cast_nullable_to_non_nullable
+              as Map<int, String>,
       activeCategory: freezed == activeCategory
           ? _self.activeCategory
           : activeCategory // ignore: cast_nullable_to_non_nullable
@@ -288,6 +300,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             List<CategoryModel> categories,
             List<OfferModel> offers,
             Map<int, SkuModel> skus,
+            Map<int, String> sellers,
             CategoryModel? activeCategory,
             String keyword,
             bool isLoadingCategories,
@@ -305,6 +318,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.categories,
             _that.offers,
             _that.skus,
+            _that.sellers,
             _that.activeCategory,
             _that.keyword,
             _that.isLoadingCategories,
@@ -336,6 +350,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             List<CategoryModel> categories,
             List<OfferModel> offers,
             Map<int, SkuModel> skus,
+            Map<int, String> sellers,
             CategoryModel? activeCategory,
             String keyword,
             bool isLoadingCategories,
@@ -352,6 +367,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.categories,
             _that.offers,
             _that.skus,
+            _that.sellers,
             _that.activeCategory,
             _that.keyword,
             _that.isLoadingCategories,
@@ -380,6 +396,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             List<CategoryModel> categories,
             List<OfferModel> offers,
             Map<int, SkuModel> skus,
+            Map<int, String> sellers,
             CategoryModel? activeCategory,
             String keyword,
             bool isLoadingCategories,
@@ -396,6 +413,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.categories,
             _that.offers,
             _that.skus,
+            _that.sellers,
             _that.activeCategory,
             _that.keyword,
             _that.isLoadingCategories,
@@ -416,6 +434,7 @@ class _CatalogHomeState extends CatalogHomeState {
       final List<CategoryModel> categories = const <CategoryModel>[],
       final List<OfferModel> offers = const <OfferModel>[],
       final Map<int, SkuModel> skus = const <int, SkuModel>{},
+      final Map<int, String> sellers = const <int, String>{},
       this.activeCategory,
       this.keyword = '',
       this.isLoadingCategories = false,
@@ -425,6 +444,7 @@ class _CatalogHomeState extends CatalogHomeState {
       : _categories = categories,
         _offers = offers,
         _skus = skus,
+        _sellers = sellers,
         super._();
 
   @override
@@ -471,6 +491,20 @@ class _CatalogHomeState extends CatalogHomeState {
     return EqualUnmodifiableMapView(_skus);
   }
 
+  /// Nama toko per id, untuk penawaran yang tidak membawa `seller_name`
+  /// (semua hasil `GET /offers`; hanya `GET /search` yang memuatnya).
+  final Map<int, String> _sellers;
+
+  /// Nama toko per id, untuk penawaran yang tidak membawa `seller_name`
+  /// (semua hasil `GET /offers`; hanya `GET /search` yang memuatnya).
+  @override
+  @JsonKey()
+  Map<int, String> get sellers {
+    if (_sellers is EqualUnmodifiableMapView) return _sellers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_sellers);
+  }
+
   @override
   final CategoryModel? activeCategory;
   @override
@@ -511,6 +545,7 @@ class _CatalogHomeState extends CatalogHomeState {
                 .equals(other._categories, _categories) &&
             const DeepCollectionEquality().equals(other._offers, _offers) &&
             const DeepCollectionEquality().equals(other._skus, _skus) &&
+            const DeepCollectionEquality().equals(other._sellers, _sellers) &&
             (identical(other.activeCategory, activeCategory) ||
                 other.activeCategory == activeCategory) &&
             (identical(other.keyword, keyword) || other.keyword == keyword) &&
@@ -530,6 +565,7 @@ class _CatalogHomeState extends CatalogHomeState {
       const DeepCollectionEquality().hash(_categories),
       const DeepCollectionEquality().hash(_offers),
       const DeepCollectionEquality().hash(_skus),
+      const DeepCollectionEquality().hash(_sellers),
       activeCategory,
       keyword,
       isLoadingCategories,
@@ -539,7 +575,7 @@ class _CatalogHomeState extends CatalogHomeState {
 
   @override
   String toString() {
-    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, isEmptyResult: $isEmptyResult)';
+    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, isEmptyResult: $isEmptyResult)';
   }
 }
 
@@ -556,6 +592,7 @@ abstract mixin class _$CatalogHomeStateCopyWith<$Res>
       List<CategoryModel> categories,
       List<OfferModel> offers,
       Map<int, SkuModel> skus,
+      Map<int, String> sellers,
       CategoryModel? activeCategory,
       String keyword,
       bool isLoadingCategories,
@@ -584,6 +621,7 @@ class __$CatalogHomeStateCopyWithImpl<$Res>
     Object? categories = null,
     Object? offers = null,
     Object? skus = null,
+    Object? sellers = null,
     Object? activeCategory = freezed,
     Object? keyword = null,
     Object? isLoadingCategories = null,
@@ -608,6 +646,10 @@ class __$CatalogHomeStateCopyWithImpl<$Res>
           ? _self._skus
           : skus // ignore: cast_nullable_to_non_nullable
               as Map<int, SkuModel>,
+      sellers: null == sellers
+          ? _self._sellers
+          : sellers // ignore: cast_nullable_to_non_nullable
+              as Map<int, String>,
       activeCategory: freezed == activeCategory
           ? _self.activeCategory
           : activeCategory // ignore: cast_nullable_to_non_nullable

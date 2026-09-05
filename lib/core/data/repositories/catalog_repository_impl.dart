@@ -42,24 +42,81 @@ class CatalogRepositoryImpl implements CatalogRepository {
   }
 
   @override
-  Future<DataState<List<OfferModel>>> offers({int? skuId, int? sellerId}) =>
-      _guardList(() => _service.offers(skuId: skuId, sellerId: sellerId));
+  Future<DataState<List<OfferModel>>> offers({
+    int? skuId,
+    int? sellerId,
+    int? categoryId,
+  }) =>
+      _guardList(() => _service.offers(
+            skuId: skuId,
+            sellerId: sellerId,
+            categoryId: categoryId,
+          ));
+
+  @override
+  Future<DataState<List<OfferModel>>> offersWithPrices({
+    int? skuId,
+    int? sellerId,
+    int? categoryId,
+  }) async {
+    try {
+      final env = await _service.offers(
+        skuId: skuId,
+        sellerId: sellerId,
+        categoryId: categoryId,
+      );
+      if (env.data.isEmpty) return DataEmpty<List<OfferModel>>(meta: env.meta);
+
+      final enriched = await _service.withPriceTiers(env.data);
+      return DataSuccess<List<OfferModel>>(
+        enriched,
+        meta: env.meta,
+        statusCode: env.statusCode,
+      );
+    } on ApiException catch (e) {
+      return DataFailed(e.error);
+    }
+  }
 
   @override
   Future<DataState<OfferModel>> offerDetail(int id) =>
       _guard(() => _service.offerDetail(id));
 
+  /// Hasil pencarian **dilengkapi `price_tiers`** sebelum dikembalikan.
+  ///
+  /// `GET /search` membawa `seller_name` dan `ongkir_mulai_dari` tapi
+  /// `price_tiers`-nya kosong (sudah diverifikasi ke backend). Hasil
+  /// pencarian tanpa harga tidak ada gunanya di marketplace yang justru
+  /// dipakai untuk membandingkan harga, jadi pelengkapan dilakukan di sini
+  /// supaya tidak ada layar yang lupa melakukannya.
+  ///
+  /// Biayanya satu request tambahan per penawaran. Idealnya backend
+  /// menyertakan harga di respons pencarian — lihat catatan di
+  /// [CatalogService.offers].
   @override
   Future<DataState<List<OfferModel>>> search(
     String q, {
     int? zoneId,
     bool? needsTaxInvoice,
-  }) =>
-      _guardList(() => _service.search(
-            q,
-            zoneId: zoneId,
-            needsTaxInvoice: needsTaxInvoice,
-          ));
+  }) async {
+    try {
+      final env = await _service.search(
+        q,
+        zoneId: zoneId,
+        needsTaxInvoice: needsTaxInvoice,
+      );
+      if (env.data.isEmpty) return DataEmpty<List<OfferModel>>(meta: env.meta);
+
+      final enriched = await _service.withPriceTiers(env.data);
+      return DataSuccess<List<OfferModel>>(
+        enriched,
+        meta: env.meta,
+        statusCode: env.statusCode,
+      );
+    } on ApiException catch (e) {
+      return DataFailed(e.error);
+    }
+  }
 
   Future<DataState<T>> _guard<T>(
     Future<ApiEnvelope<T>> Function() call,
