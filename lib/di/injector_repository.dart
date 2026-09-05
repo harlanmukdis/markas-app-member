@@ -1,3 +1,9 @@
+import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
+import 'package:navy_wear/core/data/repositories/auth_repository_impl.dart';
+import 'package:navy_wear/core/domain/repositories/auth_repository.dart';
+import 'package:navy_wear/core/services/token_store.dart';
+import 'package:navy_wear/di/injector.dart';
+
 /// Pendaftaran seluruh `*RepositoryImpl`.
 ///
 /// Dijalankan **setelah** `initializeService()` karena setiap repository
@@ -29,5 +35,10 @@
 /// dengan implementasi dari `core/data/repositories/` — supaya cubit
 /// bergantung pada abstraksi dan bisa diganti fake saat test.
 void initializeRepository() {
-  // Belum ada repository. Diisi mulai Step 2, berpasangan dengan service-nya.
+  injector.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      injector<AuthService>(),
+      injector<TokenStore>(),
+    ),
+  );
 }

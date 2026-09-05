@@ -24,6 +24,10 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutShopapay": MessageLookupByLibrary.simpleMessage("About Shopapay"),
     "accessibility": MessageLookupByLibrary.simpleMessage("Accessibility"),
+    "accountSuspendedMessage": MessageLookupByLibrary.simpleMessage(
+      "Your account has been suspended. Please contact support.",
+    ),
+    "accountType": MessageLookupByLibrary.simpleMessage("Account Type"),
     "addAddress": MessageLookupByLibrary.simpleMessage("Add Address"),
     "addCard": MessageLookupByLibrary.simpleMessage("Add card"),
     "addDeliveryInstruction": MessageLookupByLibrary.simpleMessage(
@@ -63,6 +67,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "What is the best way payment method for buy cloth?",
     ),
     "blazers": MessageLookupByLibrary.simpleMessage("Blazers"),
+    "businessBuyer": MessageLookupByLibrary.simpleMessage(
+      "Business / Contractor",
+    ),
+    "businessBuyerNote": MessageLookupByLibrary.simpleMessage(
+      "Business accounts see project (wholesale) pricing and can request quotes. NPWP and NIB/SIUP are required.",
+    ),
     "buyNow": MessageLookupByLibrary.simpleMessage("Buy Now"),
     "byCreatingAccountYouAgreeToOur": MessageLookupByLibrary.simpleMessage(
       "By creating an account, you agree to our ",
@@ -148,6 +158,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Effortless Shopping Experience",
     ),
     "email": MessageLookupByLibrary.simpleMessage("Email Address"),
+    "emailAlreadyRegistered": MessageLookupByLibrary.simpleMessage(
+      "This email address is already registered",
+    ),
     "emailNotifications": MessageLookupByLibrary.simpleMessage(
       "Email Notifications",
     ),
@@ -176,7 +189,14 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Enter your naw password , Remember this time!",
         ),
+    "enterYourNibSiup": MessageLookupByLibrary.simpleMessage(
+      "Enter your NIB / SIUP number",
+    ),
+    "enterYourNpwp": MessageLookupByLibrary.simpleMessage("Enter your NPWP"),
     "enterYourOtp": MessageLookupByLibrary.simpleMessage("Enter Your OTP"),
+    "enterYourPhoneNumber": MessageLookupByLibrary.simpleMessage(
+      "Enter your phone number",
+    ),
     "error404": MessageLookupByLibrary.simpleMessage("Error 404"),
     "errorMessage": MessageLookupByLibrary.simpleMessage(
       "We are not online this time. Please try again later",
@@ -244,6 +264,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "How do I track my order?",
     ),
     "instagram": MessageLookupByLibrary.simpleMessage("Instagram"),
+    "invalidCredentialsMessage": MessageLookupByLibrary.simpleMessage(
+      "Phone number or password is incorrect",
+    ),
     "italian": MessageLookupByLibrary.simpleMessage("Italian"),
     "itemAtCart": MessageLookupByLibrary.simpleMessage("Item at Cart"),
     "items": MessageLookupByLibrary.simpleMessage("Items"),
@@ -303,6 +326,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "myCart": MessageLookupByLibrary.simpleMessage("My Cart"),
     "myFavorites": MessageLookupByLibrary.simpleMessage("My favorites"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
+    "nameRequired": MessageLookupByLibrary.simpleMessage("Name is required"),
     "neckline": MessageLookupByLibrary.simpleMessage("Neckline "),
     "needHelp": MessageLookupByLibrary.simpleMessage("Need Help?"),
     "newFashion": MessageLookupByLibrary.simpleMessage("New Fashion"),
@@ -311,11 +335,22 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "newOffers": MessageLookupByLibrary.simpleMessage("New Offers"),
     "next": MessageLookupByLibrary.simpleMessage("Next"),
+    "nibSiupLabel": MessageLookupByLibrary.simpleMessage("NIB / SIUP Number"),
+    "nibSiupRequiredForBusiness": MessageLookupByLibrary.simpleMessage(
+      "NIB / SIUP number is required for a business account",
+    ),
+    "noInternetConnection": MessageLookupByLibrary.simpleMessage(
+      "No internet connection. Check your network and try again.",
+    ),
     "noResultsFound": MessageLookupByLibrary.simpleMessage("No results Found"),
     "nonStretch": MessageLookupByLibrary.simpleMessage("Non-Stretch"),
     "notAvailable": MessageLookupByLibrary.simpleMessage("Not Available"),
     "notification": MessageLookupByLibrary.simpleMessage("Notification"),
     "notifications": MessageLookupByLibrary.simpleMessage("Notifications"),
+    "npwpLabel": MessageLookupByLibrary.simpleMessage("NPWP"),
+    "npwpRequiredForBusiness": MessageLookupByLibrary.simpleMessage(
+      "NPWP is required for a business account",
+    ),
     "online": MessageLookupByLibrary.simpleMessage("Online"),
     "or": MessageLookupByLibrary.simpleMessage("or"),
     "orText": MessageLookupByLibrary.simpleMessage("or"),
@@ -324,12 +359,25 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "otpVerification": MessageLookupByLibrary.simpleMessage("OTP Verification"),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
+    "passwordRequired": MessageLookupByLibrary.simpleMessage(
+      "Password is required",
+    ),
+    "passwordTooShort": MessageLookupByLibrary.simpleMessage(
+      "Password must be at least 6 characters",
+    ),
     "patrickRaddenKeefeReviewer": MessageLookupByLibrary.simpleMessage(
       "Patrick Radden KeefeReviewer: David Grube and Gary DeLander",
     ),
     "payPal": MessageLookupByLibrary.simpleMessage("PayPal"),
     "paymentMethod": MessageLookupByLibrary.simpleMessage("Payment Method"),
     "paymentMethods": MessageLookupByLibrary.simpleMessage("Payment Methods"),
+    "phoneAlreadyRegistered": MessageLookupByLibrary.simpleMessage(
+      "This phone number is already registered",
+    ),
+    "phoneNumber": MessageLookupByLibrary.simpleMessage("Phone Number"),
+    "phoneRequired": MessageLookupByLibrary.simpleMessage(
+      "Phone number is required",
+    ),
     "placeDoesntExist": MessageLookupByLibrary.simpleMessage(
       "The place doesn’t exist",
     ),
@@ -364,11 +412,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "regularFit": MessageLookupByLibrary.simpleMessage("Regular Fit"),
     "relatedProduct": MessageLookupByLibrary.simpleMessage("Related Product"),
     "rememberMe": MessageLookupByLibrary.simpleMessage("Remember Me"),
+    "requestTimedOut": MessageLookupByLibrary.simpleMessage(
+      "The server took too long to respond. Please try again.",
+    ),
     "resendCode": MessageLookupByLibrary.simpleMessage("Resend code in 55 s"),
     "resetPassword": MessageLookupByLibrary.simpleMessage("Reset Password"),
     "resetPasswordInstructions": MessageLookupByLibrary.simpleMessage(
       "Enter your new password . Remember this time!",
     ),
+    "retailBuyer": MessageLookupByLibrary.simpleMessage("Retail Buyer"),
     "reviews": MessageLookupByLibrary.simpleMessage("Reviews"),
     "ruffleKnitTop": MessageLookupByLibrary.simpleMessage("Ruffle Knit Top"),
     "rumpledSatin": MessageLookupByLibrary.simpleMessage("Rumpled Satin"),
@@ -389,6 +441,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "seeDescription": MessageLookupByLibrary.simpleMessage("See Description"),
     "seeReview": MessageLookupByLibrary.simpleMessage("SEE REVIEW"),
     "semiSheer": MessageLookupByLibrary.simpleMessage("Semi-Sheer"),
+    "sessionExpired": MessageLookupByLibrary.simpleMessage(
+      "Your session has ended. Please log in again.",
+    ),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "sheer": MessageLookupByLibrary.simpleMessage("Sheer"),
     "shirredPuff": MessageLookupByLibrary.simpleMessage("Shirred Puff"),
@@ -407,6 +462,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "sleeveType": MessageLookupByLibrary.simpleMessage("Sleeve Type "),
     "solidCottonPolo": MessageLookupByLibrary.simpleMessage(
       "Solid Cotton Polo",
+    ),
+    "somethingWentWrong": MessageLookupByLibrary.simpleMessage(
+      "Something went wrong. Please try again.",
     ),
     "sort": MessageLookupByLibrary.simpleMessage("Sort"),
     "spaceDyeCrop": MessageLookupByLibrary.simpleMessage("Space Dye Crop"),
@@ -440,6 +498,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tops": MessageLookupByLibrary.simpleMessage("Tops"),
     "total": MessageLookupByLibrary.simpleMessage("Total"),
     "trending": MessageLookupByLibrary.simpleMessage("Trending"),
+    "tryAgain": MessageLookupByLibrary.simpleMessage("Try Again"),
     "turkish": MessageLookupByLibrary.simpleMessage("Turkish"),
     "twitter": MessageLookupByLibrary.simpleMessage("Twitter"),
     "type": MessageLookupByLibrary.simpleMessage("Type "),

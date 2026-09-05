@@ -28,7 +28,10 @@ abstract final class DioClient {
         // salah kirim tanpa sadar.
         contentType: Headers.jsonContentType,
         responseType: ResponseType.json,
-        headers: const {'Accept': 'application/json'},
+        // Sengaja BUKAN const: map const bersifat immutable, sehingga
+        // `dio.options.headers['X'] = ...` melempar saat runtime dan header
+        // tambahan diam-diam tidak pernah terkirim.
+        headers: {'Accept': 'application/json'},
 
         connectTimeout: const Duration(seconds: 20),
         receiveTimeout: const Duration(seconds: 30),

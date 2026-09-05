@@ -2,8 +2,8 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/presentation/views/login_view.dart';
-import '../../features/auth/presentation/views/register_view.dart';
+import 'package:navy_wear/ui/main/auth/screens/login_screen.dart';
+import 'package:navy_wear/ui/main/auth/screens/register_screen.dart';
 import '../../features/auth/presentation/views/reset_password_view.dart';
 import '../../features/auth/presentation/views/welcome_view.dart';
 import '../../features/home/presentation/views/all_review.dart';
@@ -92,7 +92,7 @@ final GoRouter router = GoRouter(
       pageBuilder: (BuildContext context, GoRouterState state) {
         return FadeThroughTransitionPageWrapper(
           transitionKey: state.pageKey,
-          page: const LoginView(),
+          page: const LoginScreen(),
         );
       },
     ),
@@ -110,7 +110,7 @@ final GoRouter router = GoRouter(
       pageBuilder: (BuildContext context, GoRouterState state) {
         return FadeThroughTransitionPageWrapper(
           transitionKey: state.pageKey,
-          page: const RegisterView(),
+          page: const RegisterScreen(),
         );
       },
     ),

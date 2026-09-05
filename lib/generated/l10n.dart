@@ -28,10 +28,9 @@ class S {
   static const AppLocalizationDelegate delegate = AppLocalizationDelegate();
 
   static Future<S> load(Locale locale) {
-    final name =
-        (locale.countryCode?.isEmpty ?? false)
-            ? locale.languageCode
-            : locale.toString();
+    final name = (locale.countryCode?.isEmpty ?? false)
+        ? locale.languageCode
+        : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
     return initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
@@ -2188,6 +2187,246 @@ class S {
       desc: '',
       args: [],
     );
+  }
+
+  /// `Phone Number`
+  String get phoneNumber {
+    return Intl.message(
+      'Phone Number',
+      name: 'phoneNumber',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter your phone number`
+  String get enterYourPhoneNumber {
+    return Intl.message(
+      'Enter your phone number',
+      name: 'enterYourPhoneNumber',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Account Type`
+  String get accountType {
+    return Intl.message(
+      'Account Type',
+      name: 'accountType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retail Buyer`
+  String get retailBuyer {
+    return Intl.message(
+      'Retail Buyer',
+      name: 'retailBuyer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Business / Contractor`
+  String get businessBuyer {
+    return Intl.message(
+      'Business / Contractor',
+      name: 'businessBuyer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Business accounts see project (wholesale) pricing and can request quotes. NPWP and NIB/SIUP are required.`
+  String get businessBuyerNote {
+    return Intl.message(
+      'Business accounts see project (wholesale) pricing and can request quotes. NPWP and NIB/SIUP are required.',
+      name: 'businessBuyerNote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `NPWP`
+  String get npwpLabel {
+    return Intl.message('NPWP', name: 'npwpLabel', desc: '', args: []);
+  }
+
+  /// `Enter your NPWP`
+  String get enterYourNpwp {
+    return Intl.message(
+      'Enter your NPWP',
+      name: 'enterYourNpwp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `NIB / SIUP Number`
+  String get nibSiupLabel {
+    return Intl.message(
+      'NIB / SIUP Number',
+      name: 'nibSiupLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter your NIB / SIUP number`
+  String get enterYourNibSiup {
+    return Intl.message(
+      'Enter your NIB / SIUP number',
+      name: 'enterYourNibSiup',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Phone number is required`
+  String get phoneRequired {
+    return Intl.message(
+      'Phone number is required',
+      name: 'phoneRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password is required`
+  String get passwordRequired {
+    return Intl.message(
+      'Password is required',
+      name: 'passwordRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Name is required`
+  String get nameRequired {
+    return Intl.message(
+      'Name is required',
+      name: 'nameRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `NPWP is required for a business account`
+  String get npwpRequiredForBusiness {
+    return Intl.message(
+      'NPWP is required for a business account',
+      name: 'npwpRequiredForBusiness',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `NIB / SIUP number is required for a business account`
+  String get nibSiupRequiredForBusiness {
+    return Intl.message(
+      'NIB / SIUP number is required for a business account',
+      name: 'nibSiupRequiredForBusiness',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password must be at least 6 characters`
+  String get passwordTooShort {
+    return Intl.message(
+      'Password must be at least 6 characters',
+      name: 'passwordTooShort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Phone number or password is incorrect`
+  String get invalidCredentialsMessage {
+    return Intl.message(
+      'Phone number or password is incorrect',
+      name: 'invalidCredentialsMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your account has been suspended. Please contact support.`
+  String get accountSuspendedMessage {
+    return Intl.message(
+      'Your account has been suspended. Please contact support.',
+      name: 'accountSuspendedMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This phone number is already registered`
+  String get phoneAlreadyRegistered {
+    return Intl.message(
+      'This phone number is already registered',
+      name: 'phoneAlreadyRegistered',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This email address is already registered`
+  String get emailAlreadyRegistered {
+    return Intl.message(
+      'This email address is already registered',
+      name: 'emailAlreadyRegistered',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No internet connection. Check your network and try again.`
+  String get noInternetConnection {
+    return Intl.message(
+      'No internet connection. Check your network and try again.',
+      name: 'noInternetConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The server took too long to respond. Please try again.`
+  String get requestTimedOut {
+    return Intl.message(
+      'The server took too long to respond. Please try again.',
+      name: 'requestTimedOut',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your session has ended. Please log in again.`
+  String get sessionExpired {
+    return Intl.message(
+      'Your session has ended. Please log in again.',
+      name: 'sessionExpired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Something went wrong. Please try again.`
+  String get somethingWentWrong {
+    return Intl.message(
+      'Something went wrong. Please try again.',
+      name: 'somethingWentWrong',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Try Again`
+  String get tryAgain {
+    return Intl.message('Try Again', name: 'tryAgain', desc: '', args: []);
   }
 }
 

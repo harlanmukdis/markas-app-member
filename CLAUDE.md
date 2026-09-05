@@ -125,7 +125,25 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 
 # Part 2 — Target architecture
 
-**Status: foundation implemented (steps 1-5), feature layers not yet.** What exists today:
+> ### 🔴 Backend blocker: the `Authorization` header is case-sensitive
+>
+> Every protected endpoint returns `401 UNAUTHENTICATED` unless the header name is spelled **exactly** `Authorization`. This violates RFC 7230 §3.2 (HTTP field names are case-insensitive) and it breaks **all native Dart/Flutter clients**, because `dart:io`'s `HttpHeaders` lowercases field names and Dio does not opt out.
+>
+> Verified against the running backend:
+>
+> | request | result |
+> |---|---|
+> | `curl -H "Authorization: Bearer …"` | **200** |
+> | `curl -H "authorization: Bearer …"` | **401** |
+> | `curl -H "AUTHORIZATION: Bearer …"` | **401** |
+> | `HttpHeaders.set(..., preserveHeaderCase: true)` | **200** |
+> | `HttpHeaders.set(...)` (Dart default, what Dio sends) | **401** |
+>
+> **Fix belongs in the backend** — read the header case-insensitively (`$_SERVER['HTTP_AUTHORIZATION']` is populated regardless of the incoming case; an exact-key lookup into `apache_request_headers()` is not). A client-side workaround exists but needs a custom `HttpClientAdapter` (~80 lines, platform-conditional) versus a one-line backend change, so it was deliberately not built.
+>
+> **Impact by platform:** Android/iOS/desktop are unusable for anything past login. Flutter **web** is probably unaffected — the browser XHR adapter sends the field name as written — but that has **not** been verified in a browser. The `GET /auth/me` contract test in `test/integration/auth_service_test.dart` is `skip`ped for this reason; remove the skip once the backend is fixed.
+
+**Status: foundation (steps 1-5) plus the auth domain implemented.** What exists today:
 
 - `lib/config/env/env.dart` + `.env` + `.env.example` (envied; `API_BASE_URL`)
 - `lib/config/network/` — `dio_client.dart` (named `"api"` Dio), `api_envelope.dart`, `api_exception.dart`, `token_refresher.dart`, `interceptors/{auth,logging}_interceptor.dart`
@@ -133,9 +151,21 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 - `lib/core/services/` — `token_store.dart`, `auth_events.dart`
 - `lib/util/` — `format_helper.dart`, `json_converters.dart`
 - `lib/di/` — `injector.dart` (called from `main.dart` before `runApp`), `injector_service.dart`, `injector_repository.dart` (both still empty)
-- Empty-but-created: `lib/core/data/datasources/remote/service/`, `lib/core/data/repositories/`, `lib/core/domain/{model,repositories}/`
+- **Auth domain (step 2)** — `AuthSessionModel` + `UserModel` (freezed), `AuthService`, `AuthRepository`/`AuthRepositoryImpl`, `AuthCubit`/`AuthState`, and the API-wired `LoginScreen`/`RegisterScreen` under `lib/ui/main/auth/`
+- `lib/util/error_message.dart` — maps `DataError.code` to localized copy; **never** shows `error.message` to users
+- Tests: `test/util/` (17, pure), `test/data/` (6, fake service+store), `test/ui/` (8, fake repository), `test/integration/` (11, needs the backend running)
 
-Still absent: `lib/ui/` (presentation is still `lib/features/`), any `*Service`/`*RepositoryImpl`/freezed model, Firebase, `lib/firebase_options.dart`.
+Still absent: the rest of `lib/features/` (catalog, cart, checkout, orders, …), Firebase, `lib/firebase_options.dart`.
+
+### Presentation lives in two trees right now
+
+`lib/ui/main/auth/` (Part 2) and `lib/features/` (the UI kit's sample tree) coexist deliberately. A screen moves to `lib/ui/` **when it gets wired to the API**, not before — so `login`/`register` moved and were rewritten, while `welcome_view` and `reset_password_view` stayed in `lib/features/auth/presentation/views/`. `reset_password` cannot move yet: **the API has no password-reset endpoint at all**, so that screen has nothing to call.
+
+The kit's social-login buttons were dropped, not ported — the backend has no OAuth, and a button that does nothing is worse than no button.
+
+### freezed 3 gotcha
+
+A `@freezed` class with custom getters or methods **must** declare a private constructor (`const UserModel._();`), otherwise generation fails with `Getters require a MyClass._() constructor`. Also prefer getters **inside** the class over an `extension`: an extension is only in scope where its own library is imported, so `user.isB2B` silently fails to resolve in a file that imported the model only transitively.
 
 **Backend contract**: the member app talks to Markas Bangunan (CodeIgniter 3 + JWT). The API is documented in `API-MEMBER-APP.md` — ask the user for it if it is not in the repo root. Three deviations from the generic plan below were forced by that API and are deliberate:
 
@@ -198,8 +228,8 @@ Derived from the gap between Part 1 and Part 2; no step is started yet.
 3. ~~Create `lib/config/network/dio_client.dart` with the named `"api"` Dio singleton.~~ **Done**, plus auth/refresh/logging interceptors.
 4. ~~Add `lib/core/data_state.dart` with the `DataState<T>` union.~~ **Done** — see deviation 1 above.
 5. ~~Build `lib/di/{injector,injector_service,injector_repository}.dart` and call `initialize()` before `runApp`.~~ **Done**; service/repository registries are still empty stubs.
-6. Move the hardcoded lists out of cubits (`HomePageCubit.productsTShirt` and friends) behind a `*Service` + `*RepositoryImpl` pair. `ProductModel.fromJson` already exists as a starting point.
-7. Convert marker states to `@freezed` unions, one feature at a time, and switch cubits from public mutable fields to emitted state data.
+6. **In progress.** Move the hardcoded lists out of cubits (`HomePageCubit.productsTShirt` and friends) behind a `*Service` + `*RepositoryImpl` pair. `ProductModel.fromJson` already exists as a starting point.
+7. **In progress** (auth done). Convert marker states to `@freezed` unions, one feature at a time, and switch cubits from public mutable fields to emitted state data.
 8. Split [app_routes.dart](lib/core/utils/app_routes.dart) into per-domain route files under `lib/config/route/`.
 9. Decide the fate of `lib/features/` vs `lib/ui/` — the target names the presentation root `ui/`, which is a rename of the existing tree, not a second one.
 

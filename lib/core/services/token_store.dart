@@ -125,6 +125,25 @@ class TokenStore {
     }
   }
 
+  /// Memperbarui **hanya** identitas non-rahasia, tanpa menyentuh token.
+  ///
+  /// Dipakai setelah `GET /auth/me`, yang merupakan satu-satunya sumber
+  /// `buyer_segment`. Dipisah dari [saveSession] supaya pemanggil tidak perlu
+  /// menyediakan access token yang sudah tersimpan hanya untuk memperbarui
+  /// profil — jalan itu memaksa null-assertion di lapisan yang kontraknya
+  /// tidak boleh throw.
+  Future<void> saveProfile({
+    int? userId,
+    String? role,
+    String? buyerSegment,
+  }) async {
+    if (userId != null) await CachedHelper.saveData(kUserId, userId);
+    if (role != null) await CachedHelper.saveData(kUserRole, role);
+    if (buyerSegment != null) {
+      await CachedHelper.saveData(kBuyerSegment, buyerSegment);
+    }
+  }
+
   /// Menyimpan access token baru hasil `POST /auth/refresh`.
   ///
   /// Endpoint refresh **tidak** mengembalikan refresh token baru, jadi yang

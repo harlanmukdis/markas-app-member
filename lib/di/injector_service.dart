@@ -1,3 +1,8 @@
+import 'package:dio/dio.dart';
+import 'package:navy_wear/config/network/dio_client.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
+import 'package:navy_wear/di/injector.dart';
+
 /// Pendaftaran seluruh `*Service` (lapisan yang benar-benar memanggil HTTP).
 ///
 /// Setiap service menerima instance `Dio` bernama, bukan membuat sendiri:
@@ -33,5 +38,7 @@
 /// Keduanya dibiarkan tidak ada dengan sengaja, bukan sekadar tidak dipakai —
 /// method yang ada di repository cepat atau lambat akan dipanggil orang.
 void initializeService() {
-  // Belum ada service. Diisi mulai Step 2 (auth), lalu katalog, cart, dst.
+  injector.registerLazySingleton<AuthService>(
+    () => AuthService(injector<Dio>(instanceName: DioClient.api)),
+  );
 }
