@@ -1,4 +1,30 @@
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+
+/// Locale untuk nilai yang **dikirim ke server**.
+///
+/// Wajib dipatok, tidak boleh mengikuti locale aktif. `CachedHelper.init()`
+/// menyetel `Intl.defaultLocale` sesuai pilihan bahasa user, dan pada locale
+/// `ar` `DateFormat` memakai angka Arab-Indic — sehingga tanggal yang dikirim
+/// jadi `٢٠٢٦-٠٩-٠٦` dan ditolak backend. Format wire harus selalu ASCII.
+const String _wireLocale = 'en_US';
+
+/// Locale untuk yang **ditampilkan ke user**.
+const String _displayLocale = 'id';
+
+bool _dateSymbolsReady = false;
+
+/// Memuat data locale `intl` sekali saja.
+///
+/// `DateFormat` dengan locale selain `en_US` melempar `LocaleDataException`
+/// kalau data simbolnya belum dimuat. Dilakukan lazy di sini — bukan di
+/// `initialize()` — supaya helper ini tetap benar saat dipakai unit test yang
+/// tidak menjalankan DI.
+void _ensureDateSymbols() {
+  if (_dateSymbolsReady) return;
+  initializeDateFormatting();
+  _dateSymbolsReady = true;
+}
 
 /// Selisih waktu server terhadap UTC.
 ///
@@ -38,16 +64,18 @@ DateTime? parseServerInstant(String? raw) {
 /// (mis. `scheduled_date` pada batch kontrak).
 String? formatForServer(DateTime? instant) {
   if (instant == null) return null;
+  _ensureDateSymbols();
   final serverWallClock = instant.toUtc().add(kServerUtcOffset);
-  return DateFormat('yyyy-MM-dd HH:mm:ss').format(serverWallClock);
+  return DateFormat('yyyy-MM-dd HH:mm:ss', _wireLocale).format(serverWallClock);
 }
 
 /// Hanya bagian tanggal, `YYYY-MM-DD` — format yang diminta field seperti
 /// `scheduled_date`.
 String? formatDateForServer(DateTime? instant) {
   if (instant == null) return null;
+  _ensureDateSymbols();
   final serverWallClock = instant.toUtc().add(kServerUtcOffset);
-  return DateFormat('yyyy-MM-dd').format(serverWallClock);
+  return DateFormat('yyyy-MM-dd', _wireLocale).format(serverWallClock);
 }
 
 /// Sisa waktu sampai [deadline]. Negatif berarti sudah lewat.
@@ -84,8 +112,19 @@ String formatCountdown(Duration? left) {
   return 'kurang dari 1 menit';
 }
 
-final DateFormat _dateTimeDisplay = DateFormat('d MMM yyyy, HH:mm', 'id');
-final DateFormat _dateDisplay = DateFormat('d MMMM yyyy', 'id');
+DateFormat? _dateTimeDisplayCache;
+DateFormat? _dateDisplayCache;
+
+DateFormat get _dateTimeDisplay {
+  _ensureDateSymbols();
+  return _dateTimeDisplayCache ??=
+      DateFormat('d MMM yyyy, HH:mm', _displayLocale);
+}
+
+DateFormat get _dateDisplay {
+  _ensureDateSymbols();
+  return _dateDisplayCache ??= DateFormat('d MMMM yyyy', _displayLocale);
+}
 
 /// Tampilan tanggal-waktu dalam **waktu server (WIB)**, bukan waktu perangkat.
 ///
