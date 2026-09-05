@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/local_network.dart';
 import '../../../favorites/favorites_view.dart';
-import '../../../home/presentation/views/home_page.dart';
+import 'package:navy_wear/ui/main/home/screens/catalog_home_screen.dart';
 import '../../../my_cart/presentation/views/my_cart.dart';
 import '../../../profile/presentaion/views/profile_view.dart';
 import '../../../trending/trending_view.dart';
@@ -22,7 +22,10 @@ class HomeLayoutCubit extends Cubit<HomeLayoutState> {
   }
 
   List<Widget> screens = [
-    const HomePage(),
+    // Home versi API. `HomePage` milik UI kit sengaja tidak dipakai lagi —
+    // isinya tab t-shirt/blazer/sepatu dari 11 ProductModel yang di-hardcode
+    // di HomePageCubit, tanpa menyentuh backend.
+    const CatalogHomeScreen(),
     const TrendingView(),
     const FavoritesView(),
     const MyCart(),
