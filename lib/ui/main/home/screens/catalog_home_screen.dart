@@ -124,16 +124,34 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
         ],
       ),
       leadingWidth: 61,
+      // Tombol pembuka drawer sengaja TIDAK bergantung pada aset gambar.
+      //
+      // Versi sebelumnya memakai `Image.asset(AppImages.avatar)`, dan di repo
+      // ini avatarnya masih placeholder abu-abu #E0E0E0 di atas AppBar putih —
+      // praktis tak terlihat, sehingga user tidak menemukan menunya sama
+      // sekali. Menu navigasi tidak boleh hilang hanya karena satu aset
+      // belum ada, jadi bentuknya kini bingkai bulat + ikon vektor, sejajar
+      // dengan tombol notifikasi di sisi kanan.
       leading: Padding(
         padding: 16.ps,
         child: InkWell(
           onTap: () => _scaffoldKey.currentState?.openDrawer(),
-          child: Image.asset(
-            AppImages.avatar,
-            fit: BoxFit.scaleDown,
-            width: 45,
+          borderRadius: BorderRadius.circular(30),
+          child: Container(
             height: 45,
-            errorBuilder: (_, __, ___) => const Icon(Icons.menu, size: 28),
+            width: 45,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xffE8E7F1)),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.menu,
+                size: 22,
+                color:
+                    isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
+              ),
+            ),
           ),
         ),
       ),
@@ -240,7 +258,11 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
                 const Spacer(),
                 if (state.offers.isNotEmpty)
                   Text(
-                    '${state.offers.length} produk',
+                    // Jujur soal pembatasan: harga hanya ada di endpoint
+                    // detail, jadi hanya sebagian yang dimuat sekaligus.
+                    state.totalAvailable > state.offers.length
+                        ? '${state.offers.length} dari ${state.totalAvailable}'
+                        : '${state.offers.length} produk',
                     style: AppStyles.styleRegular12(context)
                         .copyWith(color: kLightThirdColor),
                   ),

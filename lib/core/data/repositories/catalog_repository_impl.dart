@@ -67,16 +67,32 @@ class CatalogRepositoryImpl implements CatalogRepository {
       );
       if (env.data.isEmpty) return DataEmpty<List<OfferModel>>(meta: env.meta);
 
-      final enriched = await _service.withPriceTiers(env.data);
+      // Dibatasi karena harga HANYA ada di endpoint detail: melengkapi
+      // seluruh 74 penawaran berarti 74 request untuk satu layar Home.
+      // Sampai backend menyertakan harga di respons list (lihat catatan di
+      // CatalogService.offers), menampilkan lebih banyak justru merugikan
+      // user — layarnya jadi lambat tanpa menambah informasi.
+      //
+      // `meta['total_available']` membawa jumlah sebenarnya supaya UI bisa
+      // jujur menampilkan "24 dari 74".
+      final page = env.data.take(listPageSize).toList();
+      final enriched = await _service.withPriceTiers(page);
+
       return DataSuccess<List<OfferModel>>(
         enriched,
-        meta: env.meta,
+        meta: {...env.meta, 'total_available': env.data.length},
         statusCode: env.statusCode,
       );
     } on ApiException catch (e) {
       return DataFailed(e.error);
     }
   }
+
+  /// Banyaknya penawaran yang dilengkapi harga sekaligus.
+  ///
+  /// Ini batas biaya jaringan, bukan pilihan tampilan: setiap penawaran butuh
+  /// satu `GET /offers/{id}` hanya untuk mendapat harganya.
+  static const int listPageSize = 24;
 
   @override
   Future<DataState<OfferModel>> offerDetail(int id) =>

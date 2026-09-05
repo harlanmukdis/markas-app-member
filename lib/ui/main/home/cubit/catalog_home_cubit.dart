@@ -162,7 +162,7 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
         emit(state.copyWith(isLoadingOffers: false, isEmptyResult: true));
       case DataLoading():
         break;
-      case DataSuccess(:final data):
+      case DataSuccess(:final data, :final meta):
         final skuIds = data
             .where((o) => !o.isFreeform && o.skuId != null)
             .map((o) => o.skuId!)
@@ -182,6 +182,7 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
           offers: data,
           skus: skus,
           sellers: await _sellerNames(),
+          totalAvailable: (meta['total_available'] as int?) ?? data.length,
           isEmptyResult: data.isEmpty,
         ));
     }

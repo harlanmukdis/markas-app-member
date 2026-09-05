@@ -44,6 +44,11 @@ sealed class CatalogHomeState with _$CatalogHomeState {
     /// tidak hilang hanya karena satu permintaan berikutnya gagal.
     DataError? error,
 
+    /// Jumlah penawaran yang tersedia di server, dari `meta.total_available`.
+    /// Bisa lebih besar dari panjang [offers] karena harga hanya bisa
+    /// dilengkapi sebagian per muat.
+    @Default(0) int totalAvailable,
+
     /// Permintaan selesai tapi hasilnya kosong — beda dari "belum dimuat".
     @Default(false) bool isEmptyResult,
   }) = _CatalogHomeState;

@@ -39,6 +39,11 @@ mixin _$CatalogHomeState {
   /// tidak hilang hanya karena satu permintaan berikutnya gagal.
   DataError? get error;
 
+  /// Jumlah penawaran yang tersedia di server, dari `meta.total_available`.
+  /// Bisa lebih besar dari panjang [offers] karena harga hanya bisa
+  /// dilengkapi sebagian per muat.
+  int get totalAvailable;
+
   /// Permintaan selesai tapi hasilnya kosong — beda dari "belum dimuat".
   bool get isEmptyResult;
 
@@ -69,6 +74,8 @@ mixin _$CatalogHomeState {
             (identical(other.isLoadingOffers, isLoadingOffers) ||
                 other.isLoadingOffers == isLoadingOffers) &&
             (identical(other.error, error) || other.error == error) &&
+            (identical(other.totalAvailable, totalAvailable) ||
+                other.totalAvailable == totalAvailable) &&
             (identical(other.isEmptyResult, isEmptyResult) ||
                 other.isEmptyResult == isEmptyResult));
   }
@@ -86,11 +93,12 @@ mixin _$CatalogHomeState {
       isLoadingCategories,
       isLoadingOffers,
       error,
+      totalAvailable,
       isEmptyResult);
 
   @override
   String toString() {
-    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, isEmptyResult: $isEmptyResult)';
+    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, totalAvailable: $totalAvailable, isEmptyResult: $isEmptyResult)';
   }
 }
 
@@ -111,6 +119,7 @@ abstract mixin class $CatalogHomeStateCopyWith<$Res> {
       bool isLoadingCategories,
       bool isLoadingOffers,
       DataError? error,
+      int totalAvailable,
       bool isEmptyResult});
 
   $CategoryModelCopyWith<$Res>? get activeCategory;
@@ -139,6 +148,7 @@ class _$CatalogHomeStateCopyWithImpl<$Res>
     Object? isLoadingCategories = null,
     Object? isLoadingOffers = null,
     Object? error = freezed,
+    Object? totalAvailable = null,
     Object? isEmptyResult = null,
   }) {
     return _then(_self.copyWith(
@@ -182,6 +192,10 @@ class _$CatalogHomeStateCopyWithImpl<$Res>
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
               as DataError?,
+      totalAvailable: null == totalAvailable
+          ? _self.totalAvailable
+          : totalAvailable // ignore: cast_nullable_to_non_nullable
+              as int,
       isEmptyResult: null == isEmptyResult
           ? _self.isEmptyResult
           : isEmptyResult // ignore: cast_nullable_to_non_nullable
@@ -306,6 +320,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             bool isLoadingCategories,
             bool isLoadingOffers,
             DataError? error,
+            int totalAvailable,
             bool isEmptyResult)?
         $default, {
     required TResult orElse(),
@@ -324,6 +339,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.isLoadingCategories,
             _that.isLoadingOffers,
             _that.error,
+            _that.totalAvailable,
             _that.isEmptyResult);
       case _:
         return orElse();
@@ -356,6 +372,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             bool isLoadingCategories,
             bool isLoadingOffers,
             DataError? error,
+            int totalAvailable,
             bool isEmptyResult)
         $default,
   ) {
@@ -373,6 +390,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.isLoadingCategories,
             _that.isLoadingOffers,
             _that.error,
+            _that.totalAvailable,
             _that.isEmptyResult);
     }
   }
@@ -402,6 +420,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             bool isLoadingCategories,
             bool isLoadingOffers,
             DataError? error,
+            int totalAvailable,
             bool isEmptyResult)?
         $default,
   ) {
@@ -419,6 +438,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.isLoadingCategories,
             _that.isLoadingOffers,
             _that.error,
+            _that.totalAvailable,
             _that.isEmptyResult);
       case _:
         return null;
@@ -440,6 +460,7 @@ class _CatalogHomeState extends CatalogHomeState {
       this.isLoadingCategories = false,
       this.isLoadingOffers = false,
       this.error,
+      this.totalAvailable = 0,
       this.isEmptyResult = false})
       : _categories = categories,
         _offers = offers,
@@ -522,6 +543,13 @@ class _CatalogHomeState extends CatalogHomeState {
   @override
   final DataError? error;
 
+  /// Jumlah penawaran yang tersedia di server, dari `meta.total_available`.
+  /// Bisa lebih besar dari panjang [offers] karena harga hanya bisa
+  /// dilengkapi sebagian per muat.
+  @override
+  @JsonKey()
+  final int totalAvailable;
+
   /// Permintaan selesai tapi hasilnya kosong — beda dari "belum dimuat".
   @override
   @JsonKey()
@@ -554,6 +582,8 @@ class _CatalogHomeState extends CatalogHomeState {
             (identical(other.isLoadingOffers, isLoadingOffers) ||
                 other.isLoadingOffers == isLoadingOffers) &&
             (identical(other.error, error) || other.error == error) &&
+            (identical(other.totalAvailable, totalAvailable) ||
+                other.totalAvailable == totalAvailable) &&
             (identical(other.isEmptyResult, isEmptyResult) ||
                 other.isEmptyResult == isEmptyResult));
   }
@@ -571,11 +601,12 @@ class _CatalogHomeState extends CatalogHomeState {
       isLoadingCategories,
       isLoadingOffers,
       error,
+      totalAvailable,
       isEmptyResult);
 
   @override
   String toString() {
-    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, isEmptyResult: $isEmptyResult)';
+    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, totalAvailable: $totalAvailable, isEmptyResult: $isEmptyResult)';
   }
 }
 
@@ -598,6 +629,7 @@ abstract mixin class _$CatalogHomeStateCopyWith<$Res>
       bool isLoadingCategories,
       bool isLoadingOffers,
       DataError? error,
+      int totalAvailable,
       bool isEmptyResult});
 
   @override
@@ -627,6 +659,7 @@ class __$CatalogHomeStateCopyWithImpl<$Res>
     Object? isLoadingCategories = null,
     Object? isLoadingOffers = null,
     Object? error = freezed,
+    Object? totalAvailable = null,
     Object? isEmptyResult = null,
   }) {
     return _then(_CatalogHomeState(
@@ -670,6 +703,10 @@ class __$CatalogHomeStateCopyWithImpl<$Res>
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
               as DataError?,
+      totalAvailable: null == totalAvailable
+          ? _self.totalAvailable
+          : totalAvailable // ignore: cast_nullable_to_non_nullable
+              as int,
       isEmptyResult: null == isEmptyResult
           ? _self.isEmptyResult
           : isEmptyResult // ignore: cast_nullable_to_non_nullable
