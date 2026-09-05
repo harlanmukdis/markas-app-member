@@ -132,15 +132,15 @@ class CatalogService {
   /// >
   /// > Info toko dan ongkir (`seller_name`, `ongkir_mulai_dari`) juga tidak
   /// > ada di sini — hanya `GET /search` yang membawanya.
+  ///
+  /// **Tanpa filter apa pun, endpoint ini mengembalikan seluruh penawaran
+  /// aktif** — sudah diverifikasi (10 penawaran). Itu yang dipakai Home
+  /// untuk menampilkan katalog "Semua" tanpa perlu kata kunci.
   Future<ApiEnvelope<List<OfferModel>>> offers({
     int? skuId,
     int? sellerId,
     int? categoryId,
   }) {
-    assert(
-      skuId != null || sellerId != null || categoryId != null,
-      'GET /offers butuh sku_id, seller_id, atau category_id',
-    );
     return _list(
       path: '/offers',
       query: {

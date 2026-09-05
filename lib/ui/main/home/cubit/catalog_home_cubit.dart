@@ -40,6 +40,31 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
   /// belum termuat — app bar menampilkan "Halo" saja.
   String? get userName => _tokens.userName;
 
+  /// Memuat katalog awal: kategori + seluruh penawaran aktif.
+  ///
+  /// Grid Home sengaja langsung terisi (seperti tab Trending), bukan menunggu
+  /// user memilih kategori. `GET /offers` tanpa filter mengembalikan semua
+  /// penawaran aktif, jadi tidak perlu kata kunci.
+  Future<void> load() async {
+    await Future.wait([loadCategories(), loadAllOffers()]);
+  }
+
+  /// Chip "Semua": seluruh penawaran aktif.
+  Future<void> loadAllOffers() async {
+    emit(state.copyWith(
+      mode: CatalogHomeMode.browse,
+      activeCategory: null,
+      keyword: '',
+      isLoadingOffers: true,
+      isEmptyResult: false,
+      error: null,
+    ));
+
+    final result = await _repository.offersWithPrices();
+    if (isClosed) return;
+    await _applyOfferResult(result);
+  }
+
   Future<void> loadCategories({bool force = false}) async {
     if (state.categories.isNotEmpty && !force) return;
 
@@ -108,16 +133,8 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
     await _applyOfferResult(result);
   }
 
-  void showBrowse() {
-    emit(state.copyWith(
-      mode: CatalogHomeMode.browse,
-      keyword: '',
-      activeCategory: null,
-      offers: const [],
-      isEmptyResult: false,
-      error: null,
-    ));
-  }
+  /// Kembali ke chip "Semua".
+  Future<void> showBrowse() => loadAllOffers();
 
   Future<void> refresh() async {
     _repository.clearCache();
@@ -129,7 +146,7 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
         final category = state.activeCategory;
         if (category != null) await openCategory(category);
       case CatalogHomeMode.browse:
-        break;
+        await loadAllOffers();
     }
   }
 

@@ -34,7 +34,7 @@ class CatalogHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => CatalogHomeCubit()..loadCategories(),
+      create: (_) => CatalogHomeCubit()..load(),
       child: const _CatalogHomeBody(),
     );
   }
@@ -228,27 +228,21 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
             child: Row(
               children: [
                 Text(
-                  state.mode == CatalogHomeMode.searchResults
-                      ? 'Hasil “${state.keyword}”'
-                      : 'Kategori',
+                  switch (state.mode) {
+                    CatalogHomeMode.searchResults =>
+                      'Hasil “${state.keyword}”',
+                    CatalogHomeMode.categoryOffers =>
+                      state.activeCategory?.name ?? 'Katalog',
+                    CatalogHomeMode.browse => 'Katalog',
+                  },
                   style: AppStyles.styleSemiBold18(context),
                 ),
                 const Spacer(),
-                if (state.activeCategory != null ||
-                    state.mode == CatalogHomeMode.searchResults)
-                  TextButton(
-                    onPressed: () {
-                      _searchController.clear();
-                      cubit.showBrowse();
-                    },
-                    child: Text(
-                      'Reset',
-                      style: AppStyles.styleRegular14(context).copyWith(
-                        color: isAppDarkMode()
-                            ? kDarkPrimaryColor
-                            : kLightPrimaryColor,
-                      ),
-                    ),
+                if (state.offers.isNotEmpty)
+                  Text(
+                    '${state.offers.length} produk',
+                    style: AppStyles.styleRegular12(context)
+                        .copyWith(color: kLightThirdColor),
                   ),
               ],
             ),
@@ -259,6 +253,10 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
             active: state.activeCategory,
             isLoading: state.isLoadingCategories,
             onSelect: cubit.openCategory,
+            onSelectAll: () {
+              _searchController.clear();
+              cubit.showBrowse();
+            },
           ),
           10.sbh,
         ],
@@ -276,14 +274,6 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (state.mode == CatalogHomeMode.browse) {
-      return const _Hint(
-        icon: Icons.category_outlined,
-        text: 'Pilih kategori di atas, atau cari langsung lewat kolom '
-            'pencarian.',
-      );
-    }
-
     if (state.isEmptyResult || state.offers.isEmpty) {
       return _Hint(
         icon: Icons.search_off,
@@ -295,13 +285,14 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      // Rasio, spacing, dan padding mengikuti grid di trending_view.
+      padding: 24.psh,
       itemCount: state.offers.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: (context.screenWidth / 250).round().clamp(2, 4),
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
-        childAspectRatio: .62,
+        childAspectRatio: .8,
       ),
       itemBuilder: (context, index) {
         final offer = state.offers[index];
@@ -323,68 +314,88 @@ class _CategoryChips extends StatelessWidget {
     required this.active,
     required this.isLoading,
     required this.onSelect,
+    required this.onSelectAll,
   });
 
   final List<CategoryModel> categories;
   final CategoryModel? active;
   final bool isLoading;
   final ValueChanged<CategoryModel> onSelect;
+  final VoidCallback onSelectAll;
 
   @override
   Widget build(BuildContext context) {
     if (isLoading && categories.isEmpty) {
       return const SizedBox(
-        height: 35,
+        height: 32,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
 
-    final primary = isAppDarkMode() ? kDarkPrimaryColor : kLightPrimaryColor;
-
+    // Bentuk dan perilaku baris ini mengikuti `_customContainer` di
+    // trending_view: tinggi 32, radius 40, terisi warna primer saat dipilih
+    // dan transparan-berbingkai saat tidak.
     return SizedBox(
-      height: 35,
-      child: ListView.builder(
-        padding: 24.ps,
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final c = categories[index];
-          final selected = active?.id == c.id;
-
-          // Bentuk chip mengikuti `CategoryItems` milik kit: pill 35px,
-          // radius 40, AnimatedContainer 300ms.
-          return Padding(
-            padding: 10.pe,
-            child: InkWell(
-              onTap: () => onSelect(c),
-              borderRadius: BorderRadius.circular(40),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                height: 35,
-                decoration: BoxDecoration(
-                  color: selected
-                      ? primary
-                      : (isAppDarkMode() ? kDarkColor : kWhiteColor),
+      height: 32,
+      child: Align(
+        alignment:
+            isLanguageRTL() ? Alignment.centerRight : Alignment.centerLeft,
+        child: ListView(
+          padding: 24.ps,
+          scrollDirection: Axis.horizontal,
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: 10.pe,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(40),
+                onTap: active == null ? null : onSelectAll,
+                child: _chip(context, title: 'Semua', isSelected: active == null),
+              ),
+            ),
+            for (final c in categories)
+              Padding(
+                padding: 10.pe,
+                child: InkWell(
                   borderRadius: BorderRadius.circular(40),
-                  border: Border.all(color: primary),
-                ),
-                child: Center(
-                  child: Text(
-                    c.name,
-                    style: AppStyles.styleMedium14(context).copyWith(
-                      color: selected
-                          ? kWhiteColor
-                          : (isAppDarkMode()
-                              ? const Color(0xffDAE8FF)
-                              : primary),
-                    ),
+                  onTap: () => onSelect(c),
+                  child: _chip(
+                    context,
+                    title: c.name,
+                    isSelected: active?.id == c.id,
                   ),
                 ),
               ),
-            ),
-          );
-        },
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(
+    BuildContext context, {
+    required String title,
+    required bool isSelected,
+  }) {
+    final primary = isAppDarkMode() ? kDarkPrimaryColor : kLightPrimaryColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      height: 32,
+      decoration: BoxDecoration(
+        color: isSelected ? primary : Colors.transparent,
+        border: isSelected ? null : Border.all(color: primary),
+        borderRadius: BorderRadius.circular(40),
+      ),
+      child: Center(
+        child: Text(
+          title,
+          style: AppStyles.styleMedium14(context).copyWith(
+            color: isSelected
+                ? kWhiteColor
+                : (isAppDarkMode() ? const Color(0xffDAE8FF) : primary),
+          ),
+        ),
       ),
     );
   }

@@ -22,6 +22,11 @@ import 'package:navy_wear/util/format_helper.dart';
 /// * Badge diskon hanya muncul kalau tier-nya benar-benar punya
 ///   `strikethrough_price`; kit-nya selalu menampilkan `"X% off"`.
 ///
+/// Minimum order sengaja **tidak** ditampilkan di kartu: dengan
+/// `childAspectRatio: 0.8` yang dipakai grid trending, ruang di bawah gambar
+/// hanya cukup untuk nama, toko, harga, dan ongkir. Minimum order muncul di
+/// halaman detail, tempat keputusan qty benar-benar diambil.
+///
 /// `CustomProductItem` yang lama dibiarkan utuh karena masih dipakai layar
 /// favorites/trending/new_fashion yang belum dimigrasikan.
 class CatalogProductItem extends StatelessWidget {
@@ -150,6 +155,8 @@ class CatalogProductItem extends StatelessWidget {
               style: AppStyles.styleRegular10(context)
                   .copyWith(color: kLightThirdColor),
             ),
+          // Harga dan harga-sebelum-diskon disusun sebaris, mengikuti
+          // `CustomProductItem` milik kit.
           Row(
             children: [
               Flexible(
@@ -164,20 +171,29 @@ class CatalogProductItem extends StatelessWidget {
               ),
               if (unitName != null)
                 Text(
-                  ' / $unitName',
+                  '/$unitName',
+                  maxLines: 1,
                   style: AppStyles.styleRegular10(context)
                       .copyWith(color: kLightThirdColor),
                 ),
+              if (cheapest?.strikethroughPrice != null) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    formatRupiah(cheapest!.strikethroughPrice),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppStyles.styleMedium10(context).copyWith(
+                      decoration: TextDecoration.lineThrough,
+                      color: isAppDarkMode()
+                          ? kDarkPrimaryColor
+                          : kLightPrimaryColor,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-          if (cheapest?.strikethroughPrice != null)
-            Text(
-              formatRupiah(cheapest!.strikethroughPrice),
-              style: AppStyles.styleMedium10(context).copyWith(
-                decoration: TextDecoration.lineThrough,
-                color: isAppDarkMode() ? kDarkPrimaryColor : kLightPrimaryColor,
-              ),
-            ),
           if (offer.ongkirMulaiDari != null)
             Text(
               // Penanda estimasi wajib ada — ini bukan ongkir final (SRC-04).
