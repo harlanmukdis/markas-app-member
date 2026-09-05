@@ -106,6 +106,7 @@ class AuthRepositoryImpl implements AuthRepository {
         userId: profile.data.id,
         role: profile.data.role,
         buyerSegment: profile.data.buyerSegment,
+        fullName: profile.data.fullName,
       );
 
       return DataSuccess(

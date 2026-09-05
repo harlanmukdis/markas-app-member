@@ -32,6 +32,10 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
   /// Penentu apakah tier harga `PROJECT` boleh dirender (aturan PRD-06).
   bool get isB2B => _tokens.isB2B;
 
+  /// Nama untuk sapaan di app bar. `null` kalau belum login atau profil
+  /// belum termuat — app bar menampilkan "Halo" saja.
+  String? get userName => _tokens.userName;
+
   Future<void> loadCategories({bool force = false}) async {
     if (state.categories.isNotEmpty && !force) return;
 

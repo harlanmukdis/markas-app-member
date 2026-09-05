@@ -78,6 +78,10 @@ class TokenStore {
   /// `BUY_R` atau `BUY_B`.
   String? get role => CachedHelper.getData(kUserRole) as String?;
 
+  /// Nama lengkap user, untuk sapaan di app bar dan halaman profil.
+  /// Hanya `GET /auth/me` yang mengirimkannya.
+  String? get userName => CachedHelper.getData(kUserName) as String?;
+
   /// `RETAIL` atau `B2B`, dari `users.buyer_segment`.
   String? get buyerSegment => CachedHelper.getData(kBuyerSegment) as String?;
 
@@ -136,9 +140,11 @@ class TokenStore {
     int? userId,
     String? role,
     String? buyerSegment,
+    String? fullName,
   }) async {
     if (userId != null) await CachedHelper.saveData(kUserId, userId);
     if (role != null) await CachedHelper.saveData(kUserRole, role);
+    if (fullName != null) await CachedHelper.saveData(kUserName, fullName);
     if (buyerSegment != null) {
       await CachedHelper.saveData(kBuyerSegment, buyerSegment);
     }
@@ -165,6 +171,7 @@ class TokenStore {
     await CachedHelper.removeData(kAccessTokenExpiry);
     await CachedHelper.removeData(kUserId);
     await CachedHelper.removeData(kUserRole);
+    await CachedHelper.removeData(kUserName);
     await CachedHelper.removeData(kBuyerSegment);
   }
 

@@ -113,11 +113,13 @@ class _FakeTokenStore extends TokenStore {
     int? userId,
     String? role,
     String? buyerSegment,
+    String? fullName,
   }) async {
     profiles.add({
       'userId': userId,
       'role': role,
       'buyerSegment': buyerSegment,
+      'fullName': fullName,
     });
   }
 

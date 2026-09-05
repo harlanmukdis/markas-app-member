@@ -24,6 +24,7 @@ const String kAccessToken = 'accessToken';
 const String kRefreshToken = 'refreshToken';
 const String kUserId = 'userId';
 const String kUserRole = 'userRole';
+const String kUserName = 'userName';
 const String kBuyerSegment = 'buyerSegment';
 const String kAccessTokenExpiry = 'accessTokenExpiry';
 const String kAppLanguage = 'appLanguage';
