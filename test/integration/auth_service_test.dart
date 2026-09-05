@@ -18,10 +18,13 @@ import 'package:navy_wear/config/network/api_exception.dart';
 import 'package:navy_wear/config/network/dio_client.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
 
-/// Akun uji yang sudah didaftarkan sekali. Kalau database dev di-reset,
-/// test `PHONE_TAKEN` akan gagal — daftarkan ulang lewat register manual.
-const _phone = '081299000777';
-const _password = 'secret123';
+/// Akun uji resmi dari tim backend.
+///
+/// Dipakai apa adanya, bukan nomor acak per run, supaya tabel `users` di
+/// database dev tidak terus bertambah setiap kali test dijalankan.
+const _retailPhone = '081100000001';
+const _b2bPhone = '081100000002';
+const _password = 'password123';
 
 void main() {
   late AuthService service;
@@ -31,7 +34,7 @@ void main() {
   });
 
   test('login mengembalikan refresh token dan role', () async {
-    final session = await service.login(phone: _phone, password: _password);
+    final session = await service.login(phone: _retailPhone, password: _password);
 
     expect(session.statusCode, 200);
     expect(
@@ -62,7 +65,7 @@ void main() {
         'mis. lewat \$_SERVER[HTTP_AUTHORIZATION]). Hapus skip ini setelah '
         'diperbaiki. Test ini LOLOS di --platform chrome.',
     () async {
-    final session = await service.login(phone: _phone, password: _password);
+    final session = await service.login(phone: _retailPhone, password: _password);
 
     final dio = DioClient.createBare(Env.apiBaseUrl);
     dio.options.headers['Authorization'] =
@@ -78,14 +81,14 @@ void main() {
     expect(profile.data.buyerSegment, 'RETAIL');
     expect(profile.data.isB2B, isFalse);
     expect(profile.data.isSuspended, isFalse);
-    expect(profile.data.phone, _phone);
+    expect(profile.data.phone, _retailPhone);
     },
   );
 
   test('password salah jadi INVALID_CREDENTIALS, bukan sesi kedaluwarsa',
       () async {
     try {
-      await service.login(phone: _phone, password: 'jelas-salah');
+      await service.login(phone: _retailPhone, password: 'jelas-salah');
       fail('seharusnya melempar');
     } on ApiException catch (e) {
       expect(e.error.code, 'INVALID_CREDENTIALS');
@@ -96,7 +99,7 @@ void main() {
   test('nomor sudah terdaftar jadi 409 PHONE_TAKEN', () async {
     try {
       await service.register(
-        phone: _phone,
+        phone: _retailPhone,
         password: _password,
         fullName: 'Tes Integrasi Claude',
         role: 'BUY_R',
@@ -124,6 +127,38 @@ void main() {
       expect(e.error.code, 'VALIDATION_ERROR');
     }
   });
+
+  test(
+    'akun B2B membuka gating tier PROJECT dan modul RFQ',
+    // Sama seperti test /auth/me di atas: hanya bisa dijalankan di web
+    // sampai bug case-sensitivity header di backend diperbaiki.
+    skip: kIsWeb
+        ? false
+        : 'DIBLOKIR BUG BACKEND (native saja): header Authorization '
+            'case-sensitive. Jalankan dengan --platform chrome.',
+    () async {
+      final session =
+          await service.login(phone: _b2bPhone, password: _password);
+      expect(session.data.role, 'BUY_B');
+
+      final dio = DioClient.createBare(Env.apiBaseUrl);
+      dio.options.headers['Authorization'] =
+          'Bearer ${session.data.accessToken}';
+      final profile = await AuthService(dio).me();
+
+      expect(profile.data.buyerSegment, 'B2B');
+
+      // Penentu tunggal apakah tier harga PROJECT boleh dirender dan menu
+      // RFQ boleh muncul (aturan PRD-06).
+      expect(profile.data.isB2B, isTrue);
+      expect(profile.data.npwp, isNotNull);
+
+      // NPWP sudah diisi tapi admin belum memverifikasi — UI perlu
+      // membedakan ini dari akun B2B yang sudah terverifikasi.
+      expect(profile.data.b2bVerifiedAt, isNull);
+      expect(profile.data.isPendingB2BVerification, isTrue);
+    },
+  );
 
   test('GET /auth/me tanpa token ditolak 401', () async {
     try {
