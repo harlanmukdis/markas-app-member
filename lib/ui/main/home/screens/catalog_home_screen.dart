@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
 import 'package:navy_wear/core/function/components.dart';
-import 'package:navy_wear/core/utils/app_images.dart';
 import 'package:navy_wear/core/utils/app_routes.dart';
 import 'package:navy_wear/core/utils/app_styles.dart';
 import 'package:navy_wear/core/utils/constant.dart';
@@ -168,14 +166,11 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
                 border: Border.all(color: const Color(0xffE8E7F1)),
               ),
               child: Center(
-                child: SvgPicture.asset(
-                  AppImages.notificationIcon,
-                  width: 24,
-                  height: 24,
-                  colorFilter: ColorFilter.mode(
-                    isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
-                    BlendMode.srcIn,
-                  ),
+                child: Icon(
+                  Icons.notifications_outlined,
+                  size: 22,
+                  color:
+                      isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
                 ),
               ),
             ),
@@ -194,15 +189,12 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
         hintText: l.search,
         textInputAction: TextInputAction.search,
         onSubmitted: cubit.search,
-        prefix: SvgPicture.asset(
-          AppImages.searchNormal,
-          width: 24,
-          height: 24,
-          fit: BoxFit.scaleDown,
-          colorFilter: ColorFilter.mode(
-            isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
-            BlendMode.srcIn,
-          ),
+        // Ikon bawaan Material, bukan aset: aset ikon kit belum ada di repo
+        // ini, dan ikon bantu pencarian tidak boleh hilang karenanya.
+        prefix: Icon(
+          Icons.search,
+          size: 22,
+          color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
         ),
         suffix: IconButton(
           icon: const Icon(Icons.arrow_forward, size: 20),

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:navy_wear/core/utils/extensions.dart';
 
 import '../../../core/function/components.dart';
-import '../../../core/utils/app_images.dart';
 import '../../../core/utils/app_styles.dart';
 import '../../../core/utils/constant.dart';
 import '../../../generated/l10n.dart';
@@ -30,7 +28,7 @@ class HomeLayout extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                     color: isAppDarkMode()
-                        ? kBlackColor.withOpacity(.07)
+                        ? kBlackColor.withValues(alpha: .07)
                         : const Color(0x11000000),
                     blurRadius: 30,
                     offset: const Offset(0, -2),
@@ -60,89 +58,19 @@ class HomeLayout extends StatelessWidget {
                 },
                 items: [
                   BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        AppImages.home,
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.fill,
-                        colorFilter: ColorFilter.mode(
-                            cubit.currentIndex == 0
-                                ? isAppDarkMode()
-                                    ? kDarkPrimaryColor
-                                    : kLightPrimaryColor
-                                : isAppDarkMode()
-                                    ? kDarkSecondColor
-                                    : kLightSecondColor,
-                            BlendMode.srcIn),
-                      ),
+                      icon: const Icon(Icons.home_outlined, size: 24),
                       label: l.home),
                   BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        AppImages.trending,
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.fill,
-                        colorFilter: ColorFilter.mode(
-                            cubit.currentIndex == 1
-                                ? isAppDarkMode()
-                                    ? kDarkPrimaryColor
-                                    : kLightPrimaryColor
-                                : isAppDarkMode()
-                                    ? kDarkSecondColor
-                                    : kLightSecondColor,
-                            BlendMode.srcIn),
-                      ),
+                      icon: const Icon(Icons.trending_up, size: 24),
                       label: l.trending),
                   BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        AppImages.heart,
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.fill,
-                        colorFilter: ColorFilter.mode(
-                            cubit.currentIndex == 2
-                                ? isAppDarkMode()
-                                    ? kDarkPrimaryColor
-                                    : kLightPrimaryColor
-                                : isAppDarkMode()
-                                    ? kDarkSecondColor
-                                    : kLightSecondColor,
-                            BlendMode.srcIn),
-                      ),
+                      icon: const Icon(Icons.favorite_border, size: 24),
                       label: l.favorites),
                   BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        AppImages.bag,
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.fill,
-                        colorFilter: ColorFilter.mode(
-                            cubit.currentIndex == 3
-                                ? isAppDarkMode()
-                                    ? kDarkPrimaryColor
-                                    : kLightPrimaryColor
-                                : isAppDarkMode()
-                                    ? kDarkSecondColor
-                                    : kLightSecondColor,
-                            BlendMode.srcIn),
-                      ),
+                      icon: const Icon(Icons.shopping_bag_outlined, size: 24),
                       label: l.cart),
                   BottomNavigationBarItem(
-                      icon: SvgPicture.asset(
-                        AppImages.profile,
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.fill,
-                        colorFilter: ColorFilter.mode(
-                            cubit.currentIndex == 4
-                                ? isAppDarkMode()
-                                    ? kDarkPrimaryColor
-                                    : kLightPrimaryColor
-                                : isAppDarkMode()
-                                    ? kDarkSecondColor
-                                    : kLightSecondColor,
-                            BlendMode.srcIn),
-                      ),
+                      icon: const Icon(Icons.person_outline, size: 24),
                       label: l.profile),
                 ],
               ),
