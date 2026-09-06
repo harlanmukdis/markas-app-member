@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:navy_wear/ui/main/auth/screens/login_screen.dart';
+import 'package:navy_wear/ui/main/product/screens/product_detail_screen.dart';
 import 'package:navy_wear/ui/main/auth/screens/register_screen.dart';
 import '../../features/auth/presentation/views/reset_password_view.dart';
 import '../../features/auth/presentation/views/welcome_view.dart';
@@ -36,6 +37,21 @@ class AppRoutes {
   static const String login = '/login';
   static const String resetPassword = '/resetPassword';
   static const String register = '/register';
+
+  /// Detail penawaran ber-API.
+  ///
+  /// Memakai **path parameter**, bukan `state.extra` seperti route lain di
+  /// file ini. Alasannya bukan selera: `extra` tidak ikut serta di URL, jadi
+  /// di web sekali user me-refresh halaman detail, `extra`-nya hilang dan
+  /// `state.extra! as int` melempar. Dengan `/offer/:id` halaman ini tahan
+  /// refresh dan bisa dibagikan sebagai tautan.
+  ///
+  /// Route `productDetails` milik kit dibiarkan apa adanya karena masih
+  /// dipakai layar favorites/trending yang belum dimigrasikan.
+  static const String offerDetail = '/offer';
+
+  /// Membangun path detail untuk sebuah penawaran.
+  static String offerDetailPath(int offerId) => '/offer/$offerId';
   static const String homeLayout = '/homeLayout';
   static const String productDetails = '/productDetails';
   static const String allReview = '/allReview';
@@ -102,6 +118,18 @@ final GoRouter router = GoRouter(
         return FadeThroughTransitionPageWrapper(
           transitionKey: state.pageKey,
           page: const ResetPasswordView(),
+        );
+      },
+    ),
+    GoRoute(
+      path: '${AppRoutes.offerDetail}/:id',
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        // Id yang tidak bisa dibaca diperlakukan sebagai 0 — layarnya lalu
+        // menampilkan "Produk tidak ditemukan", bukan melempar.
+        final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+        return FadeThroughTransitionPageWrapper(
+          transitionKey: state.pageKey,
+          page: ProductDetailScreen(offerId: id),
         );
       },
     ),

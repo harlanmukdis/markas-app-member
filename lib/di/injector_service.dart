@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:navy_wear/config/network/dio_client.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/cart_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
 import 'package:navy_wear/di/injector.dart';
@@ -47,4 +48,5 @@ void initializeService() {
   injector.registerLazySingleton<ReferenceService>(
     () => ReferenceService(api),
   );
+  injector.registerLazySingleton<CartService>(() => CartService(api));
 }
