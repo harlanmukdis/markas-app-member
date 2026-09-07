@@ -282,6 +282,93 @@ void main() {
     });
   });
 
+  group('fitur v2.2', () {
+    test('reviews-summary mengembalikan objek ber-key offer_id', () async {
+      // Bentuknya objek, BUKAN array — kalau di-parse sebagai list, seluruh
+      // rating di grid hilang tanpa error.
+      final env = await catalog.reviewsSummary([65, 67, 71]);
+
+      expect(env.data.keys, containsAll([65, 67, 71]));
+      expect(env.data[65]!.reviewCount, greaterThan(0));
+      expect(env.data[65]!.avgRating, greaterThan(0));
+      expect(env.data[65]!.hasReviews, isTrue);
+    });
+
+    test('penawaran tanpa ulasan dibedakan dari rating nol', () async {
+      final env = await catalog.reviewsSummary([71]);
+      final summary = env.data[71]!;
+
+      // Backend mengirim avg_rating "0.00" untuk yang belum diulas.
+      // Menampilkannya sebagai bintang 0 membuat produk baru terlihat buruk
+      // padahal belum dinilai siapa pun.
+      expect(summary.reviewCount, 0);
+      expect(summary.avgRating, 0);
+      expect(summary.hasReviews, isFalse);
+    });
+
+    test('id kosong tidak memicu request sama sekali', () async {
+      final env = await catalog.reviewsSummary(const []);
+      expect(env.data, isEmpty);
+    });
+
+    test('daftar ulasan membawa ringkasan dan nama pembeli', () async {
+      final env = await catalog.reviews(65);
+
+      expect(env.data.summary.reviewCount, greaterThan(0));
+      expect(env.data.items, isNotEmpty);
+
+      final first = env.data.items.first;
+      expect(first.rating, inInclusiveRange(1, 5));
+      expect(first.displayName, isNotEmpty);
+      // v2.2: kolom waktu bernama created_date.
+      expect(first.createdDate, isNotNull);
+    });
+
+    test('brands membawa penanda sertifikasi dan jumlah penawaran', () async {
+      final env = await catalog.brands();
+
+      expect(env.data, isNotEmpty);
+      // is_certified dikirim "1"/"0", offer_count sebagai string.
+      expect(env.data.any((b) => b.isCertified), isTrue);
+      expect(env.data.every((b) => b.offerCount >= 0), isTrue);
+    });
+
+    test('facets memberi rentang harga, sebaran rating, dan merek', () async {
+      final env = await catalog.facets(categoryId: 1);
+      final f = env.data;
+
+      expect(f.hasPriceRange, isTrue);
+      expect(f.priceMax, greaterThan(f.priceMin!));
+      expect(f.brands, isNotEmpty);
+
+      // rating_counts KUMULATIF (">= N"), bukan histogram: nilai di "4"
+      // sudah mencakup yang berating 5. Menggambarnya sebagai batang
+      // histogram akan menyesatkan.
+      expect(f.countAtLeast(4), greaterThanOrEqualTo(f.countAtLeast(5)));
+      expect(f.countAtLeast(1), greaterThanOrEqualTo(f.countAtLeast(4)));
+    });
+
+    test('filter dan sortir baru pada /offers diterima server', () async {
+      final byBrand = await catalog.offers(brandId: 4);
+      expect(byBrand.data, isA<List>());
+
+      final byPrice = await catalog.offers(priceMin: 60000, priceMax: 80000);
+      expect(byPrice.data, isA<List>());
+
+      for (final sort in OfferSort.values) {
+        final env = await catalog.offers(sort: sort);
+        expect(env.data, isNotEmpty, reason: 'sort=${sort.wireValue}');
+      }
+    });
+
+    test('flash-sale dan best-sellers terjangkau', () async {
+      expect((await catalog.flashSale(limit: 5)).data, isA<List>());
+
+      final best = await catalog.bestSellers(limit: 5);
+      expect(best.data, isA<List>());
+    });
+  });
+
   group('referensi', () {
     test('zones hierarkis dan di-cache', () async {
       final env = await reference.zones();

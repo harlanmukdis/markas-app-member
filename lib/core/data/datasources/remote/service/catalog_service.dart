@@ -1,11 +1,31 @@
 import 'package:dio/dio.dart';
 import 'package:navy_wear/config/network/api_envelope.dart';
 import 'package:navy_wear/config/network/api_exception.dart';
+import 'package:navy_wear/core/domain/model/catalog/brand_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
+import 'package:navy_wear/core/domain/model/review/review_model.dart';
+import 'package:navy_wear/util/json_converters.dart';
 
 /// Panggilan HTTP untuk katalog: kategori, SKU master, penawaran, pencarian.
+/// Urutan hasil `GET /offers` (parameter `sort`, backend v2.2).
+enum OfferSort {
+  /// Terbaru.
+  latest('latest'),
+
+  /// Total qty terjual sepanjang waktu — agregat nyata dari sub-order
+  /// `SELESAI`, bukan skor karangan.
+  popular('popular'),
+
+  /// Qty terjual 30 hari terakhir.
+  trending('trending');
+
+  const OfferSort(this.wireValue);
+
+  final String wireValue;
+}
+
 class CatalogService {
   CatalogService(this._dio);
 
@@ -140,6 +160,11 @@ class CatalogService {
     int? skuId,
     int? sellerId,
     int? categoryId,
+    int? brandId,
+    int? priceMin,
+    int? priceMax,
+    int? minRating,
+    OfferSort? sort,
   }) {
     return _list(
       path: '/offers',
@@ -147,10 +172,155 @@ class CatalogService {
         if (skuId != null) 'sku_id': skuId,
         if (sellerId != null) 'seller_id': sellerId,
         if (categoryId != null) 'category_id': categoryId,
+        if (brandId != null) 'brand_id': brandId,
+        if (priceMin != null) 'price_min': priceMin,
+        if (priceMax != null) 'price_max': priceMax,
+        if (minRating != null) 'min_rating': minRating,
+        if (sort != null) 'sort': sort.wireValue,
       },
       fromJson: OfferModel.fromJson,
       context: 'GET /offers',
     );
+  }
+
+  /// `GET /offers/flash-sale` — penawaran dengan harga coret **terverifikasi**.
+  ///
+  /// Tidak ada hitung mundur di sini dan tidak boleh dikarang: harga coret
+  /// hanya dianggap sah kalau pernah berlaku ≥14 hari, jadi ini bukan promo
+  /// kilat berbatas waktu.
+  Future<ApiEnvelope<List<OfferModel>>> flashSale({int limit = 10}) {
+    return _list(
+      path: '/offers/flash-sale',
+      query: {'limit': limit},
+      fromJson: OfferModel.fromJson,
+      context: 'GET /offers/flash-sale',
+    );
+  }
+
+  /// `GET /offers/best-sellers` — membawa `qty_sold` nyata dari sub-order
+  /// yang sudah `SELESAI`.
+  Future<ApiEnvelope<List<OfferModel>>> bestSellers({int limit = 10}) {
+    return _list(
+      path: '/offers/best-sellers',
+      query: {'limit': limit},
+      fromJson: OfferModel.fromJson,
+      context: 'GET /offers/best-sellers',
+    );
+  }
+
+  /// `GET /brands`.
+  Future<ApiEnvelope<List<BrandModel>>> brands() {
+    return _list(
+      path: '/brands',
+      fromJson: BrandModel.fromJson,
+      context: 'GET /brands',
+    );
+  }
+
+  /// `GET /offers/facets?category_id=` — bahan sidebar filter.
+  Future<ApiEnvelope<OfferFacetsModel>> facets({int? categoryId}) async {
+    final context = 'GET /offers/facets'
+        '${categoryId == null ? '' : '?category_id=$categoryId'}';
+    try {
+      final response = await _dio.get<dynamic>(
+        '/offers/facets',
+        queryParameters: {if (categoryId != null) 'category_id': categoryId},
+      );
+      return parseEnvelope(
+        response,
+        (raw) =>
+            OfferFacetsModel.fromJson(Map<String, dynamic>.from(raw as Map)),
+        context: context,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `GET /offers/reviews-summary?ids=` — rating untuk **banyak** penawaran
+  /// dalam satu panggilan.
+  ///
+  /// Ini yang dipakai grid/list produk. Memanggil `/offers/{id}/reviews` per
+  /// kartu berarti satu request per kartu, dan grid Home sudah membayar
+  /// mahal untuk melengkapi harga (lihat catatan pada [offers]).
+  ///
+  /// Respons berbentuk objek ber-key `offer_id`, bukan array.
+  Future<ApiEnvelope<Map<int, ReviewSummaryModel>>> reviewsSummary(
+    Iterable<int> offerIds,
+  ) async {
+    const context = 'GET /offers/reviews-summary';
+    final ids = offerIds.toSet().toList();
+    if (ids.isEmpty) {
+      return const ApiEnvelope(data: {}, statusCode: 200);
+    }
+
+    try {
+      final response = await _dio.get<dynamic>(
+        '/offers/reviews-summary',
+        queryParameters: {'ids': ids.join(',')},
+      );
+      return parseEnvelope(
+        response,
+        (raw) {
+          if (raw is! Map) return <int, ReviewSummaryModel>{};
+          return {
+            for (final entry in raw.entries)
+              if (asIntOrNull(entry.key) != null && entry.value is Map)
+                asIntOrNull(entry.key)!: ReviewSummaryModel.fromJson(
+                  Map<String, dynamic>.from(entry.value as Map),
+                ),
+          };
+        },
+        context: context,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `GET /offers/{id}/reviews` — ringkasan + daftar ulasan.
+  Future<ApiEnvelope<ReviewPageModel>> reviews(
+    int offerId, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final context = 'GET /offers/$offerId/reviews';
+    try {
+      final response = await _dio.get<dynamic>(
+        '/offers/$offerId/reviews',
+        queryParameters: {'limit': limit, 'offset': offset},
+      );
+      return parseEnvelope(
+        response,
+        (raw) => ReviewPageModel.fromJson(Map<String, dynamic>.from(raw as Map)),
+        context: context,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `POST /offers/{id}/reviews`.
+  Future<ApiEnvelope<dynamic>> postReview(
+    int offerId, {
+    required int rating,
+    String? comment,
+  }) async {
+    assert(rating >= 1 && rating <= 5, 'rating harus 1..5');
+    final context = 'POST /offers/$offerId/reviews';
+    try {
+      final response = await _dio.post<dynamic>(
+        '/offers/$offerId/reviews',
+        data: {
+          'rating': rating,
+          if (comment != null && comment.trim().isNotEmpty)
+            'comment': comment.trim(),
+        },
+      );
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
   }
 
   /// Melengkapi penawaran dengan `price_tiers` dari `GET /offers/{id}`.

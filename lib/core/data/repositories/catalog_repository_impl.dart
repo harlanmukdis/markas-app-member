@@ -2,9 +2,11 @@ import 'package:navy_wear/config/network/api_envelope.dart';
 import 'package:navy_wear/config/network/api_exception.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
 import 'package:navy_wear/core/data_state.dart';
+import 'package:navy_wear/core/domain/model/catalog/brand_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
+import 'package:navy_wear/core/domain/model/review/review_model.dart';
 import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
 
 class CatalogRepositoryImpl implements CatalogRepository {
@@ -46,24 +48,88 @@ class CatalogRepositoryImpl implements CatalogRepository {
     int? skuId,
     int? sellerId,
     int? categoryId,
+    int? brandId,
+    int? priceMin,
+    int? priceMax,
+    int? minRating,
+    OfferSort? sort,
   }) =>
       _guardList(() => _service.offers(
             skuId: skuId,
             sellerId: sellerId,
             categoryId: categoryId,
+            brandId: brandId,
+            priceMin: priceMin,
+            priceMax: priceMax,
+            minRating: minRating,
+            sort: sort,
           ));
+
+  @override
+  Future<DataState<List<OfferModel>>> flashSale({int limit = 10}) =>
+      _guardList(() => _service.flashSale(limit: limit));
+
+  @override
+  Future<DataState<List<OfferModel>>> bestSellers({int limit = 10}) =>
+      _guardList(() => _service.bestSellers(limit: limit));
+
+  @override
+  Future<DataState<List<BrandModel>>> brands() =>
+      _guardList(() => _service.brands());
+
+  @override
+  Future<DataState<OfferFacetsModel>> facets({int? categoryId}) =>
+      _guard(() => _service.facets(categoryId: categoryId));
+
+  @override
+  Future<DataState<Map<int, ReviewSummaryModel>>> reviewsSummary(
+    Iterable<int> offerIds,
+  ) =>
+      _guard(() => _service.reviewsSummary(offerIds));
+
+  @override
+  Future<DataState<ReviewPageModel>> reviews(
+    int offerId, {
+    int limit = 20,
+    int offset = 0,
+  }) =>
+      _guard(() => _service.reviews(offerId, limit: limit, offset: offset));
+
+  @override
+  Future<DataState<void>> postReview(
+    int offerId, {
+    required int rating,
+    String? comment,
+  }) async {
+    try {
+      await _service.postReview(offerId, rating: rating, comment: comment);
+      return const DataSuccess(null);
+    } on ApiException catch (e) {
+      return DataFailed(e.error);
+    }
+  }
 
   @override
   Future<DataState<List<OfferModel>>> offersWithPrices({
     int? skuId,
     int? sellerId,
     int? categoryId,
+    int? brandId,
+    int? priceMin,
+    int? priceMax,
+    int? minRating,
+    OfferSort? sort,
   }) async {
     try {
       final env = await _service.offers(
         skuId: skuId,
         sellerId: sellerId,
         categoryId: categoryId,
+        brandId: brandId,
+        priceMin: priceMin,
+        priceMax: priceMax,
+        minRating: minRating,
+        sort: sort,
       );
       if (env.data.isEmpty) return DataEmpty<List<OfferModel>>(meta: env.meta);
 

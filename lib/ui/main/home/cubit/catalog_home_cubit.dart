@@ -5,6 +5,7 @@ import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
+import 'package:navy_wear/core/domain/model/review/review_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
 import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
 import 'package:navy_wear/core/domain/repositories/reference_repository.dart';
@@ -182,10 +183,31 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
           offers: data,
           skus: skus,
           sellers: await _sellerNames(),
+          reviews: {...state.reviews, ...await _reviewSummaries(data)},
           totalAvailable: (meta['total_available'] as int?) ?? data.length,
           isEmptyResult: data.isEmpty,
         ));
     }
+  }
+
+  /// Ringkasan rating untuk penawaran yang akan dirender.
+  ///
+  /// Satu panggilan untuk semua id sekaligus. Kegagalan di sini tidak boleh
+  /// menggagalkan daftar produk — kartunya cukup tampil tanpa bintang.
+  Future<Map<int, ReviewSummaryModel>> _reviewSummaries(
+    List<OfferModel> offers,
+  ) async {
+    final missing = offers
+        .map((o) => o.id)
+        .where((id) => !state.reviews.containsKey(id))
+        .toSet();
+    if (missing.isEmpty) return const {};
+
+    final result = await _repository.reviewsSummary(missing);
+    return switch (result) {
+      DataSuccess(:final data) => data,
+      _ => const {},
+    };
   }
 
   /// Nama toko per id.

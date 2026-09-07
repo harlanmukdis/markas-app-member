@@ -315,6 +315,7 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
           title: state.offerTitle(offer),
           sellerName: state.sellerNameFor(offer),
           unitName: state.offerUnit(offer),
+          review: state.reviewFor(offer),
           isB2B: cubit.isB2B,
           onTap: () =>
               router.push(AppRoutes.offerDetailPath(offer.id)),

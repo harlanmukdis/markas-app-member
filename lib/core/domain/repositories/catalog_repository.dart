@@ -1,7 +1,11 @@
 import 'package:navy_wear/core/data_state.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart'
+    show OfferSort;
+import 'package:navy_wear/core/domain/model/catalog/brand_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
+import 'package:navy_wear/core/domain/model/review/review_model.dart';
 
 /// Katalog: kategori, SKU master, penawaran, pencarian.
 abstract interface class CatalogRepository {
@@ -25,6 +29,11 @@ abstract interface class CatalogRepository {
     int? skuId,
     int? sellerId,
     int? categoryId,
+    int? brandId,
+    int? priceMin,
+    int? priceMax,
+    int? minRating,
+    OfferSort? sort,
   });
 
   /// Sama seperti [offers], tapi sudah dilengkapi `price_tiers` sehingga
@@ -33,6 +42,42 @@ abstract interface class CatalogRepository {
     int? skuId,
     int? sellerId,
     int? categoryId,
+    int? brandId,
+    int? priceMin,
+    int? priceMax,
+    int? minRating,
+    OfferSort? sort,
+  });
+
+  /// Penawaran berharga coret terverifikasi.
+  Future<DataState<List<OfferModel>>> flashSale({int limit});
+
+  /// Terlaris, membawa `qty_sold` nyata.
+  Future<DataState<List<OfferModel>>> bestSellers({int limit});
+
+  Future<DataState<List<BrandModel>>> brands();
+
+  /// Bahan sidebar filter untuk satu kategori.
+  Future<DataState<OfferFacetsModel>> facets({int? categoryId});
+
+  /// Rating untuk **banyak** penawaran sekaligus — dipakai grid/list produk.
+  ///
+  /// Satu panggilan untuk semua kartu; jangan panggil [reviews] per kartu.
+  Future<DataState<Map<int, ReviewSummaryModel>>> reviewsSummary(
+    Iterable<int> offerIds,
+  );
+
+  Future<DataState<ReviewPageModel>> reviews(
+    int offerId, {
+    int limit,
+    int offset,
+  });
+
+  /// [rating] harus 1..5.
+  Future<DataState<void>> postReview(
+    int offerId, {
+    required int rating,
+    String? comment,
   });
   Future<DataState<OfferModel>> offerDetail(int id);
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
+import 'package:navy_wear/core/domain/model/review/review_model.dart';
 import 'package:navy_wear/core/function/components.dart';
 import 'package:navy_wear/core/function/get_responsive_font_size.dart';
 import 'package:navy_wear/core/utils/app_images.dart';
@@ -37,6 +38,7 @@ class CatalogProductItem extends StatelessWidget {
     required this.isB2B,
     this.sellerName,
     this.unitName,
+    this.review,
     this.onTap,
   });
 
@@ -49,6 +51,14 @@ class CatalogProductItem extends StatelessWidget {
   final String? sellerName;
 
   final String? unitName;
+
+  /// Ringkasan rating. `null` berarti belum termuat; kalau
+  /// `hasReviews == false` bintangnya **tidak** ditampilkan — backend
+  /// mengirim `avg_rating: "0.00"` untuk produk tanpa ulasan, dan menampilkan
+  /// itu sebagai bintang 0 membuat produk baru terlihat buruk padahal belum
+  /// dinilai siapa pun.
+  final ReviewSummaryModel? review;
+
   final VoidCallback? onTap;
 
   @override
@@ -147,13 +157,39 @@ class CatalogProductItem extends StatelessWidget {
               color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
             ),
           ),
-          if (sellerName != null)
-            Text(
-              sellerName!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppStyles.styleRegular10(context)
-                  .copyWith(color: kLightThirdColor),
+          if (sellerName != null || review?.hasReviews == true)
+            Row(
+              children: [
+                if (review?.hasReviews == true) ...[
+                  const Icon(Icons.star_rounded,
+                      size: 13, color: Color(0xffFBBF24)),
+                  Text(
+                    ' ${review!.avgRating.toStringAsFixed(1)}',
+                    style: AppStyles.styleMedium10(context),
+                  ),
+                  Text(
+                    ' (${review!.reviewCount})',
+                    style: AppStyles.styleRegular10(context)
+                        .copyWith(color: kLightThirdColor),
+                  ),
+                  if (sellerName != null)
+                    Text(
+                      ' · ',
+                      style: AppStyles.styleRegular10(context)
+                          .copyWith(color: kLightThirdColor),
+                    ),
+                ],
+                if (sellerName != null)
+                  Expanded(
+                    child: Text(
+                      sellerName!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppStyles.styleRegular10(context)
+                          .copyWith(color: kLightThirdColor),
+                    ),
+                  ),
+              ],
             ),
           // Harga dan harga-sebelum-diskon disusun sebaris, mengikuti
           // `CustomProductItem` milik kit.

@@ -30,6 +30,15 @@ sealed class CatalogHomeState with _$CatalogHomeState {
     /// sendiri tidak membawa nama SKU, hanya `sku_id`.
     @Default(<int, SkuModel>{}) Map<int, SkuModel> skus,
 
+    /// Ringkasan rating per `offer_id`.
+    ///
+    /// Diambil sekali lewat `GET /offers/reviews-summary?ids=` untuk seluruh
+    /// kartu yang tampil — bukan satu panggilan per kartu. Grid ini sudah
+    /// membayar mahal untuk melengkapi harga; menambah N request lagi hanya
+    /// untuk bintang akan membuatnya tidak bisa dipakai.
+    @Default(<int, ReviewSummaryModel>{})
+    Map<int, ReviewSummaryModel> reviews,
+
     /// Nama toko per id, untuk penawaran yang tidak membawa `seller_name`
     /// (semua hasil `GET /offers`; hanya `GET /search` yang memuatnya).
     @Default(<int, String>{}) Map<int, String> sellers,
@@ -71,6 +80,9 @@ sealed class CatalogHomeState with _$CatalogHomeState {
   /// kalau tidak dari direktori toko.
   String? sellerNameFor(OfferModel offer) =>
       offer.sellerName ?? sellers[offer.sellerId];
+
+  /// Ringkasan rating sebuah penawaran, `null` kalau belum termuat.
+  ReviewSummaryModel? reviewFor(OfferModel offer) => reviews[offer.id];
 
   /// Satuan jual bawaan SKU, untuk label "/ sak", "/ dus".
   String? offerUnit(OfferModel offer) {
