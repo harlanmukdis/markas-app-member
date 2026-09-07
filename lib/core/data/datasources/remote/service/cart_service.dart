@@ -2,13 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:navy_wear/config/network/api_envelope.dart';
 import 'package:navy_wear/config/network/api_exception.dart';
 import 'package:navy_wear/core/domain/model/cart/cart_add_result.dart';
+import 'package:navy_wear/core/domain/model/cart/cart_model.dart';
 
 /// Keranjang. **Semua endpoint di sini khusus `BUY_R`/`BUY_B`** — role lain
 /// dibalas `403`.
 ///
-/// Saat ini hanya `add()` yang ada, karena itu yang dibutuhkan tombol di
-/// halaman detail produk. Sisa keranjang (view/remove/clear beserta model
-/// `grouped_by_seller`-nya) menyusul bersama layar keranjang.
+/// Perhatikan bentuk `grouped_by_seller` pada [view]: **objek** ber-key
+/// `seller_id` saat terisi, tapi **array kosong** saat keranjang kosong.
+/// Ditangani `GroupedBySellerConverter`.
 class CartService {
   CartService(this._dio);
 
@@ -41,6 +42,44 @@ class CartService {
         (raw) => CartAddResult.fromJson(Map<String, dynamic>.from(raw as Map)),
         context: context,
       );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `GET /cart/view` — perhatikan path-nya: **`/cart/view`**, bukan `/cart`
+  /// (routing CodeIgniter; `/cart` membalas 404 "Endpoint not found").
+  Future<ApiEnvelope<CartModel>> view() async {
+    const context = 'GET /cart/view';
+    try {
+      final response = await _dio.get<dynamic>('/cart/view');
+      return parseEnvelope(
+        response,
+        (raw) => CartModel.fromJson(Map<String, dynamic>.from(raw as Map)),
+        context: context,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `POST /cart/remove` — menghapus satu baris keranjang.
+  Future<ApiEnvelope<dynamic>> remove(int itemId) async {
+    const context = 'POST /cart/remove';
+    try {
+      final response =
+          await _dio.post<dynamic>('/cart/remove', data: {'item_id': itemId});
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  Future<ApiEnvelope<dynamic>> clear() async {
+    const context = 'POST /cart/clear';
+    try {
+      final response = await _dio.post<dynamic>('/cart/clear');
+      return parseEnvelope(response, (raw) => raw, context: context);
     } on DioException catch (e) {
       throw ApiException.fromDio(e, context: context);
     }

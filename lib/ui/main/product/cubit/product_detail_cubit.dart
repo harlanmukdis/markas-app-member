@@ -5,7 +5,7 @@ import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
-import 'package:navy_wear/core/domain/repositories/cart_repository.dart';
+import 'package:navy_wear/core/domain/repositories/transaction_repositories.dart';
 import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
 import 'package:navy_wear/core/domain/repositories/reference_repository.dart';
 import 'package:navy_wear/core/services/token_store.dart';

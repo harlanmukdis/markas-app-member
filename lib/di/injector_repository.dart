@@ -1,13 +1,18 @@
 import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/address_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/cart_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/order_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/payment_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/voucher_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/wishlist_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
 import 'package:navy_wear/core/data/repositories/auth_repository_impl.dart';
-import 'package:navy_wear/core/data/repositories/cart_repository_impl.dart';
+import 'package:navy_wear/core/data/repositories/transaction_repositories_impl.dart';
 import 'package:navy_wear/core/data/repositories/catalog_repository_impl.dart';
 import 'package:navy_wear/core/data/repositories/reference_repository_impl.dart';
 import 'package:navy_wear/core/domain/repositories/auth_repository.dart';
-import 'package:navy_wear/core/domain/repositories/cart_repository.dart';
+import 'package:navy_wear/core/domain/repositories/transaction_repositories.dart';
 import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
 import 'package:navy_wear/core/domain/repositories/reference_repository.dart';
 import 'package:navy_wear/core/services/token_store.dart';
@@ -61,5 +66,25 @@ void initializeRepository() {
 
   injector.registerLazySingleton<CartRepository>(
     () => CartRepositoryImpl(injector<CartService>()),
+  );
+
+  injector.registerLazySingleton<AddressRepository>(
+    () => AddressRepositoryImpl(injector<AddressService>()),
+  );
+
+  injector.registerLazySingleton<OrderRepository>(
+    () => OrderRepositoryImpl(injector<OrderService>()),
+  );
+
+  injector.registerLazySingleton<PaymentRepository>(
+    () => PaymentRepositoryImpl(injector<PaymentService>()),
+  );
+
+  injector.registerLazySingleton<WishlistRepository>(
+    () => WishlistRepositoryImpl(injector<WishlistService>()),
+  );
+
+  injector.registerLazySingleton<VoucherRepository>(
+    () => VoucherRepositoryImpl(injector<VoucherService>()),
   );
 }
