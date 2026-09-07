@@ -43,6 +43,15 @@ mixin _$AuthSessionModel {
   @JsonKey(name: 'seller_id')
   int? get sellerId;
 
+  /// `MEMBER` / `MERCHANT` / `ADMIN`. Ditambahkan backend v2.2.
+  ///
+  /// Berguna untuk memutuskan aplikasi/rute awal, tapi **bukan** penentu
+  /// menu B2B — itu tetap [role] (`BUY_R` vs `BUY_B`), karena keduanya
+  /// sama-sama `MEMBER`.
+  @StringOrNullJson()
+  @JsonKey(name: 'actor_type')
+  String? get actorType;
+
   /// Create a copy of AuthSessionModel
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -70,17 +79,19 @@ mixin _$AuthSessionModel {
             (identical(other.tokenType, tokenType) ||
                 other.tokenType == tokenType) &&
             (identical(other.sellerId, sellerId) ||
-                other.sellerId == sellerId));
+                other.sellerId == sellerId) &&
+            (identical(other.actorType, actorType) ||
+                other.actorType == actorType));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, userId, accessToken,
-      refreshToken, role, expiresIn, tokenType, sellerId);
+      refreshToken, role, expiresIn, tokenType, sellerId, actorType);
 
   @override
   String toString() {
-    return 'AuthSessionModel(userId: $userId, accessToken: $accessToken, refreshToken: $refreshToken, role: $role, expiresIn: $expiresIn, tokenType: $tokenType, sellerId: $sellerId)';
+    return 'AuthSessionModel(userId: $userId, accessToken: $accessToken, refreshToken: $refreshToken, role: $role, expiresIn: $expiresIn, tokenType: $tokenType, sellerId: $sellerId, actorType: $actorType)';
   }
 }
 
@@ -97,7 +108,8 @@ abstract mixin class $AuthSessionModelCopyWith<$Res> {
       @StringOrNullJson() String? role,
       @IntOrNullJson() @JsonKey(name: 'expires_in') int? expiresIn,
       @StringOrNullJson() @JsonKey(name: 'token_type') String? tokenType,
-      @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId});
+      @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+      @StringOrNullJson() @JsonKey(name: 'actor_type') String? actorType});
 }
 
 /// @nodoc
@@ -120,6 +132,7 @@ class _$AuthSessionModelCopyWithImpl<$Res>
     Object? expiresIn = freezed,
     Object? tokenType = freezed,
     Object? sellerId = freezed,
+    Object? actorType = freezed,
   }) {
     return _then(_self.copyWith(
       userId: null == userId
@@ -150,6 +163,10 @@ class _$AuthSessionModelCopyWithImpl<$Res>
           ? _self.sellerId
           : sellerId // ignore: cast_nullable_to_non_nullable
               as int?,
+      actorType: freezed == actorType
+          ? _self.actorType
+          : actorType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -256,15 +273,23 @@ extension AuthSessionModelPatterns on AuthSessionModel {
             @StringOrNullJson() String? role,
             @IntOrNullJson() @JsonKey(name: 'expires_in') int? expiresIn,
             @StringOrNullJson() @JsonKey(name: 'token_type') String? tokenType,
-            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId)?
+            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+            @StringOrNullJson() @JsonKey(name: 'actor_type') String? actorType)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _AuthSessionModel() when $default != null:
-        return $default(_that.userId, _that.accessToken, _that.refreshToken,
-            _that.role, _that.expiresIn, _that.tokenType, _that.sellerId);
+        return $default(
+            _that.userId,
+            _that.accessToken,
+            _that.refreshToken,
+            _that.role,
+            _that.expiresIn,
+            _that.tokenType,
+            _that.sellerId,
+            _that.actorType);
       case _:
         return orElse();
     }
@@ -294,14 +319,22 @@ extension AuthSessionModelPatterns on AuthSessionModel {
             @StringOrNullJson() String? role,
             @IntOrNullJson() @JsonKey(name: 'expires_in') int? expiresIn,
             @StringOrNullJson() @JsonKey(name: 'token_type') String? tokenType,
-            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId)
+            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+            @StringOrNullJson() @JsonKey(name: 'actor_type') String? actorType)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AuthSessionModel():
-        return $default(_that.userId, _that.accessToken, _that.refreshToken,
-            _that.role, _that.expiresIn, _that.tokenType, _that.sellerId);
+        return $default(
+            _that.userId,
+            _that.accessToken,
+            _that.refreshToken,
+            _that.role,
+            _that.expiresIn,
+            _that.tokenType,
+            _that.sellerId,
+            _that.actorType);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -330,14 +363,22 @@ extension AuthSessionModelPatterns on AuthSessionModel {
             @StringOrNullJson() String? role,
             @IntOrNullJson() @JsonKey(name: 'expires_in') int? expiresIn,
             @StringOrNullJson() @JsonKey(name: 'token_type') String? tokenType,
-            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId)?
+            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+            @StringOrNullJson() @JsonKey(name: 'actor_type') String? actorType)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AuthSessionModel() when $default != null:
-        return $default(_that.userId, _that.accessToken, _that.refreshToken,
-            _that.role, _that.expiresIn, _that.tokenType, _that.sellerId);
+        return $default(
+            _that.userId,
+            _that.accessToken,
+            _that.refreshToken,
+            _that.role,
+            _that.expiresIn,
+            _that.tokenType,
+            _that.sellerId,
+            _that.actorType);
       case _:
         return null;
     }
@@ -354,7 +395,8 @@ class _AuthSessionModel implements AuthSessionModel {
       @StringOrNullJson() this.role,
       @IntOrNullJson() @JsonKey(name: 'expires_in') this.expiresIn,
       @StringOrNullJson() @JsonKey(name: 'token_type') this.tokenType,
-      @IntOrNullJson() @JsonKey(name: 'seller_id') this.sellerId});
+      @IntOrNullJson() @JsonKey(name: 'seller_id') this.sellerId,
+      @StringOrNullJson() @JsonKey(name: 'actor_type') this.actorType});
   factory _AuthSessionModel.fromJson(Map<String, dynamic> json) =>
       _$AuthSessionModelFromJson(json);
 
@@ -394,6 +436,16 @@ class _AuthSessionModel implements AuthSessionModel {
   @JsonKey(name: 'seller_id')
   final int? sellerId;
 
+  /// `MEMBER` / `MERCHANT` / `ADMIN`. Ditambahkan backend v2.2.
+  ///
+  /// Berguna untuk memutuskan aplikasi/rute awal, tapi **bukan** penentu
+  /// menu B2B — itu tetap [role] (`BUY_R` vs `BUY_B`), karena keduanya
+  /// sama-sama `MEMBER`.
+  @override
+  @StringOrNullJson()
+  @JsonKey(name: 'actor_type')
+  final String? actorType;
+
   /// Create a copy of AuthSessionModel
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -425,17 +477,19 @@ class _AuthSessionModel implements AuthSessionModel {
             (identical(other.tokenType, tokenType) ||
                 other.tokenType == tokenType) &&
             (identical(other.sellerId, sellerId) ||
-                other.sellerId == sellerId));
+                other.sellerId == sellerId) &&
+            (identical(other.actorType, actorType) ||
+                other.actorType == actorType));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, userId, accessToken,
-      refreshToken, role, expiresIn, tokenType, sellerId);
+      refreshToken, role, expiresIn, tokenType, sellerId, actorType);
 
   @override
   String toString() {
-    return 'AuthSessionModel(userId: $userId, accessToken: $accessToken, refreshToken: $refreshToken, role: $role, expiresIn: $expiresIn, tokenType: $tokenType, sellerId: $sellerId)';
+    return 'AuthSessionModel(userId: $userId, accessToken: $accessToken, refreshToken: $refreshToken, role: $role, expiresIn: $expiresIn, tokenType: $tokenType, sellerId: $sellerId, actorType: $actorType)';
   }
 }
 
@@ -454,7 +508,8 @@ abstract mixin class _$AuthSessionModelCopyWith<$Res>
       @StringOrNullJson() String? role,
       @IntOrNullJson() @JsonKey(name: 'expires_in') int? expiresIn,
       @StringOrNullJson() @JsonKey(name: 'token_type') String? tokenType,
-      @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId});
+      @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+      @StringOrNullJson() @JsonKey(name: 'actor_type') String? actorType});
 }
 
 /// @nodoc
@@ -477,6 +532,7 @@ class __$AuthSessionModelCopyWithImpl<$Res>
     Object? expiresIn = freezed,
     Object? tokenType = freezed,
     Object? sellerId = freezed,
+    Object? actorType = freezed,
   }) {
     return _then(_AuthSessionModel(
       userId: null == userId
@@ -507,6 +563,10 @@ class __$AuthSessionModelCopyWithImpl<$Res>
           ? _self.sellerId
           : sellerId // ignore: cast_nullable_to_non_nullable
               as int?,
+      actorType: freezed == actorType
+          ? _self.actorType
+          : actorType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

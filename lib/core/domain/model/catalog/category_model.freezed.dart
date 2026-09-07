@@ -35,8 +35,8 @@ mixin _$CategoryModel {
   @JsonKey(name: 'is_risky')
   bool get isRisky;
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt;
+  @JsonKey(name: 'created_date')
+  DateTime? get createdDate;
 
   /// Atribut untuk filter dinamis.
   ///
@@ -71,8 +71,8 @@ mixin _$CategoryModel {
             (identical(other.level, level) || other.level == level) &&
             (identical(other.jalur, jalur) || other.jalur == jalur) &&
             (identical(other.isRisky, isRisky) || other.isRisky == isRisky) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate) &&
             const DeepCollectionEquality()
                 .equals(other.attributes, attributes) &&
             const DeepCollectionEquality().equals(other.children, children));
@@ -89,13 +89,13 @@ mixin _$CategoryModel {
       level,
       jalur,
       isRisky,
-      createdAt,
+      createdDate,
       const DeepCollectionEquality().hash(attributes),
       const DeepCollectionEquality().hash(children));
 
   @override
   String toString() {
-    return 'CategoryModel(id: $id, parentId: $parentId, name: $name, slug: $slug, level: $level, jalur: $jalur, isRisky: $isRisky, createdAt: $createdAt, attributes: $attributes, children: $children)';
+    return 'CategoryModel(id: $id, parentId: $parentId, name: $name, slug: $slug, level: $level, jalur: $jalur, isRisky: $isRisky, createdDate: $createdDate, attributes: $attributes, children: $children)';
   }
 }
 
@@ -113,7 +113,9 @@ abstract mixin class $CategoryModelCopyWith<$Res> {
       @IntOrNullJson() int? level,
       @StringJson() String jalur,
       @BoolJson() @JsonKey(name: 'is_risky') bool isRisky,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate,
       List<Map<String, dynamic>> attributes,
       List<CategoryModel> children});
 }
@@ -138,7 +140,7 @@ class _$CategoryModelCopyWithImpl<$Res>
     Object? level = freezed,
     Object? jalur = null,
     Object? isRisky = null,
-    Object? createdAt = freezed,
+    Object? createdDate = freezed,
     Object? attributes = null,
     Object? children = null,
   }) {
@@ -171,9 +173,9 @@ class _$CategoryModelCopyWithImpl<$Res>
           ? _self.isRisky
           : isRisky // ignore: cast_nullable_to_non_nullable
               as bool,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       attributes: null == attributes
           ? _self.attributes
@@ -289,8 +291,8 @@ extension CategoryModelPatterns on CategoryModel {
             @StringJson() String jalur,
             @BoolJson() @JsonKey(name: 'is_risky') bool isRisky,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             List<Map<String, dynamic>> attributes,
             List<CategoryModel> children)?
         $default, {
@@ -307,7 +309,7 @@ extension CategoryModelPatterns on CategoryModel {
             _that.level,
             _that.jalur,
             _that.isRisky,
-            _that.createdAt,
+            _that.createdDate,
             _that.attributes,
             _that.children);
       case _:
@@ -339,8 +341,8 @@ extension CategoryModelPatterns on CategoryModel {
             @StringJson() String jalur,
             @BoolJson() @JsonKey(name: 'is_risky') bool isRisky,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             List<Map<String, dynamic>> attributes,
             List<CategoryModel> children)
         $default,
@@ -356,7 +358,7 @@ extension CategoryModelPatterns on CategoryModel {
             _that.level,
             _that.jalur,
             _that.isRisky,
-            _that.createdAt,
+            _that.createdDate,
             _that.attributes,
             _that.children);
       case _:
@@ -387,8 +389,8 @@ extension CategoryModelPatterns on CategoryModel {
             @StringJson() String jalur,
             @BoolJson() @JsonKey(name: 'is_risky') bool isRisky,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             List<Map<String, dynamic>> attributes,
             List<CategoryModel> children)?
         $default,
@@ -404,7 +406,7 @@ extension CategoryModelPatterns on CategoryModel {
             _that.level,
             _that.jalur,
             _that.isRisky,
-            _that.createdAt,
+            _that.createdDate,
             _that.attributes,
             _that.children);
       case _:
@@ -424,7 +426,7 @@ class _CategoryModel extends CategoryModel {
       @IntOrNullJson() this.level,
       @StringJson() required this.jalur,
       @BoolJson() @JsonKey(name: 'is_risky') this.isRisky = false,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') this.createdAt,
+      @ServerDateTimeJson() @JsonKey(name: 'created_date') this.createdDate,
       final List<Map<String, dynamic>> attributes =
           const <Map<String, dynamic>>[],
       final List<CategoryModel> children = const <CategoryModel>[]})
@@ -463,8 +465,8 @@ class _CategoryModel extends CategoryModel {
   final bool isRisky;
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  final DateTime? createdAt;
+  @JsonKey(name: 'created_date')
+  final DateTime? createdDate;
 
   /// Atribut untuk filter dinamis.
   ///
@@ -525,8 +527,8 @@ class _CategoryModel extends CategoryModel {
             (identical(other.level, level) || other.level == level) &&
             (identical(other.jalur, jalur) || other.jalur == jalur) &&
             (identical(other.isRisky, isRisky) || other.isRisky == isRisky) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate) &&
             const DeepCollectionEquality()
                 .equals(other._attributes, _attributes) &&
             const DeepCollectionEquality().equals(other._children, _children));
@@ -543,13 +545,13 @@ class _CategoryModel extends CategoryModel {
       level,
       jalur,
       isRisky,
-      createdAt,
+      createdDate,
       const DeepCollectionEquality().hash(_attributes),
       const DeepCollectionEquality().hash(_children));
 
   @override
   String toString() {
-    return 'CategoryModel(id: $id, parentId: $parentId, name: $name, slug: $slug, level: $level, jalur: $jalur, isRisky: $isRisky, createdAt: $createdAt, attributes: $attributes, children: $children)';
+    return 'CategoryModel(id: $id, parentId: $parentId, name: $name, slug: $slug, level: $level, jalur: $jalur, isRisky: $isRisky, createdDate: $createdDate, attributes: $attributes, children: $children)';
   }
 }
 
@@ -569,7 +571,9 @@ abstract mixin class _$CategoryModelCopyWith<$Res>
       @IntOrNullJson() int? level,
       @StringJson() String jalur,
       @BoolJson() @JsonKey(name: 'is_risky') bool isRisky,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate,
       List<Map<String, dynamic>> attributes,
       List<CategoryModel> children});
 }
@@ -594,7 +598,7 @@ class __$CategoryModelCopyWithImpl<$Res>
     Object? level = freezed,
     Object? jalur = null,
     Object? isRisky = null,
-    Object? createdAt = freezed,
+    Object? createdDate = freezed,
     Object? attributes = null,
     Object? children = null,
   }) {
@@ -627,9 +631,9 @@ class __$CategoryModelCopyWithImpl<$Res>
           ? _self.isRisky
           : isRisky // ignore: cast_nullable_to_non_nullable
               as bool,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       attributes: null == attributes
           ? _self._attributes

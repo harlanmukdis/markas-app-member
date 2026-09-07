@@ -15,13 +15,14 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserModel {
   @IntJson()
+  @JsonKey(name: 'seq', readValue: _readUserId)
   int get id;
   @StringJson()
   String get phone;
   @StringOrNullJson()
   String? get email;
   @StringOrNullJson()
-  @JsonKey(name: 'full_name')
+  @JsonKey(name: 'name', readValue: _readUserName)
   String? get fullName;
 
   /// `BUY_R` (retail) atau `BUY_B` (B2B/kontraktor).
@@ -49,13 +50,17 @@ mixin _$UserModel {
 
   /// `ACTIVE` atau `SUSPENDED`.
   @StringJson()
-  String get status;
+  String
+      get status; // Backend v2.2 mengganti nama kolom waktu: `created_at`/`updated_at`
+// HILANG TOTAL dari semua respons, diganti `created_date`/
+// `modified_date`. Nama Dart-nya ikut diselaraskan supaya tidak ada
+// celah antara nama field di kode dan di API.
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt;
+  @JsonKey(name: 'created_date')
+  DateTime? get createdDate;
   @ServerDateTimeJson()
-  @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt;
+  @JsonKey(name: 'modified_date')
+  DateTime? get modifiedDate;
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -88,10 +93,10 @@ mixin _$UserModel {
             (identical(other.sellerId, sellerId) ||
                 other.sellerId == sellerId) &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate) &&
+            (identical(other.modifiedDate, modifiedDate) ||
+                other.modifiedDate == modifiedDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -109,12 +114,12 @@ mixin _$UserModel {
       b2bVerifiedAt,
       sellerId,
       status,
-      createdAt,
-      updatedAt);
+      createdDate,
+      modifiedDate);
 
   @override
   String toString() {
-    return 'UserModel(id: $id, phone: $phone, email: $email, fullName: $fullName, role: $role, buyerSegment: $buyerSegment, npwp: $npwp, nibSiupNo: $nibSiupNo, b2bVerifiedAt: $b2bVerifiedAt, sellerId: $sellerId, status: $status, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserModel(id: $id, phone: $phone, email: $email, fullName: $fullName, role: $role, buyerSegment: $buyerSegment, npwp: $npwp, nibSiupNo: $nibSiupNo, b2bVerifiedAt: $b2bVerifiedAt, sellerId: $sellerId, status: $status, createdDate: $createdDate, modifiedDate: $modifiedDate)';
   }
 }
 
@@ -124,10 +129,12 @@ abstract mixin class $UserModelCopyWith<$Res> {
       _$UserModelCopyWithImpl;
   @useResult
   $Res call(
-      {@IntJson() int id,
+      {@IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
       @StringJson() String phone,
       @StringOrNullJson() String? email,
-      @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+      @StringOrNullJson()
+      @JsonKey(name: 'name', readValue: _readUserName)
+      String? fullName,
       @StringJson() String role,
       @StringOrNullJson() @JsonKey(name: 'buyer_segment') String? buyerSegment,
       @StringOrNullJson() String? npwp,
@@ -137,8 +144,12 @@ abstract mixin class $UserModelCopyWith<$Res> {
       DateTime? b2bVerifiedAt,
       @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
       @StringJson() String status,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
-      @ServerDateTimeJson() @JsonKey(name: 'updated_at') DateTime? updatedAt});
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'modified_date')
+      DateTime? modifiedDate});
 }
 
 /// @nodoc
@@ -164,8 +175,8 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
     Object? b2bVerifiedAt = freezed,
     Object? sellerId = freezed,
     Object? status = null,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? createdDate = freezed,
+    Object? modifiedDate = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -212,13 +223,13 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      updatedAt: freezed == updatedAt
-          ? _self.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
+      modifiedDate: freezed == modifiedDate
+          ? _self.modifiedDate
+          : modifiedDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
   }
@@ -318,10 +329,12 @@ extension UserModelPatterns on UserModel {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-            @IntJson() int id,
+            @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
             @StringJson() String phone,
             @StringOrNullJson() String? email,
-            @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+            @StringOrNullJson()
+            @JsonKey(name: 'name', readValue: _readUserName)
+            String? fullName,
             @StringJson() String role,
             @StringOrNullJson()
             @JsonKey(name: 'buyer_segment')
@@ -334,11 +347,11 @@ extension UserModelPatterns on UserModel {
             @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
             @StringJson() String status,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             @ServerDateTimeJson()
-            @JsonKey(name: 'updated_at')
-            DateTime? updatedAt)?
+            @JsonKey(name: 'modified_date')
+            DateTime? modifiedDate)?
         $default, {
     required TResult orElse(),
   }) {
@@ -357,8 +370,8 @@ extension UserModelPatterns on UserModel {
             _that.b2bVerifiedAt,
             _that.sellerId,
             _that.status,
-            _that.createdAt,
-            _that.updatedAt);
+            _that.createdDate,
+            _that.modifiedDate);
       case _:
         return orElse();
     }
@@ -380,10 +393,12 @@ extension UserModelPatterns on UserModel {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-            @IntJson() int id,
+            @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
             @StringJson() String phone,
             @StringOrNullJson() String? email,
-            @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+            @StringOrNullJson()
+            @JsonKey(name: 'name', readValue: _readUserName)
+            String? fullName,
             @StringJson() String role,
             @StringOrNullJson()
             @JsonKey(name: 'buyer_segment')
@@ -396,11 +411,11 @@ extension UserModelPatterns on UserModel {
             @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
             @StringJson() String status,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             @ServerDateTimeJson()
-            @JsonKey(name: 'updated_at')
-            DateTime? updatedAt)
+            @JsonKey(name: 'modified_date')
+            DateTime? modifiedDate)
         $default,
   ) {
     final _that = this;
@@ -418,8 +433,8 @@ extension UserModelPatterns on UserModel {
             _that.b2bVerifiedAt,
             _that.sellerId,
             _that.status,
-            _that.createdAt,
-            _that.updatedAt);
+            _that.createdDate,
+            _that.modifiedDate);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -440,10 +455,12 @@ extension UserModelPatterns on UserModel {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-            @IntJson() int id,
+            @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
             @StringJson() String phone,
             @StringOrNullJson() String? email,
-            @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+            @StringOrNullJson()
+            @JsonKey(name: 'name', readValue: _readUserName)
+            String? fullName,
             @StringJson() String role,
             @StringOrNullJson()
             @JsonKey(name: 'buyer_segment')
@@ -456,11 +473,11 @@ extension UserModelPatterns on UserModel {
             @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
             @StringJson() String status,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             @ServerDateTimeJson()
-            @JsonKey(name: 'updated_at')
-            DateTime? updatedAt)?
+            @JsonKey(name: 'modified_date')
+            DateTime? modifiedDate)?
         $default,
   ) {
     final _that = this;
@@ -478,8 +495,8 @@ extension UserModelPatterns on UserModel {
             _that.b2bVerifiedAt,
             _that.sellerId,
             _that.status,
-            _that.createdAt,
-            _that.updatedAt);
+            _that.createdDate,
+            _that.modifiedDate);
       case _:
         return null;
     }
@@ -490,10 +507,14 @@ extension UserModelPatterns on UserModel {
 @JsonSerializable()
 class _UserModel extends UserModel {
   const _UserModel(
-      {@IntJson() required this.id,
+      {@IntJson()
+      @JsonKey(name: 'seq', readValue: _readUserId)
+      required this.id,
       @StringJson() required this.phone,
       @StringOrNullJson() this.email,
-      @StringOrNullJson() @JsonKey(name: 'full_name') this.fullName,
+      @StringOrNullJson()
+      @JsonKey(name: 'name', readValue: _readUserName)
+      this.fullName,
       @StringJson() required this.role,
       @StringOrNullJson() @JsonKey(name: 'buyer_segment') this.buyerSegment,
       @StringOrNullJson() this.npwp,
@@ -503,14 +524,15 @@ class _UserModel extends UserModel {
       this.b2bVerifiedAt,
       @IntOrNullJson() @JsonKey(name: 'seller_id') this.sellerId,
       @StringJson() required this.status,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') this.createdAt,
-      @ServerDateTimeJson() @JsonKey(name: 'updated_at') this.updatedAt})
+      @ServerDateTimeJson() @JsonKey(name: 'created_date') this.createdDate,
+      @ServerDateTimeJson() @JsonKey(name: 'modified_date') this.modifiedDate})
       : super._();
   factory _UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
 
   @override
   @IntJson()
+  @JsonKey(name: 'seq', readValue: _readUserId)
   final int id;
   @override
   @StringJson()
@@ -520,7 +542,7 @@ class _UserModel extends UserModel {
   final String? email;
   @override
   @StringOrNullJson()
-  @JsonKey(name: 'full_name')
+  @JsonKey(name: 'name', readValue: _readUserName)
   final String? fullName;
 
   /// `BUY_R` (retail) atau `BUY_B` (B2B/kontraktor).
@@ -556,14 +578,18 @@ class _UserModel extends UserModel {
   @override
   @StringJson()
   final String status;
+// Backend v2.2 mengganti nama kolom waktu: `created_at`/`updated_at`
+// HILANG TOTAL dari semua respons, diganti `created_date`/
+// `modified_date`. Nama Dart-nya ikut diselaraskan supaya tidak ada
+// celah antara nama field di kode dan di API.
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  final DateTime? createdAt;
+  @JsonKey(name: 'created_date')
+  final DateTime? createdDate;
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'updated_at')
-  final DateTime? updatedAt;
+  @JsonKey(name: 'modified_date')
+  final DateTime? modifiedDate;
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -601,10 +627,10 @@ class _UserModel extends UserModel {
             (identical(other.sellerId, sellerId) ||
                 other.sellerId == sellerId) &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate) &&
+            (identical(other.modifiedDate, modifiedDate) ||
+                other.modifiedDate == modifiedDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -622,12 +648,12 @@ class _UserModel extends UserModel {
       b2bVerifiedAt,
       sellerId,
       status,
-      createdAt,
-      updatedAt);
+      createdDate,
+      modifiedDate);
 
   @override
   String toString() {
-    return 'UserModel(id: $id, phone: $phone, email: $email, fullName: $fullName, role: $role, buyerSegment: $buyerSegment, npwp: $npwp, nibSiupNo: $nibSiupNo, b2bVerifiedAt: $b2bVerifiedAt, sellerId: $sellerId, status: $status, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserModel(id: $id, phone: $phone, email: $email, fullName: $fullName, role: $role, buyerSegment: $buyerSegment, npwp: $npwp, nibSiupNo: $nibSiupNo, b2bVerifiedAt: $b2bVerifiedAt, sellerId: $sellerId, status: $status, createdDate: $createdDate, modifiedDate: $modifiedDate)';
   }
 }
 
@@ -640,10 +666,12 @@ abstract mixin class _$UserModelCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@IntJson() int id,
+      {@IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
       @StringJson() String phone,
       @StringOrNullJson() String? email,
-      @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+      @StringOrNullJson()
+      @JsonKey(name: 'name', readValue: _readUserName)
+      String? fullName,
       @StringJson() String role,
       @StringOrNullJson() @JsonKey(name: 'buyer_segment') String? buyerSegment,
       @StringOrNullJson() String? npwp,
@@ -653,8 +681,12 @@ abstract mixin class _$UserModelCopyWith<$Res>
       DateTime? b2bVerifiedAt,
       @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
       @StringJson() String status,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
-      @ServerDateTimeJson() @JsonKey(name: 'updated_at') DateTime? updatedAt});
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'modified_date')
+      DateTime? modifiedDate});
 }
 
 /// @nodoc
@@ -680,8 +712,8 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
     Object? b2bVerifiedAt = freezed,
     Object? sellerId = freezed,
     Object? status = null,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? createdDate = freezed,
+    Object? modifiedDate = freezed,
   }) {
     return _then(_UserModel(
       id: null == id
@@ -728,13 +760,13 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      updatedAt: freezed == updatedAt
-          ? _self.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
+      modifiedDate: freezed == modifiedDate
+          ? _self.modifiedDate
+          : modifiedDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
   }

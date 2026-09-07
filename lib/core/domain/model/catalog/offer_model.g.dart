@@ -68,8 +68,8 @@ _OfferModel _$OfferModelFromJson(Map<String, dynamic> json) => _OfferModel(
           : const StringJson().fromJson(json['status']),
       rejectReason: const StringOrNullJson().fromJson(json['reject_reason']),
       description: const StringOrNullJson().fromJson(json['description']),
-      createdAt: const ServerDateTimeJson().fromJson(json['created_at']),
-      updatedAt: const ServerDateTimeJson().fromJson(json['updated_at']),
+      createdDate: const ServerDateTimeJson().fromJson(json['created_date']),
+      modifiedDate: const ServerDateTimeJson().fromJson(json['modified_date']),
       priceTiers: (json['price_tiers'] as List<dynamic>?)
               ?.map((e) => PriceTierModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -110,8 +110,8 @@ Map<String, dynamic> _$OfferModelToJson(_OfferModel instance) =>
       'status': const StringJson().toJson(instance.status),
       'reject_reason': const StringOrNullJson().toJson(instance.rejectReason),
       'description': const StringOrNullJson().toJson(instance.description),
-      'created_at': const ServerDateTimeJson().toJson(instance.createdAt),
-      'updated_at': const ServerDateTimeJson().toJson(instance.updatedAt),
+      'created_date': const ServerDateTimeJson().toJson(instance.createdDate),
+      'modified_date': const ServerDateTimeJson().toJson(instance.modifiedDate),
       'price_tiers': instance.priceTiers,
       'seller_name': const StringOrNullJson().toJson(instance.sellerName),
       'seller_score': const DoubleOrNullJson().toJson(instance.sellerScore),

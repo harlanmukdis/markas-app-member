@@ -22,7 +22,8 @@ abstract class CategoryModel with _$CategoryModel {
     /// Kategori berisiko — dikirim sebagai `"1"`/`"0"`, bukan boolean.
     @BoolJson() @JsonKey(name: 'is_risky') @Default(false) bool isRisky,
 
-    @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
+    @ServerDateTimeJson() @JsonKey(name: 'created_date')
+    DateTime? createdDate,
 
     /// Atribut untuk filter dinamis.
     ///

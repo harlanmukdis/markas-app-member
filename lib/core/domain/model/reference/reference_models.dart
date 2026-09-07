@@ -23,7 +23,8 @@ abstract class ZoneModel with _$ZoneModel {
 
     @StringJson() required String name,
     @StringOrNullJson() String? code,
-    @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
+    @ServerDateTimeJson() @JsonKey(name: 'created_date')
+    DateTime? createdDate,
   }) = _ZoneModel;
 
   factory ZoneModel.fromJson(Map<String, dynamic> json) =>

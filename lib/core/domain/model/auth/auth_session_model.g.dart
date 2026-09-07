@@ -15,6 +15,7 @@ _AuthSessionModel _$AuthSessionModelFromJson(Map<String, dynamic> json) =>
       expiresIn: const IntOrNullJson().fromJson(json['expires_in']),
       tokenType: const StringOrNullJson().fromJson(json['token_type']),
       sellerId: const IntOrNullJson().fromJson(json['seller_id']),
+      actorType: const StringOrNullJson().fromJson(json['actor_type']),
     );
 
 Map<String, dynamic> _$AuthSessionModelToJson(_AuthSessionModel instance) =>
@@ -26,4 +27,5 @@ Map<String, dynamic> _$AuthSessionModelToJson(_AuthSessionModel instance) =>
       'expires_in': const IntOrNullJson().toJson(instance.expiresIn),
       'token_type': const StringOrNullJson().toJson(instance.tokenType),
       'seller_id': const IntOrNullJson().toJson(instance.sellerId),
+      'actor_type': const StringOrNullJson().toJson(instance.actorType),
     };

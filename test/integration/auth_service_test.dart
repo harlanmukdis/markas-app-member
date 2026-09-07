@@ -82,6 +82,16 @@ void main() {
     expect(profile.data.isB2B, isFalse);
     expect(profile.data.isSuspended, isFalse);
     expect(profile.data.phone, _retailPhone);
+
+    // Backend v2.2 mengganti nama field di endpoint INI saja: id user jadi
+    // `seq` dan nama jadi `name`, sementara /offers, /categories, /brands dan
+    // sisanya tetap `id`. Perubahan itu TIDAK disebutkan di catatan rilis —
+    // dua assert ini yang menangkapnya, dan yang akan menangkapnya lagi kalau
+    // penamaannya berubah sekali lagi.
+    expect(profile.data.fullName, isNotNull);
+    expect(profile.data.fullName, isNotEmpty);
+    expect(profile.data.createdDate, isNotNull,
+        reason: 'v2.2: created_at -> created_date');
     },
   );
 

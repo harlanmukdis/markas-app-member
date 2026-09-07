@@ -126,6 +126,13 @@ class DataError {
   bool get isRouteNotFound =>
       statusCode == 404 && message.toLowerCase().contains('endpoint not found');
 
+  /// Tidak berhak — entah karena role atau karena sistem izin. Digabung
+  /// karena bagi user keduanya sama artinya: menu itu harus disembunyikan.
+  bool get isForbidden =>
+      statusCode == 403 ||
+      code == ApiErrorCode.forbidden ||
+      code == ApiErrorCode.permissionDenied;
+
   /// 404 yang benar-benar berarti data tidak ada **atau bukan milik user**.
   /// Backend sengaja tidak membedakan keduanya, dan UI juga tidak boleh.
   bool get isDataNotFound => statusCode == 404 && !isRouteNotFound;
@@ -166,6 +173,10 @@ abstract final class ApiErrorCode {
   static const invalidRefreshToken = 'INVALID_REFRESH_TOKEN';
   static const refreshRevoked = 'REFRESH_REVOKED';
   static const forbidden = 'FORBIDDEN';
+
+  /// Ditolak sistem izin berbasis grup+menu (backend v2.2). Secara praktis
+  /// setara [forbidden] bagi user: keduanya berarti "tidak berhak".
+  static const permissionDenied = 'PERMISSION_DENIED';
   static const accountSuspended = 'ACCOUNT_SUSPENDED';
   static const notFound = 'NOT_FOUND';
   static const conflict = 'CONFLICT';

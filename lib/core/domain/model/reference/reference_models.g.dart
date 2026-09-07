@@ -12,7 +12,7 @@ _ZoneModel _$ZoneModelFromJson(Map<String, dynamic> json) => _ZoneModel(
       level: const StringJson().fromJson(json['level']),
       name: const StringJson().fromJson(json['name']),
       code: const StringOrNullJson().fromJson(json['code']),
-      createdAt: const ServerDateTimeJson().fromJson(json['created_at']),
+      createdDate: const ServerDateTimeJson().fromJson(json['created_date']),
     );
 
 Map<String, dynamic> _$ZoneModelToJson(_ZoneModel instance) =>
@@ -22,7 +22,7 @@ Map<String, dynamic> _$ZoneModelToJson(_ZoneModel instance) =>
       'level': const StringJson().toJson(instance.level),
       'name': const StringJson().toJson(instance.name),
       'code': const StringOrNullJson().toJson(instance.code),
-      'created_at': const ServerDateTimeJson().toJson(instance.createdAt),
+      'created_date': const ServerDateTimeJson().toJson(instance.createdDate),
     };
 
 _FleetTypeModel _$FleetTypeModelFromJson(Map<String, dynamic> json) =>

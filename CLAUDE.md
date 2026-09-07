@@ -125,6 +125,23 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 
 # Part 2 — Target architecture
 
+> ### 🔴 Backend v2.2 renamed fields the release notes did not mention
+>
+> The v2.2 refactor notes list only `created_at` → `created_date` and `updated_at` → `modified_date`. Verified against the running backend, **`GET /auth/me` also renamed two more fields** — and only that endpoint:
+>
+> | concept | `/auth/login` | `/auth/me` v2.1 | `/auth/me` v2.2 |
+> |---|---|---|---|
+> | user id | `user_id` (int) | `id` (String) | **`seq`** (String) |
+> | name | — | `full_name` | **`name`** |
+>
+> Every other endpoint (`/offers`, `/categories`, `/brands`, `/orders`, `/addresses`, `/wishlist`) still uses `id`. `UserModel` therefore reads all spellings via `@JsonKey(readValue:)` rather than trusting one; the integration test pins it so a third rename fails loudly instead of silently producing `id: 0`.
+>
+> **Lesson that keeps repeating on this project: probe the endpoint, don't trust the release note.** Three assumptions from BE docs have now been wrong — `/offers?category_id=` existed when I assumed it did not, `price_tiers` is empty in every list response when the doc implied otherwise, and `/offers` with no filter returns everything when both the doc and I said there was no "all products" endpoint.
+>
+> ### 🔴 Server deadlines are 5 hours off (v2.2, still open)
+>
+> PHP and MySQL clocks disagree by 5 hours, so a 24-hour payment window is stored as 19 hours after `created_date`. **Do not correct this with an offset in Flutter** — when the backend is fixed the correction makes it wrong twice. Until then show absolute times via `formatServerDeadline()` and do not build countdowns that look precise. `formatCountdown()` carries the same warning at its definition.
+
 > ### 🔴 Backend blocker: the `Authorization` header is case-sensitive
 >
 > Every protected endpoint returns `401 UNAUTHENTICATED` unless the header name is spelled **exactly** `Authorization`. This violates RFC 7230 §3.2 (HTTP field names are case-insensitive) and it breaks **all native Dart/Flutter clients**, because `dart:io`'s `HttpHeaders` lowercases field names and Dio does not opt out.

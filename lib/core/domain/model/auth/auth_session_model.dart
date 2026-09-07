@@ -40,6 +40,13 @@ abstract class AuthSessionModel with _$AuthSessionModel {
 
     /// Selalu `null` untuk member; hanya berisi untuk akun toko.
     @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+
+    /// `MEMBER` / `MERCHANT` / `ADMIN`. Ditambahkan backend v2.2.
+    ///
+    /// Berguna untuk memutuskan aplikasi/rute awal, tapi **bukan** penentu
+    /// menu B2B — itu tetap [role] (`BUY_R` vs `BUY_B`), karena keduanya
+    /// sama-sama `MEMBER`.
+    @StringOrNullJson() @JsonKey(name: 'actor_type') String? actorType,
   }) = _AuthSessionModel;
 
   factory AuthSessionModel.fromJson(Map<String, dynamic> json) =>

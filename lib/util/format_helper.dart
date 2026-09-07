@@ -91,13 +91,24 @@ bool isPast(DateTime? deadline) {
   return left != null && left.isNegative;
 }
 
-/// Hitung mundur ringkas untuk UI: `"2 hari 3 jam"`, `"5 jam 12 menit"`,
-/// `"8 menit"`, atau `"Waktu habis"`.
+/// Hitung mundur ringkas: `"2 hari 3 jam"`, `"5 jam 12 menit"`, `"8 menit"`.
 ///
-/// Batas yang bersatuan "jam kerja" (mis. konfirmasi toko 1×24 jam kerja)
-/// **tidak boleh dihitung di app** karena melewatkan akhir pekan dan libur
-/// nasional. Pakai field deadline yang dikirim server — `payment_deadline`,
-/// `seller_confirm_deadline`, `expires_at` — lalu format dengan fungsi ini.
+/// > ### 🔴 JANGAN dipakai untuk deadline dari server saat ini
+/// >
+/// > Backend v2.2 masih punya bug selisih jam PHP vs MySQL **5 jam**: batas
+/// > bayar 24 jam tersimpan sebagai 19 jam setelah `created_date`. Hitung
+/// > mundur apa pun yang dibangun dari field deadline server akan **salah
+/// > sekitar 5 jam**, dan menampilkannya seolah presisi justru menyesatkan —
+/// > user bisa kehilangan pesanan karena percaya masih ada waktu.
+/// >
+/// > Tim backend sudah dikabari. **Jangan ditambal dengan offset manual di
+/// > sini**: begitu backend diperbaiki, tambalan itu membuat hasilnya salah
+/// > dua kali. Sampai beres, tampilkan waktu absolut lewat
+/// > [formatServerDeadline].
+///
+/// Batas bersatuan "jam kerja" (mis. konfirmasi toko 1×24 jam kerja) juga
+/// tidak boleh dihitung sendiri karena melewatkan akhir pekan dan libur
+/// nasional — selalu pakai field deadline dari server.
 String formatCountdown(Duration? left) {
   if (left == null) return '-';
   if (left.isNegative) return 'Waktu habis';
@@ -139,6 +150,20 @@ String formatServerDateTime(DateTime? instant, {String fallback = '-'}) {
 String formatServerDate(DateTime? instant, {String fallback = '-'}) {
   if (instant == null) return fallback;
   return _dateDisplay.format(instant.toUtc().add(kServerUtcOffset));
+}
+
+/// Menampilkan batas waktu sebagai **tanggal-jam absolut**, bukan hitung
+/// mundur.
+///
+/// Ini bentuk yang dipakai selama bug selisih 5 jam di backend belum beres:
+/// angka absolut dari server tetap bisa dibandingkan user dengan jam
+/// dindingnya sendiri, sedangkan hitung mundur menyembunyikan kesalahannya di
+/// balik tampilan yang terasa presisi.
+///
+/// Contoh keluaran: `"Batas bayar 6 Sep 2026, 14:00 WIB"`.
+String formatServerDeadline(DateTime? instant, {String prefix = 'Batas'}) {
+  if (instant == null) return '-';
+  return '$prefix ${formatServerDateTime(instant)}';
 }
 
 final NumberFormat _rupiah = NumberFormat.currency(

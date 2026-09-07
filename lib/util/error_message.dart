@@ -28,6 +28,12 @@ String errorMessageFor(BuildContext context, DataError error) {
       return l.invalidCredentialsMessage;
     case ApiErrorCode.accountSuspended:
       return l.accountSuspendedMessage;
+
+    // Ditangani bersama FORBIDDEN: bagi user, "role tidak berhak" dan
+    // "izin grup tidak mengizinkan" adalah hal yang sama.
+    case ApiErrorCode.forbidden:
+    case ApiErrorCode.permissionDenied:
+      return l.notAvailable;
     case ApiErrorCode.unauthenticated:
     case ApiErrorCode.invalidRefreshToken:
     case ApiErrorCode.refreshRevoked:

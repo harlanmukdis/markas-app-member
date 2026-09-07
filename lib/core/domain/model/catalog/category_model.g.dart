@@ -17,7 +17,7 @@ _CategoryModel _$CategoryModelFromJson(Map<String, dynamic> json) =>
       isRisky: json['is_risky'] == null
           ? false
           : const BoolJson().fromJson(json['is_risky']),
-      createdAt: const ServerDateTimeJson().fromJson(json['created_at']),
+      createdDate: const ServerDateTimeJson().fromJson(json['created_date']),
       attributes: (json['attributes'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
@@ -37,7 +37,7 @@ Map<String, dynamic> _$CategoryModelToJson(_CategoryModel instance) =>
       'level': const IntOrNullJson().toJson(instance.level),
       'jalur': const StringJson().toJson(instance.jalur),
       'is_risky': const BoolJson().toJson(instance.isRisky),
-      'created_at': const ServerDateTimeJson().toJson(instance.createdAt),
+      'created_date': const ServerDateTimeJson().toJson(instance.createdDate),
       'attributes': instance.attributes,
       'children': instance.children,
     };

@@ -28,8 +28,8 @@ mixin _$ZoneModel {
   @StringOrNullJson()
   String? get code;
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt;
+  @JsonKey(name: 'created_date')
+  DateTime? get createdDate;
 
   /// Create a copy of ZoneModel
   /// with the given fields replaced by the non-null parameter values.
@@ -52,18 +52,18 @@ mixin _$ZoneModel {
             (identical(other.level, level) || other.level == level) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.code, code) || other.code == code) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, parentId, level, name, code, createdAt);
+      Object.hash(runtimeType, id, parentId, level, name, code, createdDate);
 
   @override
   String toString() {
-    return 'ZoneModel(id: $id, parentId: $parentId, level: $level, name: $name, code: $code, createdAt: $createdAt)';
+    return 'ZoneModel(id: $id, parentId: $parentId, level: $level, name: $name, code: $code, createdDate: $createdDate)';
   }
 }
 
@@ -78,7 +78,9 @@ abstract mixin class $ZoneModelCopyWith<$Res> {
       @StringJson() String level,
       @StringJson() String name,
       @StringOrNullJson() String? code,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt});
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate});
 }
 
 /// @nodoc
@@ -98,7 +100,7 @@ class _$ZoneModelCopyWithImpl<$Res> implements $ZoneModelCopyWith<$Res> {
     Object? level = null,
     Object? name = null,
     Object? code = freezed,
-    Object? createdAt = freezed,
+    Object? createdDate = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -121,9 +123,9 @@ class _$ZoneModelCopyWithImpl<$Res> implements $ZoneModelCopyWith<$Res> {
           ? _self.code
           : code // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
   }
@@ -229,8 +231,8 @@ extension ZoneModelPatterns on ZoneModel {
             @StringJson() String name,
             @StringOrNullJson() String? code,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt)?
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate)?
         $default, {
     required TResult orElse(),
   }) {
@@ -238,7 +240,7 @@ extension ZoneModelPatterns on ZoneModel {
     switch (_that) {
       case _ZoneModel() when $default != null:
         return $default(_that.id, _that.parentId, _that.level, _that.name,
-            _that.code, _that.createdAt);
+            _that.code, _that.createdDate);
       case _:
         return orElse();
     }
@@ -266,15 +268,15 @@ extension ZoneModelPatterns on ZoneModel {
             @StringJson() String name,
             @StringOrNullJson() String? code,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt)
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ZoneModel():
         return $default(_that.id, _that.parentId, _that.level, _that.name,
-            _that.code, _that.createdAt);
+            _that.code, _that.createdDate);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -301,15 +303,15 @@ extension ZoneModelPatterns on ZoneModel {
             @StringJson() String name,
             @StringOrNullJson() String? code,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt)?
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ZoneModel() when $default != null:
         return $default(_that.id, _that.parentId, _that.level, _that.name,
-            _that.code, _that.createdAt);
+            _that.code, _that.createdDate);
       case _:
         return null;
     }
@@ -325,7 +327,7 @@ class _ZoneModel extends ZoneModel {
       @StringJson() required this.level,
       @StringJson() required this.name,
       @StringOrNullJson() this.code,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') this.createdAt})
+      @ServerDateTimeJson() @JsonKey(name: 'created_date') this.createdDate})
       : super._();
   factory _ZoneModel.fromJson(Map<String, dynamic> json) =>
       _$ZoneModelFromJson(json);
@@ -350,8 +352,8 @@ class _ZoneModel extends ZoneModel {
   final String? code;
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  final DateTime? createdAt;
+  @JsonKey(name: 'created_date')
+  final DateTime? createdDate;
 
   /// Create a copy of ZoneModel
   /// with the given fields replaced by the non-null parameter values.
@@ -379,18 +381,18 @@ class _ZoneModel extends ZoneModel {
             (identical(other.level, level) || other.level == level) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.code, code) || other.code == code) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, parentId, level, name, code, createdAt);
+      Object.hash(runtimeType, id, parentId, level, name, code, createdDate);
 
   @override
   String toString() {
-    return 'ZoneModel(id: $id, parentId: $parentId, level: $level, name: $name, code: $code, createdAt: $createdAt)';
+    return 'ZoneModel(id: $id, parentId: $parentId, level: $level, name: $name, code: $code, createdDate: $createdDate)';
   }
 }
 
@@ -408,7 +410,9 @@ abstract mixin class _$ZoneModelCopyWith<$Res>
       @StringJson() String level,
       @StringJson() String name,
       @StringOrNullJson() String? code,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt});
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate});
 }
 
 /// @nodoc
@@ -428,7 +432,7 @@ class __$ZoneModelCopyWithImpl<$Res> implements _$ZoneModelCopyWith<$Res> {
     Object? level = null,
     Object? name = null,
     Object? code = freezed,
-    Object? createdAt = freezed,
+    Object? createdDate = freezed,
   }) {
     return _then(_ZoneModel(
       id: null == id
@@ -451,9 +455,9 @@ class __$ZoneModelCopyWithImpl<$Res> implements _$ZoneModelCopyWith<$Res> {
           ? _self.code
           : code // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
   }

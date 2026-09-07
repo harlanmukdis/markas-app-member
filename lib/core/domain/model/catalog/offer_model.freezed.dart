@@ -575,11 +575,11 @@ mixin _$OfferModel {
   @StringOrNullJson()
   String? get description;
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt;
+  @JsonKey(name: 'created_date')
+  DateTime? get createdDate;
   @ServerDateTimeJson()
-  @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt;
+  @JsonKey(name: 'modified_date')
+  DateTime? get modifiedDate;
   @JsonKey(name: 'price_tiers')
   List<PriceTierModel> get priceTiers; // --- Hanya terisi dari GET /search ---
   @StringOrNullJson()
@@ -650,10 +650,10 @@ mixin _$OfferModel {
                 other.rejectReason == rejectReason) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt) &&
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate) &&
+            (identical(other.modifiedDate, modifiedDate) ||
+                other.modifiedDate == modifiedDate) &&
             const DeepCollectionEquality()
                 .equals(other.priceTiers, priceTiers) &&
             (identical(other.sellerName, sellerName) ||
@@ -691,8 +691,8 @@ mixin _$OfferModel {
         status,
         rejectReason,
         description,
-        createdAt,
-        updatedAt,
+        createdDate,
+        modifiedDate,
         const DeepCollectionEquality().hash(priceTiers),
         sellerName,
         sellerScore,
@@ -704,7 +704,7 @@ mixin _$OfferModel {
 
   @override
   String toString() {
-    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, description: $description, createdAt: $createdAt, updatedAt: $updatedAt, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
+    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, description: $description, createdDate: $createdDate, modifiedDate: $modifiedDate, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
   }
 }
 
@@ -744,8 +744,12 @@ abstract mixin class $OfferModelCopyWith<$Res> {
       @StringJson() String status,
       @StringOrNullJson() @JsonKey(name: 'reject_reason') String? rejectReason,
       @StringOrNullJson() String? description,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
-      @ServerDateTimeJson() @JsonKey(name: 'updated_at') DateTime? updatedAt,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'modified_date')
+      DateTime? modifiedDate,
       @JsonKey(name: 'price_tiers') List<PriceTierModel> priceTiers,
       @StringOrNullJson() @JsonKey(name: 'seller_name') String? sellerName,
       @DoubleOrNullJson() @JsonKey(name: 'seller_score') double? sellerScore,
@@ -786,8 +790,8 @@ class _$OfferModelCopyWithImpl<$Res> implements $OfferModelCopyWith<$Res> {
     Object? status = null,
     Object? rejectReason = freezed,
     Object? description = freezed,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? createdDate = freezed,
+    Object? modifiedDate = freezed,
     Object? priceTiers = null,
     Object? sellerName = freezed,
     Object? sellerScore = freezed,
@@ -865,13 +869,13 @@ class _$OfferModelCopyWithImpl<$Res> implements $OfferModelCopyWith<$Res> {
           ? _self.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      updatedAt: freezed == updatedAt
-          ? _self.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
+      modifiedDate: freezed == modifiedDate
+          ? _self.modifiedDate
+          : modifiedDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       priceTiers: null == priceTiers
           ? _self.priceTiers
@@ -1033,11 +1037,11 @@ extension OfferModelPatterns on OfferModel {
             String? rejectReason,
             @StringOrNullJson() String? description,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             @ServerDateTimeJson()
-            @JsonKey(name: 'updated_at')
-            DateTime? updatedAt,
+            @JsonKey(name: 'modified_date')
+            DateTime? modifiedDate,
             @JsonKey(name: 'price_tiers') List<PriceTierModel> priceTiers,
             @StringOrNullJson()
             @JsonKey(name: 'seller_name')
@@ -1079,8 +1083,8 @@ extension OfferModelPatterns on OfferModel {
             _that.status,
             _that.rejectReason,
             _that.description,
-            _that.createdAt,
-            _that.updatedAt,
+            _that.createdDate,
+            _that.modifiedDate,
             _that.priceTiers,
             _that.sellerName,
             _that.sellerScore,
@@ -1143,11 +1147,11 @@ extension OfferModelPatterns on OfferModel {
             String? rejectReason,
             @StringOrNullJson() String? description,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             @ServerDateTimeJson()
-            @JsonKey(name: 'updated_at')
-            DateTime? updatedAt,
+            @JsonKey(name: 'modified_date')
+            DateTime? modifiedDate,
             @JsonKey(name: 'price_tiers') List<PriceTierModel> priceTiers,
             @StringOrNullJson()
             @JsonKey(name: 'seller_name')
@@ -1188,8 +1192,8 @@ extension OfferModelPatterns on OfferModel {
             _that.status,
             _that.rejectReason,
             _that.description,
-            _that.createdAt,
-            _that.updatedAt,
+            _that.createdDate,
+            _that.modifiedDate,
             _that.priceTiers,
             _that.sellerName,
             _that.sellerScore,
@@ -1251,11 +1255,11 @@ extension OfferModelPatterns on OfferModel {
             String? rejectReason,
             @StringOrNullJson() String? description,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_at')
-            DateTime? createdAt,
+            @JsonKey(name: 'created_date')
+            DateTime? createdDate,
             @ServerDateTimeJson()
-            @JsonKey(name: 'updated_at')
-            DateTime? updatedAt,
+            @JsonKey(name: 'modified_date')
+            DateTime? modifiedDate,
             @JsonKey(name: 'price_tiers') List<PriceTierModel> priceTiers,
             @StringOrNullJson()
             @JsonKey(name: 'seller_name')
@@ -1296,8 +1300,8 @@ extension OfferModelPatterns on OfferModel {
             _that.status,
             _that.rejectReason,
             _that.description,
-            _that.createdAt,
-            _that.updatedAt,
+            _that.createdDate,
+            _that.modifiedDate,
             _that.priceTiers,
             _that.sellerName,
             _that.sellerScore,
@@ -1346,8 +1350,8 @@ class _OfferModel extends OfferModel {
       @StringJson() this.status = 'ACTIVE',
       @StringOrNullJson() @JsonKey(name: 'reject_reason') this.rejectReason,
       @StringOrNullJson() this.description,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') this.createdAt,
-      @ServerDateTimeJson() @JsonKey(name: 'updated_at') this.updatedAt,
+      @ServerDateTimeJson() @JsonKey(name: 'created_date') this.createdDate,
+      @ServerDateTimeJson() @JsonKey(name: 'modified_date') this.modifiedDate,
       @JsonKey(name: 'price_tiers')
       final List<PriceTierModel> priceTiers = const <PriceTierModel>[],
       @StringOrNullJson() @JsonKey(name: 'seller_name') this.sellerName,
@@ -1450,12 +1454,12 @@ class _OfferModel extends OfferModel {
   final String? description;
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_at')
-  final DateTime? createdAt;
+  @JsonKey(name: 'created_date')
+  final DateTime? createdDate;
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'updated_at')
-  final DateTime? updatedAt;
+  @JsonKey(name: 'modified_date')
+  final DateTime? modifiedDate;
   final List<PriceTierModel> _priceTiers;
   @override
   @JsonKey(name: 'price_tiers')
@@ -1545,10 +1549,10 @@ class _OfferModel extends OfferModel {
                 other.rejectReason == rejectReason) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt) &&
+            (identical(other.createdDate, createdDate) ||
+                other.createdDate == createdDate) &&
+            (identical(other.modifiedDate, modifiedDate) ||
+                other.modifiedDate == modifiedDate) &&
             const DeepCollectionEquality()
                 .equals(other._priceTiers, _priceTiers) &&
             (identical(other.sellerName, sellerName) ||
@@ -1586,8 +1590,8 @@ class _OfferModel extends OfferModel {
         status,
         rejectReason,
         description,
-        createdAt,
-        updatedAt,
+        createdDate,
+        modifiedDate,
         const DeepCollectionEquality().hash(_priceTiers),
         sellerName,
         sellerScore,
@@ -1599,7 +1603,7 @@ class _OfferModel extends OfferModel {
 
   @override
   String toString() {
-    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, description: $description, createdAt: $createdAt, updatedAt: $updatedAt, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
+    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, description: $description, createdDate: $createdDate, modifiedDate: $modifiedDate, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
   }
 }
 
@@ -1641,8 +1645,12 @@ abstract mixin class _$OfferModelCopyWith<$Res>
       @StringJson() String status,
       @StringOrNullJson() @JsonKey(name: 'reject_reason') String? rejectReason,
       @StringOrNullJson() String? description,
-      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
-      @ServerDateTimeJson() @JsonKey(name: 'updated_at') DateTime? updatedAt,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_date')
+      DateTime? createdDate,
+      @ServerDateTimeJson()
+      @JsonKey(name: 'modified_date')
+      DateTime? modifiedDate,
       @JsonKey(name: 'price_tiers') List<PriceTierModel> priceTiers,
       @StringOrNullJson() @JsonKey(name: 'seller_name') String? sellerName,
       @DoubleOrNullJson() @JsonKey(name: 'seller_score') double? sellerScore,
@@ -1683,8 +1691,8 @@ class __$OfferModelCopyWithImpl<$Res> implements _$OfferModelCopyWith<$Res> {
     Object? status = null,
     Object? rejectReason = freezed,
     Object? description = freezed,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? createdDate = freezed,
+    Object? modifiedDate = freezed,
     Object? priceTiers = null,
     Object? sellerName = freezed,
     Object? sellerScore = freezed,
@@ -1762,13 +1770,13 @@ class __$OfferModelCopyWithImpl<$Res> implements _$OfferModelCopyWith<$Res> {
           ? _self.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: freezed == createdAt
-          ? _self.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      createdDate: freezed == createdDate
+          ? _self.createdDate
+          : createdDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      updatedAt: freezed == updatedAt
-          ? _self.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
+      modifiedDate: freezed == modifiedDate
+          ? _self.modifiedDate
+          : modifiedDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       priceTiers: null == priceTiers
           ? _self._priceTiers

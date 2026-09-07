@@ -97,8 +97,10 @@ abstract class OfferModel with _$OfferModel {
     @StringOrNullJson() @JsonKey(name: 'reject_reason') String? rejectReason,
     @StringOrNullJson() String? description,
 
-    @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
-    @ServerDateTimeJson() @JsonKey(name: 'updated_at') DateTime? updatedAt,
+    @ServerDateTimeJson() @JsonKey(name: 'created_date')
+    DateTime? createdDate,
+    @ServerDateTimeJson() @JsonKey(name: 'modified_date')
+    DateTime? modifiedDate,
 
     @JsonKey(name: 'price_tiers')
     @Default(<PriceTierModel>[])

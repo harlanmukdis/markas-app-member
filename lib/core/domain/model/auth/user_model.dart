@@ -6,10 +6,20 @@ part 'user_model.g.dart';
 
 /// Profil user dari `GET /auth/me`.
 ///
-/// Catat perbedaan yang mudah menjebak: endpoint ini mengirim id sebagai
-/// **`"id"` bertipe String** (`"3"`), sementara `POST /auth/login` mengirim
-/// **`"user_id"` bertipe int** (`3`) untuk user yang sama. Keduanya ditangani
-/// [IntJson].
+/// Endpoint ini punya penamaan yang **berbeda dari endpoint lain**, dan
+/// namanya sudah berubah dua kali:
+///
+/// | konsep | `/auth/login` | `/auth/me` v2.1 | `/auth/me` v2.2 |
+/// |---|---|---|---|
+/// | id user | `user_id` (int) | `id` (String) | **`seq`** (String) |
+/// | nama | — | `full_name` | **`name`** |
+///
+/// Backend v2.2 memakai `seq` dan `name`, sementara seluruh endpoint lain
+/// (`/offers`, `/categories`, `/brands`, …) tetap `id`. Perubahan ini **tidak
+/// disebutkan** di catatan rilis v2.2, yang hanya menyebut penggantian kolom
+/// waktu — jadi [_readUserId] dan [_readUserName] membaca semua ejaan yang
+/// pernah dipakai. Kalau backend mengubahnya lagi atau merevert, model ini
+/// tidak ikut pecah.
 @freezed
 abstract class UserModel with _$UserModel {
   /// Wajib ada karena kelas ini punya getter kustom di bawah — tanpa
@@ -18,10 +28,11 @@ abstract class UserModel with _$UserModel {
   const UserModel._();
 
   const factory UserModel({
-    @IntJson() required int id,
+    @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) required int id,
     @StringJson() required String phone,
     @StringOrNullJson() String? email,
-    @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+    @StringOrNullJson() @JsonKey(name: 'name', readValue: _readUserName)
+    String? fullName,
 
     /// `BUY_R` (retail) atau `BUY_B` (B2B/kontraktor).
     @StringJson() required String role,
@@ -42,8 +53,14 @@ abstract class UserModel with _$UserModel {
     /// `ACTIVE` atau `SUSPENDED`.
     @StringJson() required String status,
 
-    @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
-    @ServerDateTimeJson() @JsonKey(name: 'updated_at') DateTime? updatedAt,
+    // Backend v2.2 mengganti nama kolom waktu: `created_at`/`updated_at`
+    // HILANG TOTAL dari semua respons, diganti `created_date`/
+    // `modified_date`. Nama Dart-nya ikut diselaraskan supaya tidak ada
+    // celah antara nama field di kode dan di API.
+    @ServerDateTimeJson() @JsonKey(name: 'created_date')
+    DateTime? createdDate,
+    @ServerDateTimeJson() @JsonKey(name: 'modified_date')
+    DateTime? modifiedDate,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
@@ -66,3 +83,14 @@ abstract class UserModel with _$UserModel {
   String get displayName =>
       (fullName != null && fullName!.trim().isNotEmpty) ? fullName! : phone;
 }
+
+/// Membaca id user dari ejaan mana pun yang dipakai backend.
+///
+/// Urutannya sesuai yang paling baru lebih dulu, supaya nilai v2.2 menang
+/// kalau backend suatu saat mengirim keduanya sekaligus.
+Object? _readUserId(Map<dynamic, dynamic> json, String key) =>
+    json['seq'] ?? json['id'] ?? json['user_id'];
+
+/// Membaca nama user dari ejaan mana pun yang dipakai backend.
+Object? _readUserName(Map<dynamic, dynamic> json, String key) =>
+    json['name'] ?? json['full_name'];

@@ -4,6 +4,13 @@
 /// flutter test --platform chrome test/integration/
 /// ```
 ///
+/// Id di sini mengikuti data uji **backend v2.2** (database dibangun ulang,
+/// sehingga seluruh id berubah dari sebelumnya):
+///
+/// * `sku 44` — keramik dengan 3 satuan (pcs 1 / dus 25 / m² 6,25)
+/// * `sku 43..46` — SKU jangkar, masing-masing dijual **dua** toko
+/// * `seller 1` / `seller 2` — Toko dan Distributor, keduanya `VERIFIED`
+///
 /// Peta autentikasi, dibuktikan lewat probe langsung (dokumen API tidak
 /// menyebutnya karena penanda emoji-nya hilang saat di-paste):
 ///
@@ -60,6 +67,9 @@ void main() {
 
       // is_risky dikirim sebagai string "1"/"0", bukan boolean.
       expect(semen.isRisky, isA<bool>());
+
+      // v2.2: kolom waktu bernama created_date, bukan created_at.
+      expect(semen.createdDate, isNotNull);
     });
 
     test('detail memuat children dan attributes tanpa melempar', () async {
@@ -249,15 +259,15 @@ void main() {
     });
 
     test('satu SKU dijual beberapa toko — inti perbandingan harga', () async {
-      // Semen (sku 1) dijual 2 toko menurut data uji.
-      final env = await catalog.offers(skuId: 1);
+      // SKU jangkar 43..46 masing-masing dijual dua toko (data uji v2.2).
+      final env = await catalog.offers(skuId: 44);
       expect(env.data.length, greaterThanOrEqualTo(2));
       expect(env.data.map((o) => o.sellerId).toSet().length,
           greaterThanOrEqualTo(2));
     });
 
-    test('keramik sku 6 punya 3 satuan dengan konversi yang benar', () async {
-      final sku = (await catalog.skuDetail(6)).data;
+    test('keramik sku 44 punya 3 satuan dengan konversi yang benar', () async {
+      final sku = (await catalog.skuDetail(44)).data;
 
       expect(sku.units.length, 3);
       final byName = {for (final u in sku.units) u.unitName: u};
@@ -320,7 +330,7 @@ void main() {
           ? false
           : 'butuh token; diblokir bug header Authorization di native',
       () async {
-      final env = await authedReference.sellerResponseRate(4);
+      final env = await authedReference.sellerResponseRate(1);
       // Tidak melempar; kalau null, badge cukup disembunyikan.
       if (env.data != null) {
         expect(env.data!.hasEnoughData, isA<bool>());
