@@ -23,9 +23,14 @@ mixin _$CatalogHomeState {
   /// [CatalogHomeMode.categoryOffers].
   List<OfferModel> get offers;
 
-  /// Nama SKU per id, untuk menamai penawaran jalur `MASTER` — `OfferModel`
-  /// sendiri tidak membawa nama SKU, hanya `sku_id`.
-  Map<int, SkuModel> get skus;
+  /// Nama & satuan dasar SKU per id, untuk menamai penawaran jalur
+  /// `MASTER` — `OfferModel` sendiri hanya membawa `sku_id`.
+  ///
+  /// [SkuBriefModel], bukan `SkuModel`: diambil lewat satu panggilan
+  /// `GET /sku-master?ids=` yang tidak membawa `units[]`. Grid tidak
+  /// butuh pemilih satuan; halaman detail yang butuh, dan itu memakai
+  /// `GET /sku-master/{id}` terpisah.
+  Map<int, SkuBriefModel> get skus;
 
   /// Ringkasan rating per `offer_id`.
   ///
@@ -47,10 +52,8 @@ mixin _$CatalogHomeState {
   /// tidak hilang hanya karena satu permintaan berikutnya gagal.
   DataError? get error;
 
-  /// Jumlah penawaran yang tersedia di server, dari `meta.total_available`.
-  /// Bisa lebih besar dari panjang [offers] karena harga hanya bisa
-  /// dilengkapi sebagian per muat.
-  int get totalAvailable;
+  /// `meta` dari respons terakhir: `{page, per_page, total, total_pages}`.
+  Map<String, dynamic> get meta;
 
   /// Permintaan selesai tapi hasilnya kosong — beda dari "belum dimuat".
   bool get isEmptyResult;
@@ -83,8 +86,7 @@ mixin _$CatalogHomeState {
             (identical(other.isLoadingOffers, isLoadingOffers) ||
                 other.isLoadingOffers == isLoadingOffers) &&
             (identical(other.error, error) || other.error == error) &&
-            (identical(other.totalAvailable, totalAvailable) ||
-                other.totalAvailable == totalAvailable) &&
+            const DeepCollectionEquality().equals(other.meta, meta) &&
             (identical(other.isEmptyResult, isEmptyResult) ||
                 other.isEmptyResult == isEmptyResult));
   }
@@ -103,12 +105,12 @@ mixin _$CatalogHomeState {
       isLoadingCategories,
       isLoadingOffers,
       error,
-      totalAvailable,
+      const DeepCollectionEquality().hash(meta),
       isEmptyResult);
 
   @override
   String toString() {
-    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, reviews: $reviews, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, totalAvailable: $totalAvailable, isEmptyResult: $isEmptyResult)';
+    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, reviews: $reviews, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, meta: $meta, isEmptyResult: $isEmptyResult)';
   }
 }
 
@@ -122,7 +124,7 @@ abstract mixin class $CatalogHomeStateCopyWith<$Res> {
       {CatalogHomeMode mode,
       List<CategoryModel> categories,
       List<OfferModel> offers,
-      Map<int, SkuModel> skus,
+      Map<int, SkuBriefModel> skus,
       Map<int, ReviewSummaryModel> reviews,
       Map<int, String> sellers,
       CategoryModel? activeCategory,
@@ -130,7 +132,7 @@ abstract mixin class $CatalogHomeStateCopyWith<$Res> {
       bool isLoadingCategories,
       bool isLoadingOffers,
       DataError? error,
-      int totalAvailable,
+      Map<String, dynamic> meta,
       bool isEmptyResult});
 
   $CategoryModelCopyWith<$Res>? get activeCategory;
@@ -160,7 +162,7 @@ class _$CatalogHomeStateCopyWithImpl<$Res>
     Object? isLoadingCategories = null,
     Object? isLoadingOffers = null,
     Object? error = freezed,
-    Object? totalAvailable = null,
+    Object? meta = null,
     Object? isEmptyResult = null,
   }) {
     return _then(_self.copyWith(
@@ -179,7 +181,7 @@ class _$CatalogHomeStateCopyWithImpl<$Res>
       skus: null == skus
           ? _self.skus
           : skus // ignore: cast_nullable_to_non_nullable
-              as Map<int, SkuModel>,
+              as Map<int, SkuBriefModel>,
       reviews: null == reviews
           ? _self.reviews
           : reviews // ignore: cast_nullable_to_non_nullable
@@ -208,10 +210,10 @@ class _$CatalogHomeStateCopyWithImpl<$Res>
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
               as DataError?,
-      totalAvailable: null == totalAvailable
-          ? _self.totalAvailable
-          : totalAvailable // ignore: cast_nullable_to_non_nullable
-              as int,
+      meta: null == meta
+          ? _self.meta
+          : meta // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
       isEmptyResult: null == isEmptyResult
           ? _self.isEmptyResult
           : isEmptyResult // ignore: cast_nullable_to_non_nullable
@@ -329,7 +331,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             CatalogHomeMode mode,
             List<CategoryModel> categories,
             List<OfferModel> offers,
-            Map<int, SkuModel> skus,
+            Map<int, SkuBriefModel> skus,
             Map<int, ReviewSummaryModel> reviews,
             Map<int, String> sellers,
             CategoryModel? activeCategory,
@@ -337,7 +339,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             bool isLoadingCategories,
             bool isLoadingOffers,
             DataError? error,
-            int totalAvailable,
+            Map<String, dynamic> meta,
             bool isEmptyResult)?
         $default, {
     required TResult orElse(),
@@ -357,7 +359,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.isLoadingCategories,
             _that.isLoadingOffers,
             _that.error,
-            _that.totalAvailable,
+            _that.meta,
             _that.isEmptyResult);
       case _:
         return orElse();
@@ -383,7 +385,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             CatalogHomeMode mode,
             List<CategoryModel> categories,
             List<OfferModel> offers,
-            Map<int, SkuModel> skus,
+            Map<int, SkuBriefModel> skus,
             Map<int, ReviewSummaryModel> reviews,
             Map<int, String> sellers,
             CategoryModel? activeCategory,
@@ -391,7 +393,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             bool isLoadingCategories,
             bool isLoadingOffers,
             DataError? error,
-            int totalAvailable,
+            Map<String, dynamic> meta,
             bool isEmptyResult)
         $default,
   ) {
@@ -410,7 +412,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.isLoadingCategories,
             _that.isLoadingOffers,
             _that.error,
-            _that.totalAvailable,
+            _that.meta,
             _that.isEmptyResult);
     }
   }
@@ -433,7 +435,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             CatalogHomeMode mode,
             List<CategoryModel> categories,
             List<OfferModel> offers,
-            Map<int, SkuModel> skus,
+            Map<int, SkuBriefModel> skus,
             Map<int, ReviewSummaryModel> reviews,
             Map<int, String> sellers,
             CategoryModel? activeCategory,
@@ -441,7 +443,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             bool isLoadingCategories,
             bool isLoadingOffers,
             DataError? error,
-            int totalAvailable,
+            Map<String, dynamic> meta,
             bool isEmptyResult)?
         $default,
   ) {
@@ -460,7 +462,7 @@ extension CatalogHomeStatePatterns on CatalogHomeState {
             _that.isLoadingCategories,
             _that.isLoadingOffers,
             _that.error,
-            _that.totalAvailable,
+            _that.meta,
             _that.isEmptyResult);
       case _:
         return null;
@@ -475,7 +477,7 @@ class _CatalogHomeState extends CatalogHomeState {
       {this.mode = CatalogHomeMode.browse,
       final List<CategoryModel> categories = const <CategoryModel>[],
       final List<OfferModel> offers = const <OfferModel>[],
-      final Map<int, SkuModel> skus = const <int, SkuModel>{},
+      final Map<int, SkuBriefModel> skus = const <int, SkuBriefModel>{},
       final Map<int, ReviewSummaryModel> reviews =
           const <int, ReviewSummaryModel>{},
       final Map<int, String> sellers = const <int, String>{},
@@ -484,13 +486,14 @@ class _CatalogHomeState extends CatalogHomeState {
       this.isLoadingCategories = false,
       this.isLoadingOffers = false,
       this.error,
-      this.totalAvailable = 0,
+      final Map<String, dynamic> meta = const <String, dynamic>{},
       this.isEmptyResult = false})
       : _categories = categories,
         _offers = offers,
         _skus = skus,
         _reviews = reviews,
         _sellers = sellers,
+        _meta = meta,
         super._();
 
   @override
@@ -523,15 +526,25 @@ class _CatalogHomeState extends CatalogHomeState {
     return EqualUnmodifiableListView(_offers);
   }
 
-  /// Nama SKU per id, untuk menamai penawaran jalur `MASTER` — `OfferModel`
-  /// sendiri tidak membawa nama SKU, hanya `sku_id`.
-  final Map<int, SkuModel> _skus;
+  /// Nama & satuan dasar SKU per id, untuk menamai penawaran jalur
+  /// `MASTER` — `OfferModel` sendiri hanya membawa `sku_id`.
+  ///
+  /// [SkuBriefModel], bukan `SkuModel`: diambil lewat satu panggilan
+  /// `GET /sku-master?ids=` yang tidak membawa `units[]`. Grid tidak
+  /// butuh pemilih satuan; halaman detail yang butuh, dan itu memakai
+  /// `GET /sku-master/{id}` terpisah.
+  final Map<int, SkuBriefModel> _skus;
 
-  /// Nama SKU per id, untuk menamai penawaran jalur `MASTER` — `OfferModel`
-  /// sendiri tidak membawa nama SKU, hanya `sku_id`.
+  /// Nama & satuan dasar SKU per id, untuk menamai penawaran jalur
+  /// `MASTER` — `OfferModel` sendiri hanya membawa `sku_id`.
+  ///
+  /// [SkuBriefModel], bukan `SkuModel`: diambil lewat satu panggilan
+  /// `GET /sku-master?ids=` yang tidak membawa `units[]`. Grid tidak
+  /// butuh pemilih satuan; halaman detail yang butuh, dan itu memakai
+  /// `GET /sku-master/{id}` terpisah.
   @override
   @JsonKey()
-  Map<int, SkuModel> get skus {
+  Map<int, SkuBriefModel> get skus {
     if (_skus is EqualUnmodifiableMapView) return _skus;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(_skus);
@@ -590,12 +603,17 @@ class _CatalogHomeState extends CatalogHomeState {
   @override
   final DataError? error;
 
-  /// Jumlah penawaran yang tersedia di server, dari `meta.total_available`.
-  /// Bisa lebih besar dari panjang [offers] karena harga hanya bisa
-  /// dilengkapi sebagian per muat.
+  /// `meta` dari respons terakhir: `{page, per_page, total, total_pages}`.
+  final Map<String, dynamic> _meta;
+
+  /// `meta` dari respons terakhir: `{page, per_page, total, total_pages}`.
   @override
   @JsonKey()
-  final int totalAvailable;
+  Map<String, dynamic> get meta {
+    if (_meta is EqualUnmodifiableMapView) return _meta;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_meta);
+  }
 
   /// Permintaan selesai tapi hasilnya kosong — beda dari "belum dimuat".
   @override
@@ -630,8 +648,7 @@ class _CatalogHomeState extends CatalogHomeState {
             (identical(other.isLoadingOffers, isLoadingOffers) ||
                 other.isLoadingOffers == isLoadingOffers) &&
             (identical(other.error, error) || other.error == error) &&
-            (identical(other.totalAvailable, totalAvailable) ||
-                other.totalAvailable == totalAvailable) &&
+            const DeepCollectionEquality().equals(other._meta, _meta) &&
             (identical(other.isEmptyResult, isEmptyResult) ||
                 other.isEmptyResult == isEmptyResult));
   }
@@ -650,12 +667,12 @@ class _CatalogHomeState extends CatalogHomeState {
       isLoadingCategories,
       isLoadingOffers,
       error,
-      totalAvailable,
+      const DeepCollectionEquality().hash(_meta),
       isEmptyResult);
 
   @override
   String toString() {
-    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, reviews: $reviews, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, totalAvailable: $totalAvailable, isEmptyResult: $isEmptyResult)';
+    return 'CatalogHomeState(mode: $mode, categories: $categories, offers: $offers, skus: $skus, reviews: $reviews, sellers: $sellers, activeCategory: $activeCategory, keyword: $keyword, isLoadingCategories: $isLoadingCategories, isLoadingOffers: $isLoadingOffers, error: $error, meta: $meta, isEmptyResult: $isEmptyResult)';
   }
 }
 
@@ -671,7 +688,7 @@ abstract mixin class _$CatalogHomeStateCopyWith<$Res>
       {CatalogHomeMode mode,
       List<CategoryModel> categories,
       List<OfferModel> offers,
-      Map<int, SkuModel> skus,
+      Map<int, SkuBriefModel> skus,
       Map<int, ReviewSummaryModel> reviews,
       Map<int, String> sellers,
       CategoryModel? activeCategory,
@@ -679,7 +696,7 @@ abstract mixin class _$CatalogHomeStateCopyWith<$Res>
       bool isLoadingCategories,
       bool isLoadingOffers,
       DataError? error,
-      int totalAvailable,
+      Map<String, dynamic> meta,
       bool isEmptyResult});
 
   @override
@@ -710,7 +727,7 @@ class __$CatalogHomeStateCopyWithImpl<$Res>
     Object? isLoadingCategories = null,
     Object? isLoadingOffers = null,
     Object? error = freezed,
-    Object? totalAvailable = null,
+    Object? meta = null,
     Object? isEmptyResult = null,
   }) {
     return _then(_CatalogHomeState(
@@ -729,7 +746,7 @@ class __$CatalogHomeStateCopyWithImpl<$Res>
       skus: null == skus
           ? _self._skus
           : skus // ignore: cast_nullable_to_non_nullable
-              as Map<int, SkuModel>,
+              as Map<int, SkuBriefModel>,
       reviews: null == reviews
           ? _self._reviews
           : reviews // ignore: cast_nullable_to_non_nullable
@@ -758,10 +775,10 @@ class __$CatalogHomeStateCopyWithImpl<$Res>
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
               as DataError?,
-      totalAvailable: null == totalAvailable
-          ? _self.totalAvailable
-          : totalAvailable // ignore: cast_nullable_to_non_nullable
-              as int,
+      meta: null == meta
+          ? _self._meta
+          : meta // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
       isEmptyResult: null == isEmptyResult
           ? _self.isEmptyResult
           : isEmptyResult // ignore: cast_nullable_to_non_nullable

@@ -96,3 +96,25 @@ abstract class SkuModel with _$SkuModel {
 
   bool get isActive => status == 'ACTIVE';
 }
+
+/// Info SKU ringkas dari `GET /sku-master?ids=1,2,3` (backend v2.4).
+///
+/// Sengaja **model terpisah**, bukan [SkuModel] yang sebagian terisi: respons
+/// bulk hanya membawa `{id, name, base_unit, weight_kg}` dan **tidak** membawa
+/// `units[]`. Mengembalikannya sebagai [SkuModel] berarti `units` kosong,
+/// yang tidak bisa dibedakan dari "SKU ini memang tanpa satuan majemuk" —
+/// dan pemilih satuan akan hilang tanpa jejak.
+///
+/// Untuk `units[]` tetap pakai [SkuModel] lewat `GET /sku-master/{id}`.
+@freezed
+abstract class SkuBriefModel with _$SkuBriefModel {
+  const factory SkuBriefModel({
+    @IntJson() required int id,
+    @StringJson() required String name,
+    @StringOrNullJson() @JsonKey(name: 'base_unit') String? baseUnit,
+    @DoubleOrNullJson() @JsonKey(name: 'weight_kg') double? weightKg,
+  }) = _SkuBriefModel;
+
+  factory SkuBriefModel.fromJson(Map<String, dynamic> json) =>
+      _$SkuBriefModelFromJson(json);
+}

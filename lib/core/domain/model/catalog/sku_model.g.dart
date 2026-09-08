@@ -83,3 +83,19 @@ Map<String, dynamic> _$SkuModelToJson(_SkuModel instance) => <String, dynamic>{
       'units': instance.units,
       'attributes': instance.attributes,
     };
+
+_SkuBriefModel _$SkuBriefModelFromJson(Map<String, dynamic> json) =>
+    _SkuBriefModel(
+      id: const IntJson().fromJson(json['id']),
+      name: const StringJson().fromJson(json['name']),
+      baseUnit: const StringOrNullJson().fromJson(json['base_unit']),
+      weightKg: const DoubleOrNullJson().fromJson(json['weight_kg']),
+    );
+
+Map<String, dynamic> _$SkuBriefModelToJson(_SkuBriefModel instance) =>
+    <String, dynamic>{
+      'id': const IntJson().toJson(instance.id),
+      'name': const StringJson().toJson(instance.name),
+      'base_unit': const StringOrNullJson().toJson(instance.baseUnit),
+      'weight_kg': const DoubleOrNullJson().toJson(instance.weightKg),
+    };

@@ -31,6 +31,8 @@ _FleetTypeModel _$FleetTypeModelFromJson(Map<String, dynamic> json) =>
       name: const StringJson().fromJson(json['name']),
       capacityKgDesc:
           const StringOrNullJson().fromJson(json['capacity_kg_desc']),
+      maxPayloadKg: const DoubleOrNullJson().fromJson(json['max_payload_kg']),
+      sizeRank: const IntOrNullJson().fromJson(json['size_rank']),
     );
 
 Map<String, dynamic> _$FleetTypeModelToJson(_FleetTypeModel instance) =>
@@ -39,6 +41,8 @@ Map<String, dynamic> _$FleetTypeModelToJson(_FleetTypeModel instance) =>
       'name': const StringJson().toJson(instance.name),
       'capacity_kg_desc':
           const StringOrNullJson().toJson(instance.capacityKgDesc),
+      'max_payload_kg': const DoubleOrNullJson().toJson(instance.maxPayloadKg),
+      'size_rank': const IntOrNullJson().toJson(instance.sizeRank),
     };
 
 _ConfigParameterModel _$ConfigParameterModelFromJson(

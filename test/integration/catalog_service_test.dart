@@ -237,7 +237,7 @@ void main() {
       expect(env.data.first.ongkirMulaiDari, isNotNull);
     });
 
-    test('withPriceTiers melengkapi harga tanpa menghapus info toko',
+    test('withPriceTiers memakai SATU panggilan bulk, bukan N detail',
         () async {
       final env = await catalog.search('semen');
       final enriched = await catalog.withPriceTiers(env.data);
@@ -366,6 +366,110 @@ void main() {
 
       final best = await catalog.bestSellers(limit: 5);
       expect(best.data, isA<List>());
+    });
+  });
+
+  group('v2.4: paginasi & bulk lookup', () {
+    test('GET /offers DIPAGINASI — meta wajib dibaca', () async {
+      final env = await catalog.offers();
+
+      // Sebelum v2.4 endpoint ini mengembalikan seluruh penawaran aktif.
+      // Sekarang default 20 per halaman, DAN TIDAK ADA ERROR APA PUN kalau
+      // kode memperlakukannya sebagai daftar lengkap — katalog cuma terlihat
+      // lebih sedikit. Test ini memaku keberadaan meta supaya kegagalan
+      // senyap itu tidak bisa terulang.
+      expect(env.meta['page'], isNotNull);
+      expect(env.meta['per_page'], isNotNull);
+      expect(env.meta['total'], isNotNull);
+      expect(env.meta['total_pages'], isNotNull);
+
+      expect(env.data.length, lessThanOrEqualTo(20));
+      expect(env.meta['total'], greaterThan(env.data.length),
+          reason: 'satu respons TIDAK berisi katalog lengkap');
+    });
+
+    test('page dan per_page dihormati server', () async {
+      final first = await catalog.offers(page: 1, perPage: 5);
+      expect(first.data, hasLength(5));
+      expect(first.meta['per_page'], 5);
+
+      final second = await catalog.offers(page: 2, perPage: 5);
+      expect(second.meta['page'], 2);
+
+      // Halaman berbeda harus berisi penawaran berbeda.
+      final firstIds = first.data.map((o) => o.id).toSet();
+      final secondIds = second.data.map((o) => o.id).toSet();
+      expect(firstIds.intersection(secondIds), isEmpty);
+    });
+
+    test('GET /offers/prices mengembalikan harga ber-key offer_id', () async {
+      final page = await catalog.offers(perPage: 5);
+      final ids = page.data.map((o) => o.id).toList();
+
+      final env = await catalog.prices(ids);
+
+      expect(env.data.keys, containsAll(ids));
+      expect(env.data.values.every((p) => p > 0), isTrue);
+    });
+
+    test('GET /sku-master?ids= mengembalikan nama massal', () async {
+      final env = await catalog.skuBriefs([1, 2]);
+
+      expect(env.data.keys, containsAll([1, 2]));
+      expect(env.data[1]!.name, isNotEmpty);
+      expect(env.data[1]!.baseUnit, isNotEmpty);
+      // Respons bulk TIDAK membawa units[] — itu sebabnya SkuBriefModel
+      // dipisah dari SkuModel.
+      expect(env.data[1]!.weightKg, isNotNull);
+    });
+
+    test('id kosong tidak memicu request pada kedua endpoint bulk', () async {
+      expect((await catalog.prices(const [])).data, isEmpty);
+      expect((await catalog.skuBriefs(const [])).data, isEmpty);
+    });
+
+    test('satu halaman grid butuh 4 panggilan, bukan 3xN', () async {
+      // Pola yang disarankan tim backend, diuji utuh.
+      final page = await catalog.offers(categoryId: 1, page: 1, perPage: 10);
+      final offerIds = page.data.map((o) => o.id).toList();
+      final skuIds = page.data
+          .where((o) => o.skuId != null)
+          .map((o) => o.skuId!)
+          .toList();
+
+      final prices = (await catalog.prices(offerIds)).data;
+      final names = (await catalog.skuBriefs(skuIds)).data;
+      final ratings = (await catalog.reviewsSummary(offerIds)).data;
+
+      // Empat panggilan total, dan cukup untuk merender seluruh kartu.
+      for (final offer in page.data) {
+        expect(prices[offer.id], isNotNull);
+        if (offer.skuId != null && !offer.isFreeform) {
+          expect(names[offer.skuId!]?.name, isNotEmpty);
+        }
+        expect(ratings[offer.id], isNotNull);
+      }
+    });
+
+    test('fleet-types membawa kapasitas & rank (jangan di-hardcode)',
+        () async {
+      final env = await reference.fleetTypes();
+      final byCode = {for (final f in env.data) f.code: f};
+
+      expect(byCode['MOTOR']!.maxPayloadKg, isNotNull);
+      expect(byCode['TRONTON']!.maxPayloadKg,
+          greaterThan(byCode['MOTOR']!.maxPayloadKg!));
+      expect(byCode['MOTOR']!.sizeRank, lessThan(byCode['TRONTON']!.sizeRank!));
+    });
+
+    test('penawaran membawa penanda sampel', () async {
+      final env = await catalog.offers(perPage: 50);
+      // is_sample dikirim "1"/"0"; yang penting terbaca sebagai bool dan
+      // batas qty-nya ikut terhitung.
+      for (final o in env.data) {
+        expect(o.isSample, isA<bool>());
+        expect(o.maxSelectableQty, o.isSample ? 2 : isNull);
+      }
     });
   });
 

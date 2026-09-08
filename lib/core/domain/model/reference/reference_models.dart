@@ -48,6 +48,17 @@ abstract class FleetTypeModel with _$FleetTypeModel {
     @StringOrNullJson()
     @JsonKey(name: 'capacity_kg_desc')
     String? capacityKgDesc,
+
+    /// Kapasitas muatan, dipakai backend untuk memblokir pengiriman yang
+    /// melebihi kapasitas (`FLEET_PAYLOAD_EXCEEDED`).
+    ///
+    /// **Jangan di-hardcode di aplikasi** — nilainya masih DRAFT dan bisa
+    /// diubah owner. Ambil dari endpoint ini.
+    @DoubleOrNullJson() @JsonKey(name: 'max_payload_kg') double? maxPayloadKg,
+
+    /// Peringkat ukuran armada (1 = motor, 6 = tronton). Dipakai backend
+    /// membandingkan dengan `access_type` alamat.
+    @IntOrNullJson() @JsonKey(name: 'size_rank') int? sizeRank,
   }) = _FleetTypeModel;
 
   factory FleetTypeModel.fromJson(Map<String, dynamic> json) =>

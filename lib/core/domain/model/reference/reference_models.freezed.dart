@@ -475,6 +475,21 @@ mixin _$FleetTypeModel {
   @JsonKey(name: 'capacity_kg_desc')
   String? get capacityKgDesc;
 
+  /// Kapasitas muatan, dipakai backend untuk memblokir pengiriman yang
+  /// melebihi kapasitas (`FLEET_PAYLOAD_EXCEEDED`).
+  ///
+  /// **Jangan di-hardcode di aplikasi** — nilainya masih DRAFT dan bisa
+  /// diubah owner. Ambil dari endpoint ini.
+  @DoubleOrNullJson()
+  @JsonKey(name: 'max_payload_kg')
+  double? get maxPayloadKg;
+
+  /// Peringkat ukuran armada (1 = motor, 6 = tronton). Dipakai backend
+  /// membandingkan dengan `access_type` alamat.
+  @IntOrNullJson()
+  @JsonKey(name: 'size_rank')
+  int? get sizeRank;
+
   /// Create a copy of FleetTypeModel
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -494,16 +509,21 @@ mixin _$FleetTypeModel {
             (identical(other.code, code) || other.code == code) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.capacityKgDesc, capacityKgDesc) ||
-                other.capacityKgDesc == capacityKgDesc));
+                other.capacityKgDesc == capacityKgDesc) &&
+            (identical(other.maxPayloadKg, maxPayloadKg) ||
+                other.maxPayloadKg == maxPayloadKg) &&
+            (identical(other.sizeRank, sizeRank) ||
+                other.sizeRank == sizeRank));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, code, name, capacityKgDesc);
+  int get hashCode => Object.hash(
+      runtimeType, code, name, capacityKgDesc, maxPayloadKg, sizeRank);
 
   @override
   String toString() {
-    return 'FleetTypeModel(code: $code, name: $name, capacityKgDesc: $capacityKgDesc)';
+    return 'FleetTypeModel(code: $code, name: $name, capacityKgDesc: $capacityKgDesc, maxPayloadKg: $maxPayloadKg, sizeRank: $sizeRank)';
   }
 }
 
@@ -518,7 +538,9 @@ abstract mixin class $FleetTypeModelCopyWith<$Res> {
       @StringJson() String name,
       @StringOrNullJson()
       @JsonKey(name: 'capacity_kg_desc')
-      String? capacityKgDesc});
+      String? capacityKgDesc,
+      @DoubleOrNullJson() @JsonKey(name: 'max_payload_kg') double? maxPayloadKg,
+      @IntOrNullJson() @JsonKey(name: 'size_rank') int? sizeRank});
 }
 
 /// @nodoc
@@ -537,6 +559,8 @@ class _$FleetTypeModelCopyWithImpl<$Res>
     Object? code = null,
     Object? name = null,
     Object? capacityKgDesc = freezed,
+    Object? maxPayloadKg = freezed,
+    Object? sizeRank = freezed,
   }) {
     return _then(_self.copyWith(
       code: null == code
@@ -551,6 +575,14 @@ class _$FleetTypeModelCopyWithImpl<$Res>
           ? _self.capacityKgDesc
           : capacityKgDesc // ignore: cast_nullable_to_non_nullable
               as String?,
+      maxPayloadKg: freezed == maxPayloadKg
+          ? _self.maxPayloadKg
+          : maxPayloadKg // ignore: cast_nullable_to_non_nullable
+              as double?,
+      sizeRank: freezed == sizeRank
+          ? _self.sizeRank
+          : sizeRank // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -653,14 +685,19 @@ extension FleetTypeModelPatterns on FleetTypeModel {
             @StringJson() String name,
             @StringOrNullJson()
             @JsonKey(name: 'capacity_kg_desc')
-            String? capacityKgDesc)?
+            String? capacityKgDesc,
+            @DoubleOrNullJson()
+            @JsonKey(name: 'max_payload_kg')
+            double? maxPayloadKg,
+            @IntOrNullJson() @JsonKey(name: 'size_rank') int? sizeRank)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _FleetTypeModel() when $default != null:
-        return $default(_that.code, _that.name, _that.capacityKgDesc);
+        return $default(_that.code, _that.name, _that.capacityKgDesc,
+            _that.maxPayloadKg, _that.sizeRank);
       case _:
         return orElse();
     }
@@ -686,13 +723,18 @@ extension FleetTypeModelPatterns on FleetTypeModel {
             @StringJson() String name,
             @StringOrNullJson()
             @JsonKey(name: 'capacity_kg_desc')
-            String? capacityKgDesc)
+            String? capacityKgDesc,
+            @DoubleOrNullJson()
+            @JsonKey(name: 'max_payload_kg')
+            double? maxPayloadKg,
+            @IntOrNullJson() @JsonKey(name: 'size_rank') int? sizeRank)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _FleetTypeModel():
-        return $default(_that.code, _that.name, _that.capacityKgDesc);
+        return $default(_that.code, _that.name, _that.capacityKgDesc,
+            _that.maxPayloadKg, _that.sizeRank);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -717,13 +759,18 @@ extension FleetTypeModelPatterns on FleetTypeModel {
             @StringJson() String name,
             @StringOrNullJson()
             @JsonKey(name: 'capacity_kg_desc')
-            String? capacityKgDesc)?
+            String? capacityKgDesc,
+            @DoubleOrNullJson()
+            @JsonKey(name: 'max_payload_kg')
+            double? maxPayloadKg,
+            @IntOrNullJson() @JsonKey(name: 'size_rank') int? sizeRank)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _FleetTypeModel() when $default != null:
-        return $default(_that.code, _that.name, _that.capacityKgDesc);
+        return $default(_that.code, _that.name, _that.capacityKgDesc,
+            _that.maxPayloadKg, _that.sizeRank);
       case _:
         return null;
     }
@@ -738,7 +785,9 @@ class _FleetTypeModel implements FleetTypeModel {
       @StringJson() required this.name,
       @StringOrNullJson()
       @JsonKey(name: 'capacity_kg_desc')
-      this.capacityKgDesc});
+      this.capacityKgDesc,
+      @DoubleOrNullJson() @JsonKey(name: 'max_payload_kg') this.maxPayloadKg,
+      @IntOrNullJson() @JsonKey(name: 'size_rank') this.sizeRank});
   factory _FleetTypeModel.fromJson(Map<String, dynamic> json) =>
       _$FleetTypeModelFromJson(json);
 
@@ -754,6 +803,23 @@ class _FleetTypeModel implements FleetTypeModel {
   @StringOrNullJson()
   @JsonKey(name: 'capacity_kg_desc')
   final String? capacityKgDesc;
+
+  /// Kapasitas muatan, dipakai backend untuk memblokir pengiriman yang
+  /// melebihi kapasitas (`FLEET_PAYLOAD_EXCEEDED`).
+  ///
+  /// **Jangan di-hardcode di aplikasi** — nilainya masih DRAFT dan bisa
+  /// diubah owner. Ambil dari endpoint ini.
+  @override
+  @DoubleOrNullJson()
+  @JsonKey(name: 'max_payload_kg')
+  final double? maxPayloadKg;
+
+  /// Peringkat ukuran armada (1 = motor, 6 = tronton). Dipakai backend
+  /// membandingkan dengan `access_type` alamat.
+  @override
+  @IntOrNullJson()
+  @JsonKey(name: 'size_rank')
+  final int? sizeRank;
 
   /// Create a copy of FleetTypeModel
   /// with the given fields replaced by the non-null parameter values.
@@ -778,16 +844,21 @@ class _FleetTypeModel implements FleetTypeModel {
             (identical(other.code, code) || other.code == code) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.capacityKgDesc, capacityKgDesc) ||
-                other.capacityKgDesc == capacityKgDesc));
+                other.capacityKgDesc == capacityKgDesc) &&
+            (identical(other.maxPayloadKg, maxPayloadKg) ||
+                other.maxPayloadKg == maxPayloadKg) &&
+            (identical(other.sizeRank, sizeRank) ||
+                other.sizeRank == sizeRank));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, code, name, capacityKgDesc);
+  int get hashCode => Object.hash(
+      runtimeType, code, name, capacityKgDesc, maxPayloadKg, sizeRank);
 
   @override
   String toString() {
-    return 'FleetTypeModel(code: $code, name: $name, capacityKgDesc: $capacityKgDesc)';
+    return 'FleetTypeModel(code: $code, name: $name, capacityKgDesc: $capacityKgDesc, maxPayloadKg: $maxPayloadKg, sizeRank: $sizeRank)';
   }
 }
 
@@ -804,7 +875,9 @@ abstract mixin class _$FleetTypeModelCopyWith<$Res>
       @StringJson() String name,
       @StringOrNullJson()
       @JsonKey(name: 'capacity_kg_desc')
-      String? capacityKgDesc});
+      String? capacityKgDesc,
+      @DoubleOrNullJson() @JsonKey(name: 'max_payload_kg') double? maxPayloadKg,
+      @IntOrNullJson() @JsonKey(name: 'size_rank') int? sizeRank});
 }
 
 /// @nodoc
@@ -823,6 +896,8 @@ class __$FleetTypeModelCopyWithImpl<$Res>
     Object? code = null,
     Object? name = null,
     Object? capacityKgDesc = freezed,
+    Object? maxPayloadKg = freezed,
+    Object? sizeRank = freezed,
   }) {
     return _then(_FleetTypeModel(
       code: null == code
@@ -837,6 +912,14 @@ class __$FleetTypeModelCopyWithImpl<$Res>
           ? _self.capacityKgDesc
           : capacityKgDesc // ignore: cast_nullable_to_non_nullable
               as String?,
+      maxPayloadKg: freezed == maxPayloadKg
+          ? _self.maxPayloadKg
+          : maxPayloadKg // ignore: cast_nullable_to_non_nullable
+              as double?,
+      sizeRank: freezed == sizeRank
+          ? _self.sizeRank
+          : sizeRank // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }

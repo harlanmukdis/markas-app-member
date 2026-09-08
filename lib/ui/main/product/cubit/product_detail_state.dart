@@ -45,6 +45,16 @@ sealed class ProductDetailState with _$ProductDetailState {
 
   bool get isReady => !isLoading && offer != null;
 
+  /// Penawaran sampel — qty dibatasi 2 pcs per transaksi (ORD-16), berlaku
+  /// juga untuk pembeli B2B.
+  bool get isSample => offer?.isSample ?? false;
+
+  /// Qty sudah menyentuh batas sampel, jadi tombol tambah harus mati.
+  bool get atSampleLimit {
+    final max = offer?.maxSelectableQty;
+    return max != null && qty >= max;
+  }
+
   String get title {
     if (offer?.isFreeform == true) {
       return offer?.freeformName ?? 'Barang tanpa nama';

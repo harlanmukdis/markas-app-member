@@ -109,36 +109,37 @@ class CatalogService {
     return result;
   }
 
-  /// Beberapa SKU sekaligus, dipotong jadi batch.
+  /// Beberapa SKU sekaligus.
   ///
-  /// Dipotong dengan sengaja: menembakkan `Future.wait` atas 50 id akan
-  /// membuka 50 koneksi bersamaan dan bisa menjatuhkan server dev. Yang sudah
-  /// ada di cache tidak diminta lagi.
-  Future<Map<int, SkuModel>> skusByIds(
-    Iterable<int> ids, {
-    int batchSize = 6,
-  }) async {
+  /// Sejak backend v2.4 memakai `GET /sku-master?ids=` — **satu** panggilan,
+  /// bukan satu per id dalam batch seperti sebelumnya. Yang sudah ada di
+  /// cache detail dipakai apa adanya supaya `units[]`-nya tidak hilang.
+  Future<Map<int, SkuBriefModel>> skusByIds(Iterable<int> ids) async {
     final wanted = ids.toSet();
-    final missing = wanted.where((id) => !_skuCache.containsKey(id)).toList();
+    if (wanted.isEmpty) return const {};
 
-    for (var i = 0; i < missing.length; i += batchSize) {
-      final batch = missing.skip(i).take(batchSize);
-      await Future.wait(
-        batch.map((id) async {
-          try {
-            await skuDetail(id);
-          } on ApiException {
-            // Satu SKU yang hilang tidak boleh menggagalkan seluruh batch —
-            // pemanggil melihatnya sebagai id yang tidak ada di hasil.
-          }
-        }),
-      );
-    }
-
-    return {
+    final fromCache = <int, SkuBriefModel>{
       for (final id in wanted)
-        if (_skuCache[id] != null) id: _skuCache[id]!,
+        if (_skuCache[id] != null)
+          id: SkuBriefModel(
+            id: id,
+            name: _skuCache[id]!.name,
+            baseUnit: _skuCache[id]!.baseUnit,
+            weightKg: _skuCache[id]!.weightKg,
+          ),
     };
+
+    final missing = wanted.difference(fromCache.keys.toSet());
+    if (missing.isEmpty) return fromCache;
+
+    try {
+      final fetched = await skuBriefs(missing);
+      return {...fromCache, ...fetched.data};
+    } on ApiException {
+      // Nama SKU yang gagal diambil membuat kartu memakai label cadangan,
+      // bukan menggagalkan seluruh daftar.
+      return fromCache;
+    }
   }
 
   /// `GET /offers` — penawaran **ACTIVE**, disaring per SKU, per toko, atau
@@ -153,9 +154,22 @@ class CatalogService {
   /// > Info toko dan ongkir (`seller_name`, `ongkir_mulai_dari`) juga tidak
   /// > ada di sini — hanya `GET /search` yang membawanya.
   ///
-  /// **Tanpa filter apa pun, endpoint ini mengembalikan seluruh penawaran
-  /// aktif** — sudah diverifikasi (10 penawaran). Itu yang dipakai Home
-  /// untuk menampilkan katalog "Semua" tanpa perlu kata kunci.
+  /// Tanpa filter apa pun, endpoint ini mengembalikan katalog lengkap —
+  /// itu yang dipakai Home untuk daftar "Semua" tanpa perlu kata kunci.
+  ///
+  /// > **DIPAGINASI sejak backend v2.4**, dan ini **gagal secara senyap**:
+  /// > sebelumnya seluruh penawaran aktif dikembalikan sekaligus, sekarang
+  /// > hanya [perPage] pertama (default server 20, maksimum 100) **tanpa
+  /// > error apa pun**. Kode yang menganggap `data` berisi daftar lengkap
+  /// > cuma menampilkan lebih sedikit produk dan tidak ada yang gagal.
+  /// >
+  /// > `meta` membawa `{page, per_page, total, total_pages}` — pakai itu
+  /// > untuk paginasi, jangan pernah menganggap satu respons sudah lengkap.
+  /// >
+  /// > Paginasi ini **hanya untuk pemanggil pembeli/publik**. Token berperan
+  /// > `SEL` masuk ke cabang lain yang tidak dipaginasi dan tidak membawa
+  /// > `meta` — tidak relevan untuk aplikasi member, tapi jangan sampai pola
+  /// > ini disalin apa adanya ke aplikasi toko.
   Future<ApiEnvelope<List<OfferModel>>> offers({
     int? skuId,
     int? sellerId,
@@ -165,6 +179,8 @@ class CatalogService {
     int? priceMax,
     int? minRating,
     OfferSort? sort,
+    int? page,
+    int? perPage,
   }) {
     return _list(
       path: '/offers',
@@ -177,10 +193,84 @@ class CatalogService {
         if (priceMax != null) 'price_max': priceMax,
         if (minRating != null) 'min_rating': minRating,
         if (sort != null) 'sort': sort.wireValue,
+        if (page != null) 'page': page,
+        if (perPage != null) 'per_page': perPage,
       },
       fromJson: OfferModel.fromJson,
       context: 'GET /offers',
     );
+  }
+
+  /// `GET /offers/prices?ids=` — harga tier `RETAIL` termurah per penawaran,
+  /// **satu panggilan untuk banyak id** (backend v2.4).
+  ///
+  /// Ini yang menggantikan pelengkapan harga lewat `GET /offers/{id}` satu
+  /// per satu. Definisi harganya sama dengan yang dipakai `facets()` dan
+  /// filter `price_min`/`price_max`, jadi angka di kartu konsisten dengan
+  /// filternya.
+  ///
+  /// Respons berbentuk objek ber-key `offer_id`, bukan array.
+  Future<ApiEnvelope<Map<int, int>>> prices(Iterable<int> offerIds) async {
+    const context = 'GET /offers/prices';
+    final ids = offerIds.toSet().toList();
+    if (ids.isEmpty) return const ApiEnvelope(data: {}, statusCode: 200);
+
+    try {
+      final response = await _dio.get<dynamic>(
+        '/offers/prices',
+        queryParameters: {'ids': ids.join(',')},
+      );
+      return parseEnvelope(
+        response,
+        (raw) {
+          if (raw is! Map) return <int, int>{};
+          return {
+            for (final e in raw.entries)
+              if (asIntOrNull(e.key) != null)
+                asIntOrNull(e.key)!: asInt(e.value),
+          };
+        },
+        context: context,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `GET /sku-master?ids=` — nama & satuan dasar SKU, **satu panggilan untuk
+  /// banyak id** (backend v2.4).
+  ///
+  /// Hasilnya [SkuBriefModel], **bukan** [SkuModel]: respons bulk tidak
+  /// membawa `units[]`. Untuk pemilih satuan tetap butuh [skuDetail].
+  Future<ApiEnvelope<Map<int, SkuBriefModel>>> skuBriefs(
+    Iterable<int> skuIds,
+  ) async {
+    const context = 'GET /sku-master?ids=';
+    final ids = skuIds.toSet().toList();
+    if (ids.isEmpty) return const ApiEnvelope(data: {}, statusCode: 200);
+
+    try {
+      final response = await _dio.get<dynamic>(
+        '/sku-master',
+        queryParameters: {'ids': ids.join(',')},
+      );
+      return parseEnvelope(
+        response,
+        (raw) {
+          if (raw is! Map) return <int, SkuBriefModel>{};
+          return {
+            for (final e in raw.entries)
+              if (asIntOrNull(e.key) != null && e.value is Map)
+                asIntOrNull(e.key)!: SkuBriefModel.fromJson(
+                  Map<String, dynamic>.from(e.value as Map),
+                ),
+          };
+        },
+        context: context,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
   }
 
   /// `GET /offers/flash-sale` — penawaran dengan harga coret **terverifikasi**.
@@ -323,41 +413,49 @@ class CatalogService {
     }
   }
 
-  /// Melengkapi penawaran dengan `price_tiers` dari `GET /offers/{id}`.
+  /// Melengkapi penawaran dengan **harga termurah** lewat
+  /// `GET /offers/prices?ids=` — satu panggilan untuk seluruh daftar.
   ///
-  /// Field yang sudah ada di [offers] dipertahankan — khususnya info toko dan
-  /// ongkir dari `GET /search`, yang **tidak** dikembalikan endpoint detail.
-  /// Jadi hasilnya gabungan keduanya, bukan sekadar timpa.
+  /// Menggantikan pendekatan sebelumnya yang memanggil `GET /offers/{id}`
+  /// sekali per penawaran. Dengan katalog 188 penawaran, cara lama berarti
+  /// puluhan request untuk satu layar dan memaksa daftar dibatasi 24 item;
+  /// sekarang tidak perlu dibatasi lagi.
   ///
-  /// Dipotong jadi batch supaya membuka kategori berisi 20 penawaran tidak
-  /// membuka 20 koneksi bersamaan. Penawaran yang gagal diambil tetap
-  /// dikembalikan apa adanya (tanpa tier) daripada menghilang dari daftar.
-  Future<List<OfferModel>> withPriceTiers(
-    List<OfferModel> offers, {
-    int batchSize = 6,
-  }) async {
-    final needsTiers =
+  /// Yang dihasilkan adalah **satu tier sintetis** berisi harga termurah,
+  /// bukan seluruh `price_tiers` — endpoint bulk hanya mengembalikan angka.
+  /// Untuk tabel harga bertingkat lengkap tetap butuh [offerDetail].
+  ///
+  /// Penawaran yang tidak punya harga dikembalikan apa adanya, bukan
+  /// dihilangkan dari daftar.
+  Future<List<OfferModel>> withPriceTiers(List<OfferModel> offers) async {
+    final needsPrice =
         offers.where((o) => o.priceTiers.isEmpty).map((o) => o.id).toSet();
-    final missing =
-        needsTiers.where((id) => !_offerCache.containsKey(id)).toList();
+    if (needsPrice.isEmpty) return offers;
 
-    for (var i = 0; i < missing.length; i += batchSize) {
-      await Future.wait(
-        missing.skip(i).take(batchSize).map((id) async {
-          try {
-            final detail = await offerDetail(id);
-            _offerCache[id] = detail.data;
-          } on ApiException {
-            // Biarkan penawaran ini tanpa tier.
-          }
-        }),
-      );
+    Map<int, int> prices;
+    try {
+      prices = (await this.prices(needsPrice)).data;
+    } on ApiException {
+      // Harga gagal diambil bukan alasan menghilangkan produk dari daftar;
+      // kartunya tampil tanpa harga.
+      return offers;
     }
 
     return offers.map((offer) {
       if (offer.priceTiers.isNotEmpty) return offer;
-      final tiers = _offerCache[offer.id]?.priceTiers;
-      return tiers == null ? offer : offer.copyWith(priceTiers: tiers);
+      final price = prices[offer.id];
+      if (price == null) return offer;
+      return offer.copyWith(
+        priceTiers: [
+          PriceTierModel(
+            id: -offer.id,
+            offerId: offer.id,
+            segment: 'RETAIL',
+            minQty: 1,
+            price: price,
+          ),
+        ],
+      );
     }).toList();
   }
 

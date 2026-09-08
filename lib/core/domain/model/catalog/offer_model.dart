@@ -95,6 +95,19 @@ abstract class OfferModel with _$OfferModel {
 
     @StringJson() @Default('ACTIVE') String status,
     @StringOrNullJson() @JsonKey(name: 'reject_reason') String? rejectReason,
+
+    /// Penawaran **sampel** (ORD-16, backend v2.4).
+    ///
+    /// Dibatasi **2 pcs per transaksi** untuk semua pembeli, termasuk B2B —
+    /// qty lebih dari itu ditolak `422 SAMPLE_QTY_EXCEEDED` saat masuk
+    /// keranjang. UI harus membatasi stepper-nya, bukan menunggu server
+    /// menolak.
+    @BoolJson() @JsonKey(name: 'is_sample') @Default(false) bool isSample,
+
+    /// Penawaran ukuran penuh yang disampelkan — untuk tautan "lihat ukuran
+    /// penuh".
+    @IntOrNullJson() @JsonKey(name: 'sample_of_offer_id')
+    int? sampleOfOfferId,
     @StringOrNullJson() String? description,
 
     @ServerDateTimeJson() @JsonKey(name: 'created_date')
@@ -128,6 +141,16 @@ abstract class OfferModel with _$OfferModel {
       _$OfferModelFromJson(json);
 
   bool get isActive => status == 'ACTIVE';
+
+  /// Batas qty per transaksi untuk penawaran sampel (ORD-16).
+  ///
+  /// Angkanya ditetapkan backend dan tidak diekspos lewat parameter, jadi
+  /// harus dikenali di sini. Kalau suatu saat jadi parameter, ambil dari
+  /// `GET /config/parameters`.
+  static const int sampleMaxQty = 2;
+
+  /// Qty maksimum yang boleh dipilih user, `null` berarti tanpa batas.
+  int? get maxSelectableQty => isSample ? sampleMaxQty : null;
 
   /// Nama yang layak ditampilkan. Untuk penawaran `BEBAS`, nama ada di
   /// `freeform_name` karena tidak ada SKU master yang bisa dirujuk.

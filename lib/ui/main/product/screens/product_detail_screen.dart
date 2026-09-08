@@ -363,10 +363,21 @@ class _ProductDetailBodyState extends State<_ProductDetailBody> {
             _StepperButton(
               icon: Icons.add,
               filled: true,
-              onPressed: cubit.addQty,
+              // Dimatikan di batas sampel, bukan dibiarkan lalu ditolak
+              // server dengan SAMPLE_QTY_EXCEEDED.
+              onPressed: state.atSampleLimit ? null : cubit.addQty,
             ),
           ],
         ),
+        if (state.isSample) ...[
+          6.sbh,
+          Text(
+            'Produk sampel — maksimal ${OfferModel.sampleMaxQty} pcs per '
+            'transaksi.',
+            style: AppStyles.styleRegular12(context)
+                .copyWith(color: kWarningColor),
+          ),
+        ],
         6.sbh,
         Text(
           // Harga per satuan dasar, karena tier memakai satuan dasar.
@@ -430,7 +441,7 @@ class _StepperButton extends StatelessWidget {
 
   final IconData icon;
   final bool filled;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

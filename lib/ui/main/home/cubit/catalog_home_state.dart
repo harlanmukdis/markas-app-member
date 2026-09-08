@@ -26,9 +26,14 @@ sealed class CatalogHomeState with _$CatalogHomeState {
     /// [CatalogHomeMode.categoryOffers].
     @Default(<OfferModel>[]) List<OfferModel> offers,
 
-    /// Nama SKU per id, untuk menamai penawaran jalur `MASTER` — `OfferModel`
-    /// sendiri tidak membawa nama SKU, hanya `sku_id`.
-    @Default(<int, SkuModel>{}) Map<int, SkuModel> skus,
+    /// Nama & satuan dasar SKU per id, untuk menamai penawaran jalur
+    /// `MASTER` — `OfferModel` sendiri hanya membawa `sku_id`.
+    ///
+    /// [SkuBriefModel], bukan `SkuModel`: diambil lewat satu panggilan
+    /// `GET /sku-master?ids=` yang tidak membawa `units[]`. Grid tidak
+    /// butuh pemilih satuan; halaman detail yang butuh, dan itu memakai
+    /// `GET /sku-master/{id}` terpisah.
+    @Default(<int, SkuBriefModel>{}) Map<int, SkuBriefModel> skus,
 
     /// Ringkasan rating per `offer_id`.
     ///
@@ -53,10 +58,8 @@ sealed class CatalogHomeState with _$CatalogHomeState {
     /// tidak hilang hanya karena satu permintaan berikutnya gagal.
     DataError? error,
 
-    /// Jumlah penawaran yang tersedia di server, dari `meta.total_available`.
-    /// Bisa lebih besar dari panjang [offers] karena harga hanya bisa
-    /// dilengkapi sebagian per muat.
-    @Default(0) int totalAvailable,
+    /// `meta` dari respons terakhir: `{page, per_page, total, total_pages}`.
+    @Default(<String, dynamic>{}) Map<String, dynamic> meta,
 
     /// Permintaan selesai tapi hasilnya kosong — beda dari "belum dimuat".
     @Default(false) bool isEmptyResult,
@@ -84,9 +87,22 @@ sealed class CatalogHomeState with _$CatalogHomeState {
   /// Ringkasan rating sebuah penawaran, `null` kalau belum termuat.
   ReviewSummaryModel? reviewFor(OfferModel offer) => reviews[offer.id];
 
-  /// Satuan jual bawaan SKU, untuk label "/ sak", "/ dus".
-  String? offerUnit(OfferModel offer) {
-    final sku = offer.skuId == null ? null : skus[offer.skuId];
-    return sku?.defaultSellUnit?.unitName ?? sku?.baseUnit;
-  }
+  /// Satuan dasar SKU, untuk label "/ sak", "/ dus".
+  String? offerUnit(OfferModel offer) =>
+      offer.skuId == null ? null : skus[offer.skuId]?.baseUnit;
+
+  /// Halaman keberapa yang sedang ditampilkan, dari `meta.page`.
+  int get page => asIntOrNull(meta['page']) ?? 1;
+
+  /// Total halaman menurut server, dari `meta.total_pages`.
+  ///
+  /// **Wajib dibaca**: `GET /offers` dipaginasi sejak v2.4 dengan default 20
+  /// per halaman, dan menganggap satu respons sudah lengkap membuat katalog
+  /// tampak jauh lebih sedikit tanpa error apa pun.
+  int get totalPages => asIntOrNull(meta['total_pages']) ?? 1;
+
+  /// Total penawaran menurut server, dari `meta.total`.
+  int get totalOffers => asIntOrNull(meta['total']) ?? offers.length;
+
+  bool get hasMorePages => page < totalPages;
 }

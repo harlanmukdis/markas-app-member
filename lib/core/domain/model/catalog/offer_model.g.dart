@@ -67,6 +67,11 @@ _OfferModel _$OfferModelFromJson(Map<String, dynamic> json) => _OfferModel(
           ? 'ACTIVE'
           : const StringJson().fromJson(json['status']),
       rejectReason: const StringOrNullJson().fromJson(json['reject_reason']),
+      isSample: json['is_sample'] == null
+          ? false
+          : const BoolJson().fromJson(json['is_sample']),
+      sampleOfOfferId:
+          const IntOrNullJson().fromJson(json['sample_of_offer_id']),
       description: const StringOrNullJson().fromJson(json['description']),
       createdDate: const ServerDateTimeJson().fromJson(json['created_date']),
       modifiedDate: const ServerDateTimeJson().fromJson(json['modified_date']),
@@ -109,6 +114,9 @@ Map<String, dynamic> _$OfferModelToJson(_OfferModel instance) =>
       'min_order_qty': const DoubleJson().toJson(instance.minOrderQty),
       'status': const StringJson().toJson(instance.status),
       'reject_reason': const StringOrNullJson().toJson(instance.rejectReason),
+      'is_sample': const BoolJson().toJson(instance.isSample),
+      'sample_of_offer_id':
+          const IntOrNullJson().toJson(instance.sampleOfOfferId),
       'description': const StringOrNullJson().toJson(instance.description),
       'created_date': const ServerDateTimeJson().toJson(instance.createdDate),
       'modified_date': const ServerDateTimeJson().toJson(instance.modifiedDate),

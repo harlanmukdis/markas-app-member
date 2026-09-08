@@ -34,7 +34,9 @@ class CatalogRepositoryImpl implements CatalogRepository {
       _guard(() => _service.skuDetail(id, forceRefresh: forceRefresh));
 
   @override
-  Future<DataState<Map<int, SkuModel>>> skusByIds(Iterable<int> ids) async {
+  Future<DataState<Map<int, SkuBriefModel>>> skusByIds(
+    Iterable<int> ids,
+  ) async {
     try {
       final result = await _service.skusByIds(ids);
       return result.isEmpty ? const DataEmpty() : DataSuccess(result);
@@ -42,6 +44,10 @@ class CatalogRepositoryImpl implements CatalogRepository {
       return DataFailed(e.error);
     }
   }
+
+  @override
+  Future<DataState<Map<int, int>>> prices(Iterable<int> offerIds) =>
+      _guard(() => _service.prices(offerIds));
 
   @override
   Future<DataState<List<OfferModel>>> offers({
@@ -53,6 +59,8 @@ class CatalogRepositoryImpl implements CatalogRepository {
     int? priceMax,
     int? minRating,
     OfferSort? sort,
+    int? page,
+    int? perPage,
   }) =>
       _guardList(() => _service.offers(
             skuId: skuId,
@@ -63,6 +71,8 @@ class CatalogRepositoryImpl implements CatalogRepository {
             priceMax: priceMax,
             minRating: minRating,
             sort: sort,
+            page: page,
+            perPage: perPage,
           ));
 
   @override
@@ -119,6 +129,8 @@ class CatalogRepositoryImpl implements CatalogRepository {
     int? priceMax,
     int? minRating,
     OfferSort? sort,
+    int? page,
+    int? perPage,
   }) async {
     try {
       final env = await _service.offers(
@@ -130,35 +142,26 @@ class CatalogRepositoryImpl implements CatalogRepository {
         priceMax: priceMax,
         minRating: minRating,
         sort: sort,
+        page: page,
+        perPage: perPage,
       );
       if (env.data.isEmpty) return DataEmpty<List<OfferModel>>(meta: env.meta);
 
-      // Dibatasi karena harga HANYA ada di endpoint detail: melengkapi
-      // seluruh 74 penawaran berarti 74 request untuk satu layar Home.
-      // Sampai backend menyertakan harga di respons list (lihat catatan di
-      // CatalogService.offers), menampilkan lebih banyak justru merugikan
-      // user — layarnya jadi lambat tanpa menambah informasi.
-      //
-      // `meta['total_available']` membawa jumlah sebenarnya supaya UI bisa
-      // jujur menampilkan "24 dari 74".
-      final page = env.data.take(listPageSize).toList();
-      final enriched = await _service.withPriceTiers(page);
+      // Tidak ada pembatasan buatan lagi: harga kini datang dari satu
+      // panggilan `GET /offers/prices`, bukan satu request per penawaran.
+      // Server sendiri yang membatasi lewat paginasi, dan jumlahnya ada di
+      // `meta`.
+      final enriched = await _service.withPriceTiers(env.data);
 
       return DataSuccess<List<OfferModel>>(
         enriched,
-        meta: {...env.meta, 'total_available': env.data.length},
+        meta: env.meta,
         statusCode: env.statusCode,
       );
     } on ApiException catch (e) {
       return DataFailed(e.error);
     }
   }
-
-  /// Banyaknya penawaran yang dilengkapi harga sekaligus.
-  ///
-  /// Ini batas biaya jaringan, bukan pilihan tampilan: setiap penawaran butuh
-  /// satu `GET /offers/{id}` hanya untuk mendapat harganya.
-  static const int listPageSize = 24;
 
   @override
   Future<DataState<OfferModel>> offerDetail(int id) =>

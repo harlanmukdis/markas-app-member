@@ -94,6 +94,9 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
   }
 
   static double _initialQty(OfferModel offer, SkuUnitModel? unit) {
+    // Sampel tidak mengikuti minimum order — batasnya justru di atas.
+    if (offer.isSample) return 1;
+
     final minBase = offer.minOrderQty;
     if (minBase <= 0) return 1;
     final factor = unit?.conversionFactorToBase ?? 1;
@@ -127,7 +130,14 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
     ));
   }
 
-  void addQty() => emit(state.copyWith(qty: state.qty + 1, cartMessage: null));
+  void addQty() {
+    // Penawaran sampel dibatasi 2 pcs per transaksi (ORD-16). Dibatasi di
+    // sini supaya user tidak menaikkan qty lalu ditolak server dengan
+    // SAMPLE_QTY_EXCEEDED saat menekan tambah-ke-keranjang.
+    final max = state.offer?.maxSelectableQty;
+    if (max != null && state.qty >= max) return;
+    emit(state.copyWith(qty: state.qty + 1, cartMessage: null));
+  }
 
   void minusQty() {
     if (state.qty <= 1) return;

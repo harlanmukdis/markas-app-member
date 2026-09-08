@@ -24,13 +24,36 @@ enum PaymentMethod {
     return null;
   }
 
-  /// Metode yang boleh dipilih user.
+  /// Metode yang **benar-benar bisa dirender** aplikasi.
+  ///
+  /// Hanya dua dari lima, dan bukan karena pilihan desain — tiga sisanya
+  /// tidak mengembalikan apa pun yang bisa ditampilkan ke pembeli:
+  ///
+  /// * `EWALLET` — tanpa deeplink, QR, maupun referensi.
+  /// * `CARD` — `card_token` dibuat server tapi tidak dikembalikan, dan tidak
+  ///   ada URL redirect 3DS.
+  /// * `BANK_TRANSFER` — hanya `expires_at`. **Tidak ada rekening tujuan di
+  ///   mana pun**: tidak ada parameter, tabel, maupun konfigurasinya.
+  ///
+  /// Menampilkan ketiganya berarti menyodorkan tombol yang berujung layar
+  /// kosong.
+  static const List<PaymentMethod> renderable = [va, qris];
+
+  /// Metode yang boleh dipilih user untuk satu order.
   ///
   /// Untuk order di atas ambang (`forced_bank_transfer`), server **memaksa**
-  /// transfer bank walau app mengirim `VA` — jadi opsi lain harus
-  /// disembunyikan, bukan dibiarkan lalu ditimpa diam-diam.
+  /// `BANK_TRANSFER` walau app mengirim `VA`. Metode itu tidak bisa
+  /// disembunyikan pada kasus ini — jadi ia satu-satunya pilihan, dan UI
+  /// wajib menampilkan instruksi bahwa detail rekening dikonfirmasi tim,
+  /// bukan layar kosong.
   static List<PaymentMethod> selectable({required bool forcedBankTransfer}) =>
-      forcedBankTransfer ? const [bankTransfer] : values;
+      forcedBankTransfer ? const [bankTransfer] : renderable;
+
+  /// Server tidak mengembalikan data yang cukup untuk merender metode ini.
+  bool get isRenderable => renderable.contains(this);
+
+  /// Butuh instruksi manual karena rekening tujuan belum tersedia di API.
+  bool get needsManualInstruction => this == bankTransfer;
 }
 
 /// Pembayaran dari `POST /payments/initiate` dan
@@ -57,7 +80,14 @@ abstract class PaymentModel with _$PaymentModel {
     /// absolut, jangan hitung mundur presisi.
     @ServerDateTimeJson() @JsonKey(name: 'expires_at') DateTime? expiresAt,
     @ServerDateTimeJson() @JsonKey(name: 'verified_at') DateTime? verifiedAt,
-    @ServerDateTimeJson() @JsonKey(name: 'created_date') DateTime? createdDate,
+    /// Perhatikan: endpoint pembayaran **masih mengirim `created_at`**, bukan
+    /// `created_date` seperti endpoint lain — backend meng-alias kolomnya di
+    /// `C_Payments.php`. Inkonsistensi ini juga berlaku untuk
+    /// `/chat/messages`. Dibaca lewat [_readPaymentCreated] supaya benar
+    /// untuk kedua ejaan, dan tetap benar kalau nanti diseragamkan.
+    @ServerDateTimeJson()
+    @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
+    DateTime? createdDate,
   }) = _PaymentModel;
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) =>
@@ -85,3 +115,11 @@ abstract class PaymentModel with _$PaymentModel {
   /// endpoint notifikasi — status hanya bisa diketahui dengan menanya ulang.
   bool get shouldPoll => isPending || awaitingManualConfirmation;
 }
+
+/// Membaca waktu pembuatan pembayaran dari ejaan mana pun.
+///
+/// Endpoint `/payments/*` dan `/chat/messages` mengembalikan `created_at`
+/// sementara seluruh endpoint lain memakai `created_date`. Membaca keduanya
+/// membuat model ini tahan terhadap penyeragaman di sisi backend.
+Object? _readPaymentCreated(Map<dynamic, dynamic> json, String key) =>
+    json['created_at'] ?? json['created_date'];

@@ -5,6 +5,7 @@ import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
+import 'package:navy_wear/util/json_converters.dart';
 import 'package:navy_wear/core/domain/model/review/review_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
 import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
@@ -169,11 +170,15 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
             .map((o) => o.skuId!)
             .toSet();
 
+        // Satu panggilan `GET /sku-master?ids=` untuk seluruh halaman —
+        // sebelumnya satu request per SKU.
         var skus = state.skus;
         if (skuIds.isNotEmpty) {
           final skuResult = await _repository.skusByIds(skuIds);
           if (isClosed) return;
-          if (skuResult case DataSuccess(data: final map)) {
+          if (skuResult case DataSuccess<Map<int, SkuBriefModel>>(
+            data: final map,
+          )) {
             skus = {...skus, ...map};
           }
         }
@@ -184,7 +189,7 @@ class CatalogHomeCubit extends Cubit<CatalogHomeState> {
           skus: skus,
           sellers: await _sellerNames(),
           reviews: {...state.reviews, ...await _reviewSummaries(data)},
-          totalAvailable: (meta['total_available'] as int?) ?? data.length,
+          meta: meta,
           isEmptyResult: data.isEmpty,
         ));
     }

@@ -183,6 +183,17 @@ abstract final class ApiErrorCode {
   static const invalidState = 'INVALID_STATE';
   static const invalidTransition = 'INVALID_TRANSITION';
   static const validationError = 'VALIDATION_ERROR';
+
+  /// Qty melebihi batas penawaran sampel (ORD-16): maksimal 2 pcs per
+  /// transaksi, berlaku juga untuk pembeli B2B.
+  static const sampleQtyExceeded = 'SAMPLE_QTY_EXCEEDED';
+
+  /// Berat total melebihi kapasitas armada (OPS-01). Muncul di sisi toko,
+  /// tapi ditangani di sini supaya pesannya konsisten.
+  static const fleetPayloadExceeded = 'FLEET_PAYLOAD_EXCEEDED';
+
+  /// Armada terlalu besar untuk akses lokasi (FLD-02).
+  static const fleetAccessBlocked = 'FLEET_ACCESS_BLOCKED';
   static const dbError = 'DB_ERROR';
 }
 

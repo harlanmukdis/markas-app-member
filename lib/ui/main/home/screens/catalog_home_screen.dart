@@ -252,8 +252,8 @@ class _CatalogHomeBodyState extends State<_CatalogHomeBody> {
                   Text(
                     // Jujur soal pembatasan: harga hanya ada di endpoint
                     // detail, jadi hanya sebagian yang dimuat sekaligus.
-                    state.totalAvailable > state.offers.length
-                        ? '${state.offers.length} dari ${state.totalAvailable}'
+                    state.totalOffers > state.offers.length
+                        ? '${state.offers.length} dari ${state.totalOffers}'
                         : '${state.offers.length} produk',
                     style: AppStyles.styleRegular12(context)
                         .copyWith(color: kLightThirdColor),

@@ -21,7 +21,8 @@ _PaymentModel _$PaymentModelFromJson(Map<String, dynamic> json) =>
       qrisPayload: const StringOrNullJson().fromJson(json['qris_payload']),
       expiresAt: const ServerDateTimeJson().fromJson(json['expires_at']),
       verifiedAt: const ServerDateTimeJson().fromJson(json['verified_at']),
-      createdDate: const ServerDateTimeJson().fromJson(json['created_date']),
+      createdDate: const ServerDateTimeJson()
+          .fromJson(_readPaymentCreated(json, 'created_at')),
     );
 
 Map<String, dynamic> _$PaymentModelToJson(_PaymentModel instance) =>
@@ -36,5 +37,5 @@ Map<String, dynamic> _$PaymentModelToJson(_PaymentModel instance) =>
       'qris_payload': const StringOrNullJson().toJson(instance.qrisPayload),
       'expires_at': const ServerDateTimeJson().toJson(instance.expiresAt),
       'verified_at': const ServerDateTimeJson().toJson(instance.verifiedAt),
-      'created_date': const ServerDateTimeJson().toJson(instance.createdDate),
+      'created_at': const ServerDateTimeJson().toJson(instance.createdDate),
     };

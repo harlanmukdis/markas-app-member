@@ -1294,4 +1294,393 @@ class __$SkuModelCopyWithImpl<$Res> implements _$SkuModelCopyWith<$Res> {
   }
 }
 
+/// @nodoc
+mixin _$SkuBriefModel {
+  @IntJson()
+  int get id;
+  @StringJson()
+  String get name;
+  @StringOrNullJson()
+  @JsonKey(name: 'base_unit')
+  String? get baseUnit;
+  @DoubleOrNullJson()
+  @JsonKey(name: 'weight_kg')
+  double? get weightKg;
+
+  /// Create a copy of SkuBriefModel
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $SkuBriefModelCopyWith<SkuBriefModel> get copyWith =>
+      _$SkuBriefModelCopyWithImpl<SkuBriefModel>(
+          this as SkuBriefModel, _$identity);
+
+  /// Serializes this SkuBriefModel to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is SkuBriefModel &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.baseUnit, baseUnit) ||
+                other.baseUnit == baseUnit) &&
+            (identical(other.weightKg, weightKg) ||
+                other.weightKg == weightKg));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, name, baseUnit, weightKg);
+
+  @override
+  String toString() {
+    return 'SkuBriefModel(id: $id, name: $name, baseUnit: $baseUnit, weightKg: $weightKg)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $SkuBriefModelCopyWith<$Res> {
+  factory $SkuBriefModelCopyWith(
+          SkuBriefModel value, $Res Function(SkuBriefModel) _then) =
+      _$SkuBriefModelCopyWithImpl;
+  @useResult
+  $Res call(
+      {@IntJson() int id,
+      @StringJson() String name,
+      @StringOrNullJson() @JsonKey(name: 'base_unit') String? baseUnit,
+      @DoubleOrNullJson() @JsonKey(name: 'weight_kg') double? weightKg});
+}
+
+/// @nodoc
+class _$SkuBriefModelCopyWithImpl<$Res>
+    implements $SkuBriefModelCopyWith<$Res> {
+  _$SkuBriefModelCopyWithImpl(this._self, this._then);
+
+  final SkuBriefModel _self;
+  final $Res Function(SkuBriefModel) _then;
+
+  /// Create a copy of SkuBriefModel
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? baseUnit = freezed,
+    Object? weightKg = freezed,
+  }) {
+    return _then(_self.copyWith(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      baseUnit: freezed == baseUnit
+          ? _self.baseUnit
+          : baseUnit // ignore: cast_nullable_to_non_nullable
+              as String?,
+      weightKg: freezed == weightKg
+          ? _self.weightKg
+          : weightKg // ignore: cast_nullable_to_non_nullable
+              as double?,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [SkuBriefModel].
+extension SkuBriefModelPatterns on SkuBriefModel {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_SkuBriefModel value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _SkuBriefModel() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_SkuBriefModel value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SkuBriefModel():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_SkuBriefModel value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SkuBriefModel() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            @IntJson() int id,
+            @StringJson() String name,
+            @StringOrNullJson() @JsonKey(name: 'base_unit') String? baseUnit,
+            @DoubleOrNullJson() @JsonKey(name: 'weight_kg') double? weightKg)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _SkuBriefModel() when $default != null:
+        return $default(_that.id, _that.name, _that.baseUnit, _that.weightKg);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            @IntJson() int id,
+            @StringJson() String name,
+            @StringOrNullJson() @JsonKey(name: 'base_unit') String? baseUnit,
+            @DoubleOrNullJson() @JsonKey(name: 'weight_kg') double? weightKg)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SkuBriefModel():
+        return $default(_that.id, _that.name, _that.baseUnit, _that.weightKg);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            @IntJson() int id,
+            @StringJson() String name,
+            @StringOrNullJson() @JsonKey(name: 'base_unit') String? baseUnit,
+            @DoubleOrNullJson() @JsonKey(name: 'weight_kg') double? weightKg)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SkuBriefModel() when $default != null:
+        return $default(_that.id, _that.name, _that.baseUnit, _that.weightKg);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _SkuBriefModel implements SkuBriefModel {
+  const _SkuBriefModel(
+      {@IntJson() required this.id,
+      @StringJson() required this.name,
+      @StringOrNullJson() @JsonKey(name: 'base_unit') this.baseUnit,
+      @DoubleOrNullJson() @JsonKey(name: 'weight_kg') this.weightKg});
+  factory _SkuBriefModel.fromJson(Map<String, dynamic> json) =>
+      _$SkuBriefModelFromJson(json);
+
+  @override
+  @IntJson()
+  final int id;
+  @override
+  @StringJson()
+  final String name;
+  @override
+  @StringOrNullJson()
+  @JsonKey(name: 'base_unit')
+  final String? baseUnit;
+  @override
+  @DoubleOrNullJson()
+  @JsonKey(name: 'weight_kg')
+  final double? weightKg;
+
+  /// Create a copy of SkuBriefModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$SkuBriefModelCopyWith<_SkuBriefModel> get copyWith =>
+      __$SkuBriefModelCopyWithImpl<_SkuBriefModel>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$SkuBriefModelToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _SkuBriefModel &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.baseUnit, baseUnit) ||
+                other.baseUnit == baseUnit) &&
+            (identical(other.weightKg, weightKg) ||
+                other.weightKg == weightKg));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, name, baseUnit, weightKg);
+
+  @override
+  String toString() {
+    return 'SkuBriefModel(id: $id, name: $name, baseUnit: $baseUnit, weightKg: $weightKg)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$SkuBriefModelCopyWith<$Res>
+    implements $SkuBriefModelCopyWith<$Res> {
+  factory _$SkuBriefModelCopyWith(
+          _SkuBriefModel value, $Res Function(_SkuBriefModel) _then) =
+      __$SkuBriefModelCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {@IntJson() int id,
+      @StringJson() String name,
+      @StringOrNullJson() @JsonKey(name: 'base_unit') String? baseUnit,
+      @DoubleOrNullJson() @JsonKey(name: 'weight_kg') double? weightKg});
+}
+
+/// @nodoc
+class __$SkuBriefModelCopyWithImpl<$Res>
+    implements _$SkuBriefModelCopyWith<$Res> {
+  __$SkuBriefModelCopyWithImpl(this._self, this._then);
+
+  final _SkuBriefModel _self;
+  final $Res Function(_SkuBriefModel) _then;
+
+  /// Create a copy of SkuBriefModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? baseUnit = freezed,
+    Object? weightKg = freezed,
+  }) {
+    return _then(_SkuBriefModel(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      baseUnit: freezed == baseUnit
+          ? _self.baseUnit
+          : baseUnit // ignore: cast_nullable_to_non_nullable
+              as String?,
+      weightKg: freezed == weightKg
+          ? _self.weightKg
+          : weightKg // ignore: cast_nullable_to_non_nullable
+              as double?,
+    ));
+  }
+}
+
 // dart format on

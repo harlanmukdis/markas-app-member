@@ -17,8 +17,15 @@ abstract interface class CatalogRepository {
 
   Future<DataState<SkuModel>> skuDetail(int id, {bool forceRefresh = false});
 
-  /// Beberapa SKU sekaligus, memanfaatkan cache dan dipotong jadi batch.
-  Future<DataState<Map<int, SkuModel>>> skusByIds(Iterable<int> ids);
+  /// Nama & satuan dasar beberapa SKU sekaligus.
+  ///
+  /// Satu panggilan lewat `GET /sku-master?ids=`. Hasilnya [SkuBriefModel] —
+  /// **tanpa `units[]`**, karena respons bulk tidak membawanya. Untuk pemilih
+  /// satuan pakai [skuDetail].
+  Future<DataState<Map<int, SkuBriefModel>>> skusByIds(Iterable<int> ids);
+
+  /// Harga termurah beberapa penawaran sekaligus, ber-key `offer_id`.
+  Future<DataState<Map<int, int>>> prices(Iterable<int> offerIds);
 
   /// Penawaran per SKU / toko / kategori.
   ///
@@ -34,10 +41,16 @@ abstract interface class CatalogRepository {
     int? priceMax,
     int? minRating,
     OfferSort? sort,
+    int? page,
+    int? perPage,
   });
 
-  /// Sama seperti [offers], tapi sudah dilengkapi `price_tiers` sehingga
-  /// langsung bisa dirender jadi kartu produk berharga.
+  /// Sama seperti [offers], tapi harganya sudah dilengkapi lewat satu
+  /// panggilan `GET /offers/prices` sehingga langsung bisa dirender jadi
+  /// kartu produk berharga.
+  ///
+  /// `meta` pada [DataSuccess] membawa `{page, per_page, total, total_pages}`
+  /// — **selalu** periksa itu, jangan menganggap satu respons sudah lengkap.
   Future<DataState<List<OfferModel>>> offersWithPrices({
     int? skuId,
     int? sellerId,
@@ -47,6 +60,8 @@ abstract interface class CatalogRepository {
     int? priceMax,
     int? minRating,
     OfferSort? sort,
+    int? page,
+    int? perPage,
   });
 
   /// Penawaran berharga coret terverifikasi.

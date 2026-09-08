@@ -47,8 +47,14 @@ mixin _$PaymentModel {
   @ServerDateTimeJson()
   @JsonKey(name: 'verified_at')
   DateTime? get verifiedAt;
+
+  /// Perhatikan: endpoint pembayaran **masih mengirim `created_at`**, bukan
+  /// `created_date` seperti endpoint lain — backend meng-alias kolomnya di
+  /// `C_Payments.php`. Inkonsistensi ini juga berlaku untuk
+  /// `/chat/messages`. Dibaca lewat [_readPaymentCreated] supaya benar
+  /// untuk kedua ejaan, dan tetap benar kalau nanti diseragamkan.
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_date')
+  @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
   DateTime? get createdDate;
 
   /// Create a copy of PaymentModel
@@ -126,7 +132,7 @@ abstract mixin class $PaymentModelCopyWith<$Res> {
       @ServerDateTimeJson() @JsonKey(name: 'expires_at') DateTime? expiresAt,
       @ServerDateTimeJson() @JsonKey(name: 'verified_at') DateTime? verifiedAt,
       @ServerDateTimeJson()
-      @JsonKey(name: 'created_date')
+      @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
       DateTime? createdDate});
 }
 
@@ -314,7 +320,7 @@ extension PaymentModelPatterns on PaymentModel {
             @JsonKey(name: 'verified_at')
             DateTime? verifiedAt,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_date')
+            @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
             DateTime? createdDate)?
         $default, {
     required TResult orElse(),
@@ -372,7 +378,7 @@ extension PaymentModelPatterns on PaymentModel {
             @JsonKey(name: 'verified_at')
             DateTime? verifiedAt,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_date')
+            @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
             DateTime? createdDate)
         $default,
   ) {
@@ -428,7 +434,7 @@ extension PaymentModelPatterns on PaymentModel {
             @JsonKey(name: 'verified_at')
             DateTime? verifiedAt,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_date')
+            @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
             DateTime? createdDate)?
         $default,
   ) {
@@ -467,7 +473,9 @@ class _PaymentModel extends PaymentModel {
       @StringOrNullJson() @JsonKey(name: 'qris_payload') this.qrisPayload,
       @ServerDateTimeJson() @JsonKey(name: 'expires_at') this.expiresAt,
       @ServerDateTimeJson() @JsonKey(name: 'verified_at') this.verifiedAt,
-      @ServerDateTimeJson() @JsonKey(name: 'created_date') this.createdDate})
+      @ServerDateTimeJson()
+      @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
+      this.createdDate})
       : super._();
   factory _PaymentModel.fromJson(Map<String, dynamic> json) =>
       _$PaymentModelFromJson(json);
@@ -517,9 +525,15 @@ class _PaymentModel extends PaymentModel {
   @ServerDateTimeJson()
   @JsonKey(name: 'verified_at')
   final DateTime? verifiedAt;
+
+  /// Perhatikan: endpoint pembayaran **masih mengirim `created_at`**, bukan
+  /// `created_date` seperti endpoint lain — backend meng-alias kolomnya di
+  /// `C_Payments.php`. Inkonsistensi ini juga berlaku untuk
+  /// `/chat/messages`. Dibaca lewat [_readPaymentCreated] supaya benar
+  /// untuk kedua ejaan, dan tetap benar kalau nanti diseragamkan.
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_date')
+  @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
   final DateTime? createdDate;
 
   /// Create a copy of PaymentModel
@@ -603,7 +617,7 @@ abstract mixin class _$PaymentModelCopyWith<$Res>
       @ServerDateTimeJson() @JsonKey(name: 'expires_at') DateTime? expiresAt,
       @ServerDateTimeJson() @JsonKey(name: 'verified_at') DateTime? verifiedAt,
       @ServerDateTimeJson()
-      @JsonKey(name: 'created_date')
+      @JsonKey(name: 'created_at', readValue: _readPaymentCreated)
       DateTime? createdDate});
 }
 

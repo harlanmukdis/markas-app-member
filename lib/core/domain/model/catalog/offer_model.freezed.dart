@@ -572,6 +572,22 @@ mixin _$OfferModel {
   @StringOrNullJson()
   @JsonKey(name: 'reject_reason')
   String? get rejectReason;
+
+  /// Penawaran **sampel** (ORD-16, backend v2.4).
+  ///
+  /// Dibatasi **2 pcs per transaksi** untuk semua pembeli, termasuk B2B —
+  /// qty lebih dari itu ditolak `422 SAMPLE_QTY_EXCEEDED` saat masuk
+  /// keranjang. UI harus membatasi stepper-nya, bukan menunggu server
+  /// menolak.
+  @BoolJson()
+  @JsonKey(name: 'is_sample')
+  bool get isSample;
+
+  /// Penawaran ukuran penuh yang disampelkan — untuk tautan "lihat ukuran
+  /// penuh".
+  @IntOrNullJson()
+  @JsonKey(name: 'sample_of_offer_id')
+  int? get sampleOfOfferId;
   @StringOrNullJson()
   String? get description;
   @ServerDateTimeJson()
@@ -648,6 +664,10 @@ mixin _$OfferModel {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.rejectReason, rejectReason) ||
                 other.rejectReason == rejectReason) &&
+            (identical(other.isSample, isSample) ||
+                other.isSample == isSample) &&
+            (identical(other.sampleOfOfferId, sampleOfOfferId) ||
+                other.sampleOfOfferId == sampleOfOfferId) &&
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.createdDate, createdDate) ||
@@ -690,6 +710,8 @@ mixin _$OfferModel {
         minOrderQty,
         status,
         rejectReason,
+        isSample,
+        sampleOfOfferId,
         description,
         createdDate,
         modifiedDate,
@@ -704,7 +726,7 @@ mixin _$OfferModel {
 
   @override
   String toString() {
-    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, description: $description, createdDate: $createdDate, modifiedDate: $modifiedDate, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
+    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, isSample: $isSample, sampleOfOfferId: $sampleOfOfferId, description: $description, createdDate: $createdDate, modifiedDate: $modifiedDate, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
   }
 }
 
@@ -743,6 +765,10 @@ abstract mixin class $OfferModelCopyWith<$Res> {
       @DoubleJson() @JsonKey(name: 'min_order_qty') double minOrderQty,
       @StringJson() String status,
       @StringOrNullJson() @JsonKey(name: 'reject_reason') String? rejectReason,
+      @BoolJson() @JsonKey(name: 'is_sample') bool isSample,
+      @IntOrNullJson()
+      @JsonKey(name: 'sample_of_offer_id')
+      int? sampleOfOfferId,
       @StringOrNullJson() String? description,
       @ServerDateTimeJson()
       @JsonKey(name: 'created_date')
@@ -789,6 +815,8 @@ class _$OfferModelCopyWithImpl<$Res> implements $OfferModelCopyWith<$Res> {
     Object? minOrderQty = null,
     Object? status = null,
     Object? rejectReason = freezed,
+    Object? isSample = null,
+    Object? sampleOfOfferId = freezed,
     Object? description = freezed,
     Object? createdDate = freezed,
     Object? modifiedDate = freezed,
@@ -865,6 +893,14 @@ class _$OfferModelCopyWithImpl<$Res> implements $OfferModelCopyWith<$Res> {
           ? _self.rejectReason
           : rejectReason // ignore: cast_nullable_to_non_nullable
               as String?,
+      isSample: null == isSample
+          ? _self.isSample
+          : isSample // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sampleOfOfferId: freezed == sampleOfOfferId
+          ? _self.sampleOfOfferId
+          : sampleOfOfferId // ignore: cast_nullable_to_non_nullable
+              as int?,
       description: freezed == description
           ? _self.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -1035,6 +1071,10 @@ extension OfferModelPatterns on OfferModel {
             @StringOrNullJson()
             @JsonKey(name: 'reject_reason')
             String? rejectReason,
+            @BoolJson() @JsonKey(name: 'is_sample') bool isSample,
+            @IntOrNullJson()
+            @JsonKey(name: 'sample_of_offer_id')
+            int? sampleOfOfferId,
             @StringOrNullJson() String? description,
             @ServerDateTimeJson()
             @JsonKey(name: 'created_date')
@@ -1082,6 +1122,8 @@ extension OfferModelPatterns on OfferModel {
             _that.minOrderQty,
             _that.status,
             _that.rejectReason,
+            _that.isSample,
+            _that.sampleOfOfferId,
             _that.description,
             _that.createdDate,
             _that.modifiedDate,
@@ -1145,6 +1187,10 @@ extension OfferModelPatterns on OfferModel {
             @StringOrNullJson()
             @JsonKey(name: 'reject_reason')
             String? rejectReason,
+            @BoolJson() @JsonKey(name: 'is_sample') bool isSample,
+            @IntOrNullJson()
+            @JsonKey(name: 'sample_of_offer_id')
+            int? sampleOfOfferId,
             @StringOrNullJson() String? description,
             @ServerDateTimeJson()
             @JsonKey(name: 'created_date')
@@ -1191,6 +1237,8 @@ extension OfferModelPatterns on OfferModel {
             _that.minOrderQty,
             _that.status,
             _that.rejectReason,
+            _that.isSample,
+            _that.sampleOfOfferId,
             _that.description,
             _that.createdDate,
             _that.modifiedDate,
@@ -1253,6 +1301,10 @@ extension OfferModelPatterns on OfferModel {
             @StringOrNullJson()
             @JsonKey(name: 'reject_reason')
             String? rejectReason,
+            @BoolJson() @JsonKey(name: 'is_sample') bool isSample,
+            @IntOrNullJson()
+            @JsonKey(name: 'sample_of_offer_id')
+            int? sampleOfOfferId,
             @StringOrNullJson() String? description,
             @ServerDateTimeJson()
             @JsonKey(name: 'created_date')
@@ -1299,6 +1351,8 @@ extension OfferModelPatterns on OfferModel {
             _that.minOrderQty,
             _that.status,
             _that.rejectReason,
+            _that.isSample,
+            _that.sampleOfOfferId,
             _that.description,
             _that.createdDate,
             _that.modifiedDate,
@@ -1349,6 +1403,10 @@ class _OfferModel extends OfferModel {
       @DoubleJson() @JsonKey(name: 'min_order_qty') this.minOrderQty = 0,
       @StringJson() this.status = 'ACTIVE',
       @StringOrNullJson() @JsonKey(name: 'reject_reason') this.rejectReason,
+      @BoolJson() @JsonKey(name: 'is_sample') this.isSample = false,
+      @IntOrNullJson()
+      @JsonKey(name: 'sample_of_offer_id')
+      this.sampleOfOfferId,
       @StringOrNullJson() this.description,
       @ServerDateTimeJson() @JsonKey(name: 'created_date') this.createdDate,
       @ServerDateTimeJson() @JsonKey(name: 'modified_date') this.modifiedDate,
@@ -1449,6 +1507,24 @@ class _OfferModel extends OfferModel {
   @StringOrNullJson()
   @JsonKey(name: 'reject_reason')
   final String? rejectReason;
+
+  /// Penawaran **sampel** (ORD-16, backend v2.4).
+  ///
+  /// Dibatasi **2 pcs per transaksi** untuk semua pembeli, termasuk B2B —
+  /// qty lebih dari itu ditolak `422 SAMPLE_QTY_EXCEEDED` saat masuk
+  /// keranjang. UI harus membatasi stepper-nya, bukan menunggu server
+  /// menolak.
+  @override
+  @BoolJson()
+  @JsonKey(name: 'is_sample')
+  final bool isSample;
+
+  /// Penawaran ukuran penuh yang disampelkan — untuk tautan "lihat ukuran
+  /// penuh".
+  @override
+  @IntOrNullJson()
+  @JsonKey(name: 'sample_of_offer_id')
+  final int? sampleOfOfferId;
   @override
   @StringOrNullJson()
   final String? description;
@@ -1547,6 +1623,10 @@ class _OfferModel extends OfferModel {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.rejectReason, rejectReason) ||
                 other.rejectReason == rejectReason) &&
+            (identical(other.isSample, isSample) ||
+                other.isSample == isSample) &&
+            (identical(other.sampleOfOfferId, sampleOfOfferId) ||
+                other.sampleOfOfferId == sampleOfOfferId) &&
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.createdDate, createdDate) ||
@@ -1589,6 +1669,8 @@ class _OfferModel extends OfferModel {
         minOrderQty,
         status,
         rejectReason,
+        isSample,
+        sampleOfOfferId,
         description,
         createdDate,
         modifiedDate,
@@ -1603,7 +1685,7 @@ class _OfferModel extends OfferModel {
 
   @override
   String toString() {
-    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, description: $description, createdDate: $createdDate, modifiedDate: $modifiedDate, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
+    return 'OfferModel(id: $id, sellerId: $sellerId, skuId: $skuId, categoryId: $categoryId, isFreeform: $isFreeform, isTemporaryListing: $isTemporaryListing, freeformName: $freeformName, freeformWeightKg: $freeformWeightKg, freeformLengthCm: $freeformLengthCm, freeformWidthCm: $freeformWidthCm, freeformHeightCm: $freeformHeightCm, handlingClass: $handlingClass, photos: $photos, minOrderQty: $minOrderQty, status: $status, rejectReason: $rejectReason, isSample: $isSample, sampleOfOfferId: $sampleOfOfferId, description: $description, createdDate: $createdDate, modifiedDate: $modifiedDate, priceTiers: $priceTiers, sellerName: $sellerName, sellerScore: $sellerScore, pkpStatus: $pkpStatus, ongkirMulaiDari: $ongkirMulaiDari, ongkirIsEstimate: $ongkirIsEstimate, availableStock: $availableStock)';
   }
 }
 
@@ -1644,6 +1726,10 @@ abstract mixin class _$OfferModelCopyWith<$Res>
       @DoubleJson() @JsonKey(name: 'min_order_qty') double minOrderQty,
       @StringJson() String status,
       @StringOrNullJson() @JsonKey(name: 'reject_reason') String? rejectReason,
+      @BoolJson() @JsonKey(name: 'is_sample') bool isSample,
+      @IntOrNullJson()
+      @JsonKey(name: 'sample_of_offer_id')
+      int? sampleOfOfferId,
       @StringOrNullJson() String? description,
       @ServerDateTimeJson()
       @JsonKey(name: 'created_date')
@@ -1690,6 +1776,8 @@ class __$OfferModelCopyWithImpl<$Res> implements _$OfferModelCopyWith<$Res> {
     Object? minOrderQty = null,
     Object? status = null,
     Object? rejectReason = freezed,
+    Object? isSample = null,
+    Object? sampleOfOfferId = freezed,
     Object? description = freezed,
     Object? createdDate = freezed,
     Object? modifiedDate = freezed,
@@ -1766,6 +1854,14 @@ class __$OfferModelCopyWithImpl<$Res> implements _$OfferModelCopyWith<$Res> {
           ? _self.rejectReason
           : rejectReason // ignore: cast_nullable_to_non_nullable
               as String?,
+      isSample: null == isSample
+          ? _self.isSample
+          : isSample // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sampleOfOfferId: freezed == sampleOfOfferId
+          ? _self.sampleOfOfferId
+          : sampleOfOfferId // ignore: cast_nullable_to_non_nullable
+              as int?,
       description: freezed == description
           ? _self.description
           : description // ignore: cast_nullable_to_non_nullable

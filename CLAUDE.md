@@ -125,6 +125,26 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 
 # Part 2 — Target architecture
 
+> ### 🔴 `GET /offers` is paginated since v2.4 — and it fails silently
+>
+> Default `per_page` is **20**, max 100, and the response carries `meta: {page, per_page, total, total_pages}`. Before v2.4 the endpoint returned every ACTIVE offer. Code that treats `data` as the complete list **produces no error at all** — the catalog just shows fewer products. Always read `meta`; `CatalogHomeState` exposes `page`/`totalPages`/`hasMorePages` for this.
+>
+> Pagination applies only to buyer/public callers. A `SEL` token hits a different branch with no pagination and **no `meta`** — don't copy this pattern into the seller app.
+>
+> ### 🆕 v2.4 bulk endpoints removed a real N+1
+>
+> `GET /offers/prices?ids=` (cheapest RETAIL price per offer) and `GET /sku-master?ids=` (name/base_unit/weight per SKU) each answer for many ids in one call. `CatalogService.withPriceTiers` and `skusByIds` now use them, which is why the artificial 24-item cap on the home grid is gone. One grid page costs **4 calls** total: offers, prices, sku names, reviews-summary.
+>
+> The bulk SKU response has **no `units[]`**, so it maps to `SkuBriefModel`, not `SkuModel` — returning a `SkuModel` with an empty `units` list would be indistinguishable from "this SKU genuinely has no sell units" and the unit picker would vanish without a trace.
+>
+> ### 🔴 Wishlist is entirely broken in v2.4 (backend regression)
+>
+> All three endpoints return `403 PERMISSION_DENIED` with the server's own message: `Unknown menu_cd (server misconfiguration): WISHLIST_VIEW` (also `WISHLIST_ADD`, `WISHLIST_REMOVE`). The v2.4 permission seed is missing those three rows. They worked in v2.2 and the integration test passed then; other permissioned endpoints are fine (`cart/add` 201, `offers/{id}/reviews` 200), so the permission system itself is healthy. The client layer is finished — drop the `skip` in `test/integration/transaction_flow_test.dart` once the seed lands.
+>
+> ### ⚠️ `created_at` survives on exactly two endpoint groups
+>
+> The v2.2 note said `created_at` was gone everywhere. It is gone from the database, but `/payments/*` and `/chat/messages` still return **`created_at`** because they alias the column. Never blind find-and-replace `created_at` → `created_date`. `PaymentModel` reads both via `@JsonKey(readValue:)`.
+>
 > ### 🔴 Backend v2.2 renamed fields the release notes did not mention
 >
 > The v2.2 refactor notes list only `created_at` → `created_date` and `updated_at` → `modified_date`. Verified against the running backend, **`GET /auth/me` also renamed two more fields** — and only that endpoint:
