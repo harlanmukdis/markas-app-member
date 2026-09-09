@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:navy_wear/ui/main/auth/screens/login_screen.dart';
+import 'package:navy_wear/ui/main/checkout/screens/checkout_screen.dart';
+import 'package:navy_wear/ui/main/order/screens/order_detail_screen.dart';
+import 'package:navy_wear/ui/main/order/screens/order_list_screen.dart';
 import 'package:navy_wear/ui/main/product/screens/product_detail_screen.dart';
 import 'package:navy_wear/ui/main/auth/screens/register_screen.dart';
 import '../../features/auth/presentation/views/reset_password_view.dart';
@@ -52,6 +55,20 @@ class AppRoutes {
 
   /// Membangun path detail untuk sebuah penawaran.
   static String offerDetailPath(int offerId) => '/offer/$offerId';
+
+  /// Checkout ber-API.
+  ///
+  /// Dinamai `checkoutOrder` karena `AppRoutes.checkout` milik kit sudah
+  /// terpakai oleh `CheckoutView` lama yang belum dimigrasikan.
+  static const String checkoutOrder = '/checkoutOrder';
+
+  /// Daftar pesanan.
+  static const String orders = '/orders';
+
+  /// Detail pesanan. Path parameter, bukan `extra`, agar tahan refresh di web.
+  static const String orderDetail = '/order';
+
+  static String orderDetailPath(int orderId) => '/order/$orderId';
   static const String homeLayout = '/homeLayout';
   static const String productDetails = '/productDetails';
   static const String allReview = '/allReview';
@@ -118,6 +135,34 @@ final GoRouter router = GoRouter(
         return FadeThroughTransitionPageWrapper(
           transitionKey: state.pageKey,
           page: const ResetPasswordView(),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.checkoutOrder,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return FadeThroughTransitionPageWrapper(
+          transitionKey: state.pageKey,
+          page: const CheckoutScreen(),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.orders,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return FadeThroughTransitionPageWrapper(
+          transitionKey: state.pageKey,
+          page: const OrderListScreen(),
+        );
+      },
+    ),
+    GoRoute(
+      path: '${AppRoutes.orderDetail}/:id',
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+        return FadeThroughTransitionPageWrapper(
+          transitionKey: state.pageKey,
+          page: OrderDetailScreen(orderId: id),
         );
       },
     ),
