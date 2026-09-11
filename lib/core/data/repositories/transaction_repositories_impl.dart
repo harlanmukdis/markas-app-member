@@ -13,6 +13,8 @@ import 'package:navy_wear/core/domain/model/order/order_models.dart';
 import 'package:navy_wear/core/domain/model/payment/payment_model.dart';
 import 'package:navy_wear/core/domain/model/voucher/voucher_models.dart';
 import 'package:navy_wear/core/domain/model/wishlist/wishlist_item_model.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/wallet_service.dart';
+import 'package:navy_wear/core/domain/model/wallet/wallet_models.dart';
 import 'package:navy_wear/core/domain/repositories/transaction_repositories.dart';
 
 class AddressRepositoryImpl with RepositoryGuard implements AddressRepository {
@@ -84,6 +86,17 @@ class CartRepositoryImpl with RepositoryGuard implements CartRepository {
   @override
   Future<DataState<void>> remove(int itemId) =>
       guardVoid(() => _service.remove(itemId));
+
+  @override
+  Future<DataState<CartVoucherModel>> attachVoucher({
+    required String code,
+    int? sellerId,
+  }) =>
+      guard(() => _service.attachVoucher(code: code, sellerId: sellerId));
+
+  @override
+  Future<DataState<void>> removeVoucher(String code) =>
+      guardVoid(() => _service.removeVoucher(code));
 
   @override
   Future<DataState<void>> clear() => guardVoid(() => _service.clear());
@@ -196,4 +209,28 @@ class VoucherRepositoryImpl with RepositoryGuard implements VoucherRepository {
             subOrderSubtotal: subOrderSubtotal,
             subOrderId: subOrderId,
           ));
+}
+
+class WalletRepositoryImpl with RepositoryGuard implements WalletRepository {
+  WalletRepositoryImpl(this._service);
+
+  final WalletService _service;
+
+  @override
+  Future<DataState<WalletBalanceModel>> balance() =>
+      guard(() => _service.balance());
+
+  @override
+  Future<DataState<WalletTopupModel>> topup({
+    required TopupMethod method,
+    required int amount,
+  }) =>
+      guard(() => _service.topup(method: method, amount: amount));
+
+  @override
+  Future<DataState<List<WalletEntryModel>>> history({
+    int limit = 30,
+    int offset = 0,
+  }) =>
+      guardList(() => _service.history(limit: limit, offset: offset));
 }

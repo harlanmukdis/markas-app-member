@@ -3524,6 +3524,20 @@ mixin _$CheckoutResultModel {
   String? get orderNo;
   @StringJson()
   String get status;
+
+  /// Rincian wajib tampil terpisah, bukan diringkas jadi satu angka.
+  /// Pada bahan bangunan ongkir rutin melampaui harga barangnya — satu
+  /// checkout nyata di backend ini: barang Rp 355.000, ongkir Rp 750.000.
+  /// Pembeli yang cuma melihat `grand_total` akan mengira barangnya yang
+  /// mahal.
+  @IntJson()
+  int get subtotal;
+  @IntJson()
+  @JsonKey(name: 'shipping_total')
+  int get shippingTotal;
+  @IntJson()
+  @JsonKey(name: 'discount_total')
+  int get discountTotal;
   @IntJson()
   @JsonKey(name: 'grand_total')
   int get grandTotal;
@@ -3552,6 +3566,12 @@ mixin _$CheckoutResultModel {
             (identical(other.orderId, orderId) || other.orderId == orderId) &&
             (identical(other.orderNo, orderNo) || other.orderNo == orderNo) &&
             (identical(other.status, status) || other.status == status) &&
+            (identical(other.subtotal, subtotal) ||
+                other.subtotal == subtotal) &&
+            (identical(other.shippingTotal, shippingTotal) ||
+                other.shippingTotal == shippingTotal) &&
+            (identical(other.discountTotal, discountTotal) ||
+                other.discountTotal == discountTotal) &&
             (identical(other.grandTotal, grandTotal) ||
                 other.grandTotal == grandTotal) &&
             (identical(other.forcedBankTransfer, forcedBankTransfer) ||
@@ -3567,13 +3587,16 @@ mixin _$CheckoutResultModel {
       orderId,
       orderNo,
       status,
+      subtotal,
+      shippingTotal,
+      discountTotal,
       grandTotal,
       forcedBankTransfer,
       const DeepCollectionEquality().hash(subOrderIds));
 
   @override
   String toString() {
-    return 'CheckoutResultModel(orderId: $orderId, orderNo: $orderNo, status: $status, grandTotal: $grandTotal, forcedBankTransfer: $forcedBankTransfer, subOrderIds: $subOrderIds)';
+    return 'CheckoutResultModel(orderId: $orderId, orderNo: $orderNo, status: $status, subtotal: $subtotal, shippingTotal: $shippingTotal, discountTotal: $discountTotal, grandTotal: $grandTotal, forcedBankTransfer: $forcedBankTransfer, subOrderIds: $subOrderIds)';
   }
 }
 
@@ -3587,6 +3610,9 @@ abstract mixin class $CheckoutResultModelCopyWith<$Res> {
       {@IntJson() @JsonKey(name: 'order_id') int orderId,
       @StringOrNullJson() @JsonKey(name: 'order_no') String? orderNo,
       @StringJson() String status,
+      @IntJson() int subtotal,
+      @IntJson() @JsonKey(name: 'shipping_total') int shippingTotal,
+      @IntJson() @JsonKey(name: 'discount_total') int discountTotal,
       @IntJson() @JsonKey(name: 'grand_total') int grandTotal,
       @BoolJson()
       @JsonKey(name: 'forced_bank_transfer')
@@ -3610,6 +3636,9 @@ class _$CheckoutResultModelCopyWithImpl<$Res>
     Object? orderId = null,
     Object? orderNo = freezed,
     Object? status = null,
+    Object? subtotal = null,
+    Object? shippingTotal = null,
+    Object? discountTotal = null,
     Object? grandTotal = null,
     Object? forcedBankTransfer = null,
     Object? subOrderIds = null,
@@ -3627,6 +3656,18 @@ class _$CheckoutResultModelCopyWithImpl<$Res>
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
+      subtotal: null == subtotal
+          ? _self.subtotal
+          : subtotal // ignore: cast_nullable_to_non_nullable
+              as int,
+      shippingTotal: null == shippingTotal
+          ? _self.shippingTotal
+          : shippingTotal // ignore: cast_nullable_to_non_nullable
+              as int,
+      discountTotal: null == discountTotal
+          ? _self.discountTotal
+          : discountTotal // ignore: cast_nullable_to_non_nullable
+              as int,
       grandTotal: null == grandTotal
           ? _self.grandTotal
           : grandTotal // ignore: cast_nullable_to_non_nullable
@@ -3740,6 +3781,9 @@ extension CheckoutResultModelPatterns on CheckoutResultModel {
             @IntJson() @JsonKey(name: 'order_id') int orderId,
             @StringOrNullJson() @JsonKey(name: 'order_no') String? orderNo,
             @StringJson() String status,
+            @IntJson() int subtotal,
+            @IntJson() @JsonKey(name: 'shipping_total') int shippingTotal,
+            @IntJson() @JsonKey(name: 'discount_total') int discountTotal,
             @IntJson() @JsonKey(name: 'grand_total') int grandTotal,
             @BoolJson()
             @JsonKey(name: 'forced_bank_transfer')
@@ -3751,8 +3795,16 @@ extension CheckoutResultModelPatterns on CheckoutResultModel {
     final _that = this;
     switch (_that) {
       case _CheckoutResultModel() when $default != null:
-        return $default(_that.orderId, _that.orderNo, _that.status,
-            _that.grandTotal, _that.forcedBankTransfer, _that.subOrderIds);
+        return $default(
+            _that.orderId,
+            _that.orderNo,
+            _that.status,
+            _that.subtotal,
+            _that.shippingTotal,
+            _that.discountTotal,
+            _that.grandTotal,
+            _that.forcedBankTransfer,
+            _that.subOrderIds);
       case _:
         return orElse();
     }
@@ -3777,6 +3829,9 @@ extension CheckoutResultModelPatterns on CheckoutResultModel {
             @IntJson() @JsonKey(name: 'order_id') int orderId,
             @StringOrNullJson() @JsonKey(name: 'order_no') String? orderNo,
             @StringJson() String status,
+            @IntJson() int subtotal,
+            @IntJson() @JsonKey(name: 'shipping_total') int shippingTotal,
+            @IntJson() @JsonKey(name: 'discount_total') int discountTotal,
             @IntJson() @JsonKey(name: 'grand_total') int grandTotal,
             @BoolJson()
             @JsonKey(name: 'forced_bank_transfer')
@@ -3787,8 +3842,16 @@ extension CheckoutResultModelPatterns on CheckoutResultModel {
     final _that = this;
     switch (_that) {
       case _CheckoutResultModel():
-        return $default(_that.orderId, _that.orderNo, _that.status,
-            _that.grandTotal, _that.forcedBankTransfer, _that.subOrderIds);
+        return $default(
+            _that.orderId,
+            _that.orderNo,
+            _that.status,
+            _that.subtotal,
+            _that.shippingTotal,
+            _that.discountTotal,
+            _that.grandTotal,
+            _that.forcedBankTransfer,
+            _that.subOrderIds);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -3812,6 +3875,9 @@ extension CheckoutResultModelPatterns on CheckoutResultModel {
             @IntJson() @JsonKey(name: 'order_id') int orderId,
             @StringOrNullJson() @JsonKey(name: 'order_no') String? orderNo,
             @StringJson() String status,
+            @IntJson() int subtotal,
+            @IntJson() @JsonKey(name: 'shipping_total') int shippingTotal,
+            @IntJson() @JsonKey(name: 'discount_total') int discountTotal,
             @IntJson() @JsonKey(name: 'grand_total') int grandTotal,
             @BoolJson()
             @JsonKey(name: 'forced_bank_transfer')
@@ -3822,8 +3888,16 @@ extension CheckoutResultModelPatterns on CheckoutResultModel {
     final _that = this;
     switch (_that) {
       case _CheckoutResultModel() when $default != null:
-        return $default(_that.orderId, _that.orderNo, _that.status,
-            _that.grandTotal, _that.forcedBankTransfer, _that.subOrderIds);
+        return $default(
+            _that.orderId,
+            _that.orderNo,
+            _that.status,
+            _that.subtotal,
+            _that.shippingTotal,
+            _that.discountTotal,
+            _that.grandTotal,
+            _that.forcedBankTransfer,
+            _that.subOrderIds);
       case _:
         return null;
     }
@@ -3837,6 +3911,9 @@ class _CheckoutResultModel extends CheckoutResultModel {
       {@IntJson() @JsonKey(name: 'order_id') required this.orderId,
       @StringOrNullJson() @JsonKey(name: 'order_no') this.orderNo,
       @StringJson() this.status = '',
+      @IntJson() this.subtotal = 0,
+      @IntJson() @JsonKey(name: 'shipping_total') this.shippingTotal = 0,
+      @IntJson() @JsonKey(name: 'discount_total') this.discountTotal = 0,
       @IntJson() @JsonKey(name: 'grand_total') this.grandTotal = 0,
       @BoolJson()
       @JsonKey(name: 'forced_bank_transfer')
@@ -3860,6 +3937,24 @@ class _CheckoutResultModel extends CheckoutResultModel {
   @JsonKey()
   @StringJson()
   final String status;
+
+  /// Rincian wajib tampil terpisah, bukan diringkas jadi satu angka.
+  /// Pada bahan bangunan ongkir rutin melampaui harga barangnya — satu
+  /// checkout nyata di backend ini: barang Rp 355.000, ongkir Rp 750.000.
+  /// Pembeli yang cuma melihat `grand_total` akan mengira barangnya yang
+  /// mahal.
+  @override
+  @JsonKey()
+  @IntJson()
+  final int subtotal;
+  @override
+  @IntJson()
+  @JsonKey(name: 'shipping_total')
+  final int shippingTotal;
+  @override
+  @IntJson()
+  @JsonKey(name: 'discount_total')
+  final int discountTotal;
   @override
   @IntJson()
   @JsonKey(name: 'grand_total')
@@ -3901,6 +3996,12 @@ class _CheckoutResultModel extends CheckoutResultModel {
             (identical(other.orderId, orderId) || other.orderId == orderId) &&
             (identical(other.orderNo, orderNo) || other.orderNo == orderNo) &&
             (identical(other.status, status) || other.status == status) &&
+            (identical(other.subtotal, subtotal) ||
+                other.subtotal == subtotal) &&
+            (identical(other.shippingTotal, shippingTotal) ||
+                other.shippingTotal == shippingTotal) &&
+            (identical(other.discountTotal, discountTotal) ||
+                other.discountTotal == discountTotal) &&
             (identical(other.grandTotal, grandTotal) ||
                 other.grandTotal == grandTotal) &&
             (identical(other.forcedBankTransfer, forcedBankTransfer) ||
@@ -3916,13 +4017,16 @@ class _CheckoutResultModel extends CheckoutResultModel {
       orderId,
       orderNo,
       status,
+      subtotal,
+      shippingTotal,
+      discountTotal,
       grandTotal,
       forcedBankTransfer,
       const DeepCollectionEquality().hash(_subOrderIds));
 
   @override
   String toString() {
-    return 'CheckoutResultModel(orderId: $orderId, orderNo: $orderNo, status: $status, grandTotal: $grandTotal, forcedBankTransfer: $forcedBankTransfer, subOrderIds: $subOrderIds)';
+    return 'CheckoutResultModel(orderId: $orderId, orderNo: $orderNo, status: $status, subtotal: $subtotal, shippingTotal: $shippingTotal, discountTotal: $discountTotal, grandTotal: $grandTotal, forcedBankTransfer: $forcedBankTransfer, subOrderIds: $subOrderIds)';
   }
 }
 
@@ -3938,6 +4042,9 @@ abstract mixin class _$CheckoutResultModelCopyWith<$Res>
       {@IntJson() @JsonKey(name: 'order_id') int orderId,
       @StringOrNullJson() @JsonKey(name: 'order_no') String? orderNo,
       @StringJson() String status,
+      @IntJson() int subtotal,
+      @IntJson() @JsonKey(name: 'shipping_total') int shippingTotal,
+      @IntJson() @JsonKey(name: 'discount_total') int discountTotal,
       @IntJson() @JsonKey(name: 'grand_total') int grandTotal,
       @BoolJson()
       @JsonKey(name: 'forced_bank_transfer')
@@ -3961,6 +4068,9 @@ class __$CheckoutResultModelCopyWithImpl<$Res>
     Object? orderId = null,
     Object? orderNo = freezed,
     Object? status = null,
+    Object? subtotal = null,
+    Object? shippingTotal = null,
+    Object? discountTotal = null,
     Object? grandTotal = null,
     Object? forcedBankTransfer = null,
     Object? subOrderIds = null,
@@ -3978,6 +4088,18 @@ class __$CheckoutResultModelCopyWithImpl<$Res>
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
+      subtotal: null == subtotal
+          ? _self.subtotal
+          : subtotal // ignore: cast_nullable_to_non_nullable
+              as int,
+      shippingTotal: null == shippingTotal
+          ? _self.shippingTotal
+          : shippingTotal // ignore: cast_nullable_to_non_nullable
+              as int,
+      discountTotal: null == discountTotal
+          ? _self.discountTotal
+          : discountTotal // ignore: cast_nullable_to_non_nullable
+              as int,
       grandTotal: null == grandTotal
           ? _self.grandTotal
           : grandTotal // ignore: cast_nullable_to_non_nullable

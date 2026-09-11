@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/address/address_model.dart';
+import 'package:navy_wear/core/domain/model/cart/cart_model.dart';
 import 'package:navy_wear/core/domain/model/order/order_models.dart';
 import 'package:navy_wear/core/domain/repositories/transaction_repositories.dart';
 import 'package:navy_wear/di/injector.dart';
@@ -14,12 +15,14 @@ class CheckoutCubit extends Cubit<CheckoutState> {
   CheckoutCubit()
       : _addresses = injector<AddressRepository>(),
         _orders = injector<OrderRepository>(),
+        _cart = injector<CartRepository>(),
         super(const CheckoutState());
 
   static CheckoutCubit get(BuildContext context) => BlocProvider.of(context);
 
   final AddressRepository _addresses;
   final OrderRepository _orders;
+  final CartRepository _cart;
 
   Future<void> loadAddresses() async {
     emit(state.copyWith(isLoadingAddresses: true, error: null));
@@ -59,6 +62,19 @@ class CheckoutCubit extends Cubit<CheckoutState> {
   /// tidak berguna.
   void setAllOrNothing(bool value) =>
       emit(state.copyWith(allOrNothing: value));
+
+  /// Membaca kode voucher yang menempel, untuk dibandingkan setelah checkout.
+  ///
+  /// Kegagalannya diabaikan: ini cuma bahan peringatan, bukan syarat checkout.
+  Future<void> loadCartVouchers() async {
+    final result = await _cart.view();
+    if (isClosed) return;
+    if (result case DataSuccess<CartModel>(:final data)) {
+      emit(state.copyWith(
+        cartVoucherCodes: data.vouchers.map((v) => v.code).toList(),
+      ));
+    }
+  }
 
   Future<void> submit() async {
     final addressId = state.selectedAddressId;

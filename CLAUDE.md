@@ -162,6 +162,26 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 >
 > PHP and MySQL clocks disagree by 5 hours, so a 24-hour payment window is stored as 19 hours after `created_date`. **Do not correct this with an offset in Flutter** — when the backend is fixed the correction makes it wrong twice. Until then show absolute times via `formatServerDeadline()` and do not build countdowns that look precise. `formatCountdown()` carries the same warning at its definition.
 
+> ### 🆕 `SALDO` is the only payment method that actually completes
+>
+> The brief documents six methods on `POST /payments/initiate`. Only `SALDO` finishes: the server answers `status: "LUNAS"` immediately, with no gateway and no `expires_at`. VA and QRIS still run on `MOCK_GATEWAY`, so their `va_number` / `qris_payload` are fake strings no bank will accept. `PaymentMethod.renderable` is therefore `[saldo, va, qris]` with `saldo` first, and `selectable(forcedBankTransfer: true)` keeps `saldo` — it is **exempt** from the forced-bank-transfer rule, and dropping it would push the buyer onto the one path whose destination account number does not exist anywhere in the API.
+>
+> `INSUFFICIENT_BALANCE` carries `details: {balance, required}`. `DataError.walletShortfall` turns that into the number to show; never compute the shortfall from a locally cached balance.
+>
+> ### 🔴 `created_at` survives on a **third** endpoint the brief does not list
+>
+> The brief names `/chat/messages` and `/payments/*` as the only holdouts. `POST /wallet/topup` also returns **`created_at`** — while `GET /wallet/history`, in the same module, returns `created_date`. Verified against the running backend. `WalletTopupModel` reads both spellings via `@JsonKey(readValue:)`, and an integration test pins it so a future cleanup does not break silently.
+>
+> Its `expires_at` is also 19 hours after `created_at`, not 24 — the same 5-hour clock skew as `payment_deadline`.
+>
+> ### 🔴 `POST /cart/clear` does **not** detach vouchers
+>
+> Emptying the cart removes the items and leaves the voucher attached. Re-attaching the same code then fails with **`409 ALREADY_ATTACHED`** — a code that appears in no brief. This is a routine path, not an edge case, so `_cartMessage()` in the cart screen explains it in a sentence a buyer can act on. An integration test pins the behaviour and will go red if the server ever starts detaching, at which point the 409 handling can go.
+>
+> ### 🔴 Order status lags shipment status, so a "Dikirim" tab is not buildable
+>
+> The brief suggests five order tabs, with "Dikirim" keyed to shipment status `DIKIRIM`. Two facts block it: `GET /orders` carries **no shipment data at all** (no `sub_orders`, no `shipments`), and the order-level status does not advance with the shipment. Order 3 in the test data is order `DIBAYAR` / sub-order `BERJALAN` / shipment `SAMPAI` — the goods have already arrived while the order still reads "paid". Filling a "Dikirim" tab would cost one `GET /orders/{id}` per order, the exact N+1 the brief warns against elsewhere, and filtering on order status alone would leave it permanently empty. `OrderTab` therefore stays at four order-level tabs.
+
 > ### 🔴 Backend blocker: the `Authorization` header is case-sensitive
 >
 > Every protected endpoint returns `401 UNAUTHENTICATED` unless the header name is spelled **exactly** `Authorization`. This violates RFC 7230 §3.2 (HTTP field names are case-insensitive) and it breaks **all native Dart/Flutter clients**, because `dart:io`'s `HttpHeaders` lowercases field names and Dio does not opt out.
@@ -213,7 +233,7 @@ The kit's social-login buttons were dropped, not ported — the backend has no O
 
 A `@freezed` class with custom getters or methods **must** declare a private constructor (`const UserModel._();`), otherwise generation fails with `Getters require a MyClass._() constructor`. Also prefer getters **inside** the class over an `extension`: an extension is only in scope where its own library is imported, so `user.isB2B` silently fails to resolve in a file that imported the model only transitively.
 
-**Backend contract**: the member app talks to Markas Bangunan (CodeIgniter 3 + JWT). The API is documented in `API-MEMBER-APP.md` — ask the user for it if it is not in the repo root. Three deviations from the generic plan below were forced by that API and are deliberate:
+**Backend contract**: the member app talks to Markas Bangunan (CodeIgniter 3 + JWT). The API is documented in **`BRIEF-FE-MEMBER.md`** (11 September 2026, branch `wip-harlan`) — ask the user for it if it is not in the repo root. That brief **supersedes** `API-MEMBER-APP.md`, `MEMBER-APP-FEATURE-MAP.md`, `PROMPT-PENYESUAIAN-v2.2.md`, and `PROMPT-PENYESUAIAN-v2.4.md`; those were written before the refactor and are stale on field names and feature lists. Even so, the brief is not complete — four things below were found by probing and contradict or extend it. Three deviations from the generic plan below were forced by that API and are deliberate:
 
 1. **`DataSuccess` carries `meta` and `statusCode`.** The API puts business decisions in `meta` (`forced_bank_transfer` decides which payment methods may render; `note` explains an auto-rejected return), and uses **200 vs 201** to distinguish "returned the existing record" from "created a new one" (`POST /payments/initiate`, `POST /chat/threads`). A repository that forwards only `data` loses both.
 2. **Every numeric and boolean model field must use a converter from `lib/util/json_converters.dart`.** The same logical field arrives as a number from one endpoint and a string from another (`"grand_total": 6500000` from `POST /checkout`, `"grand_total": "6500000"` from `GET /orders/{id}`), and `tinyint` booleans arrive as `"0"`/`"1"`.

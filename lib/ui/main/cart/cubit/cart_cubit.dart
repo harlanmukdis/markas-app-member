@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/cart/cart_model.dart';
+import 'package:navy_wear/core/domain/model/voucher/voucher_models.dart';
 import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
 import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
@@ -55,6 +56,7 @@ class CartCubit extends Cubit<CartState> {
         emit(state.copyWith(
           isLoading: false,
           groups: await _buildGroups(data),
+          vouchers: data.vouchers,
         ));
       default:
         emit(state.copyWith(isLoading: false, groups: const []));
@@ -194,6 +196,68 @@ class CartCubit extends Cubit<CartState> {
       busyLineIds: {...state.busyLineIds}..remove(lineId),
       message: message,
     ));
+  }
+
+  /// `POST /cart/voucher`.
+  ///
+  /// [sellerId] hanya perlu untuk voucher platform saat keranjang berisi
+  /// barang dari lebih dari satu toko — voucher toko menentukan targetnya
+  /// sendiri. Dikirim otomatis kalau keranjang cuma punya satu toko, supaya
+  /// pembeli tidak pernah ditanya hal yang jawabannya sudah pasti.
+  Future<void> applyVoucher(String code, {int? sellerId}) async {
+    if (state.isVoucherBusy) return;
+    final trimmed = code.trim().toUpperCase();
+    if (trimmed.isEmpty) return;
+
+    emit(state.copyWith(isVoucherBusy: true, error: null, message: null));
+
+    final result = await _cart.attachVoucher(
+      code: trimmed,
+      sellerId: sellerId ??
+          (state.groups.length == 1 ? state.groups.first.sellerId : null),
+    );
+    if (isClosed) return;
+
+    switch (result) {
+      case DataSuccess<CartVoucherModel>(:final data):
+        final previews = Map<String, int>.from(state.discountPreviews);
+        if (data.discountAmountPreview != null) {
+          previews[data.code] = data.discountAmountPreview!;
+        }
+        emit(state.copyWith(isVoucherBusy: false, discountPreviews: previews));
+        await _reloadVouchers();
+      case DataFailed(:final error):
+        emit(state.copyWith(isVoucherBusy: false, error: error));
+      default:
+        emit(state.copyWith(isVoucherBusy: false));
+    }
+  }
+
+  Future<void> removeVoucher(String code) async {
+    if (state.isVoucherBusy) return;
+    emit(state.copyWith(isVoucherBusy: true, error: null, message: null));
+
+    final result = await _cart.removeVoucher(code);
+    if (isClosed) return;
+
+    if (result case DataFailed(:final error)) {
+      emit(state.copyWith(isVoucherBusy: false, error: error));
+      return;
+    }
+    final previews = Map<String, int>.from(state.discountPreviews)
+      ..remove(code);
+    emit(state.copyWith(isVoucherBusy: false, discountPreviews: previews));
+    await _reloadVouchers();
+  }
+
+  /// Membaca ulang daftar voucher saja, tanpa menyusun ulang seluruh grup —
+  /// itu butuh satu `GET /offers/{id}` per baris.
+  Future<void> _reloadVouchers() async {
+    final result = await _cart.view();
+    if (isClosed) return;
+    if (result case DataSuccess<CartModel>(:final data)) {
+      emit(state.copyWith(vouchers: data.vouchers));
+    }
   }
 
   void clearMessage() => emit(state.copyWith(message: null, error: null));

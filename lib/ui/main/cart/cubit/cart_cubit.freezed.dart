@@ -764,6 +764,18 @@ mixin _$CartState {
   bool get isClearing;
   String? get message;
 
+  /// Voucher yang menempel di keranjang.
+  List<CartVoucherModel> get vouchers;
+
+  /// Pratinjau potongan per kode, dari `POST /cart/voucher`.
+  ///
+  /// Disimpan terpisah dari [vouchers] karena `GET /cart/view` **tidak**
+  /// mengirim angka ini — memuat ulang keranjang akan menghapusnya kalau
+  /// digabung. Angkanya juga bukan jaminan: server menghitung ulang saat
+  /// checkout.
+  Map<String, int> get discountPreviews;
+  bool get isVoucherBusy;
+
   /// Create a copy of CartState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -784,7 +796,12 @@ mixin _$CartState {
                 .equals(other.busyLineIds, busyLineIds) &&
             (identical(other.isClearing, isClearing) ||
                 other.isClearing == isClearing) &&
-            (identical(other.message, message) || other.message == message));
+            (identical(other.message, message) || other.message == message) &&
+            const DeepCollectionEquality().equals(other.vouchers, vouchers) &&
+            const DeepCollectionEquality()
+                .equals(other.discountPreviews, discountPreviews) &&
+            (identical(other.isVoucherBusy, isVoucherBusy) ||
+                other.isVoucherBusy == isVoucherBusy));
   }
 
   @override
@@ -795,11 +812,14 @@ mixin _$CartState {
       const DeepCollectionEquality().hash(groups),
       const DeepCollectionEquality().hash(busyLineIds),
       isClearing,
-      message);
+      message,
+      const DeepCollectionEquality().hash(vouchers),
+      const DeepCollectionEquality().hash(discountPreviews),
+      isVoucherBusy);
 
   @override
   String toString() {
-    return 'CartState(isLoading: $isLoading, error: $error, groups: $groups, busyLineIds: $busyLineIds, isClearing: $isClearing, message: $message)';
+    return 'CartState(isLoading: $isLoading, error: $error, groups: $groups, busyLineIds: $busyLineIds, isClearing: $isClearing, message: $message, vouchers: $vouchers, discountPreviews: $discountPreviews, isVoucherBusy: $isVoucherBusy)';
   }
 }
 
@@ -814,7 +834,10 @@ abstract mixin class $CartStateCopyWith<$Res> {
       List<CartSellerGroup> groups,
       Set<int> busyLineIds,
       bool isClearing,
-      String? message});
+      String? message,
+      List<CartVoucherModel> vouchers,
+      Map<String, int> discountPreviews,
+      bool isVoucherBusy});
 }
 
 /// @nodoc
@@ -835,6 +858,9 @@ class _$CartStateCopyWithImpl<$Res> implements $CartStateCopyWith<$Res> {
     Object? busyLineIds = null,
     Object? isClearing = null,
     Object? message = freezed,
+    Object? vouchers = null,
+    Object? discountPreviews = null,
+    Object? isVoucherBusy = null,
   }) {
     return _then(_self.copyWith(
       isLoading: null == isLoading
@@ -861,6 +887,18 @@ class _$CartStateCopyWithImpl<$Res> implements $CartStateCopyWith<$Res> {
           ? _self.message
           : message // ignore: cast_nullable_to_non_nullable
               as String?,
+      vouchers: null == vouchers
+          ? _self.vouchers
+          : vouchers // ignore: cast_nullable_to_non_nullable
+              as List<CartVoucherModel>,
+      discountPreviews: null == discountPreviews
+          ? _self.discountPreviews
+          : discountPreviews // ignore: cast_nullable_to_non_nullable
+              as Map<String, int>,
+      isVoucherBusy: null == isVoucherBusy
+          ? _self.isVoucherBusy
+          : isVoucherBusy // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -962,15 +1000,26 @@ extension CartStatePatterns on CartState {
             List<CartSellerGroup> groups,
             Set<int> busyLineIds,
             bool isClearing,
-            String? message)?
+            String? message,
+            List<CartVoucherModel> vouchers,
+            Map<String, int> discountPreviews,
+            bool isVoucherBusy)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _CartState() when $default != null:
-        return $default(_that.isLoading, _that.error, _that.groups,
-            _that.busyLineIds, _that.isClearing, _that.message);
+        return $default(
+            _that.isLoading,
+            _that.error,
+            _that.groups,
+            _that.busyLineIds,
+            _that.isClearing,
+            _that.message,
+            _that.vouchers,
+            _that.discountPreviews,
+            _that.isVoucherBusy);
       case _:
         return orElse();
     }
@@ -997,14 +1046,25 @@ extension CartStatePatterns on CartState {
             List<CartSellerGroup> groups,
             Set<int> busyLineIds,
             bool isClearing,
-            String? message)
+            String? message,
+            List<CartVoucherModel> vouchers,
+            Map<String, int> discountPreviews,
+            bool isVoucherBusy)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _CartState():
-        return $default(_that.isLoading, _that.error, _that.groups,
-            _that.busyLineIds, _that.isClearing, _that.message);
+        return $default(
+            _that.isLoading,
+            _that.error,
+            _that.groups,
+            _that.busyLineIds,
+            _that.isClearing,
+            _that.message,
+            _that.vouchers,
+            _that.discountPreviews,
+            _that.isVoucherBusy);
     }
   }
 
@@ -1028,14 +1088,25 @@ extension CartStatePatterns on CartState {
             List<CartSellerGroup> groups,
             Set<int> busyLineIds,
             bool isClearing,
-            String? message)?
+            String? message,
+            List<CartVoucherModel> vouchers,
+            Map<String, int> discountPreviews,
+            bool isVoucherBusy)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _CartState() when $default != null:
-        return $default(_that.isLoading, _that.error, _that.groups,
-            _that.busyLineIds, _that.isClearing, _that.message);
+        return $default(
+            _that.isLoading,
+            _that.error,
+            _that.groups,
+            _that.busyLineIds,
+            _that.isClearing,
+            _that.message,
+            _that.vouchers,
+            _that.discountPreviews,
+            _that.isVoucherBusy);
       case _:
         return null;
     }
@@ -1051,9 +1122,14 @@ class _CartState extends CartState {
       final List<CartSellerGroup> groups = const <CartSellerGroup>[],
       final Set<int> busyLineIds = const <int>{},
       this.isClearing = false,
-      this.message})
+      this.message,
+      final List<CartVoucherModel> vouchers = const <CartVoucherModel>[],
+      final Map<String, int> discountPreviews = const <String, int>{},
+      this.isVoucherBusy = false})
       : _groups = groups,
         _busyLineIds = busyLineIds,
+        _vouchers = vouchers,
+        _discountPreviews = discountPreviews,
         super._();
 
   @override
@@ -1090,6 +1166,44 @@ class _CartState extends CartState {
   @override
   final String? message;
 
+  /// Voucher yang menempel di keranjang.
+  final List<CartVoucherModel> _vouchers;
+
+  /// Voucher yang menempel di keranjang.
+  @override
+  @JsonKey()
+  List<CartVoucherModel> get vouchers {
+    if (_vouchers is EqualUnmodifiableListView) return _vouchers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_vouchers);
+  }
+
+  /// Pratinjau potongan per kode, dari `POST /cart/voucher`.
+  ///
+  /// Disimpan terpisah dari [vouchers] karena `GET /cart/view` **tidak**
+  /// mengirim angka ini — memuat ulang keranjang akan menghapusnya kalau
+  /// digabung. Angkanya juga bukan jaminan: server menghitung ulang saat
+  /// checkout.
+  final Map<String, int> _discountPreviews;
+
+  /// Pratinjau potongan per kode, dari `POST /cart/voucher`.
+  ///
+  /// Disimpan terpisah dari [vouchers] karena `GET /cart/view` **tidak**
+  /// mengirim angka ini — memuat ulang keranjang akan menghapusnya kalau
+  /// digabung. Angkanya juga bukan jaminan: server menghitung ulang saat
+  /// checkout.
+  @override
+  @JsonKey()
+  Map<String, int> get discountPreviews {
+    if (_discountPreviews is EqualUnmodifiableMapView) return _discountPreviews;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_discountPreviews);
+  }
+
+  @override
+  @JsonKey()
+  final bool isVoucherBusy;
+
   /// Create a copy of CartState
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -1111,7 +1225,12 @@ class _CartState extends CartState {
                 .equals(other._busyLineIds, _busyLineIds) &&
             (identical(other.isClearing, isClearing) ||
                 other.isClearing == isClearing) &&
-            (identical(other.message, message) || other.message == message));
+            (identical(other.message, message) || other.message == message) &&
+            const DeepCollectionEquality().equals(other._vouchers, _vouchers) &&
+            const DeepCollectionEquality()
+                .equals(other._discountPreviews, _discountPreviews) &&
+            (identical(other.isVoucherBusy, isVoucherBusy) ||
+                other.isVoucherBusy == isVoucherBusy));
   }
 
   @override
@@ -1122,11 +1241,14 @@ class _CartState extends CartState {
       const DeepCollectionEquality().hash(_groups),
       const DeepCollectionEquality().hash(_busyLineIds),
       isClearing,
-      message);
+      message,
+      const DeepCollectionEquality().hash(_vouchers),
+      const DeepCollectionEquality().hash(_discountPreviews),
+      isVoucherBusy);
 
   @override
   String toString() {
-    return 'CartState(isLoading: $isLoading, error: $error, groups: $groups, busyLineIds: $busyLineIds, isClearing: $isClearing, message: $message)';
+    return 'CartState(isLoading: $isLoading, error: $error, groups: $groups, busyLineIds: $busyLineIds, isClearing: $isClearing, message: $message, vouchers: $vouchers, discountPreviews: $discountPreviews, isVoucherBusy: $isVoucherBusy)';
   }
 }
 
@@ -1144,7 +1266,10 @@ abstract mixin class _$CartStateCopyWith<$Res>
       List<CartSellerGroup> groups,
       Set<int> busyLineIds,
       bool isClearing,
-      String? message});
+      String? message,
+      List<CartVoucherModel> vouchers,
+      Map<String, int> discountPreviews,
+      bool isVoucherBusy});
 }
 
 /// @nodoc
@@ -1165,6 +1290,9 @@ class __$CartStateCopyWithImpl<$Res> implements _$CartStateCopyWith<$Res> {
     Object? busyLineIds = null,
     Object? isClearing = null,
     Object? message = freezed,
+    Object? vouchers = null,
+    Object? discountPreviews = null,
+    Object? isVoucherBusy = null,
   }) {
     return _then(_CartState(
       isLoading: null == isLoading
@@ -1191,6 +1319,18 @@ class __$CartStateCopyWithImpl<$Res> implements _$CartStateCopyWith<$Res> {
           ? _self.message
           : message // ignore: cast_nullable_to_non_nullable
               as String?,
+      vouchers: null == vouchers
+          ? _self._vouchers
+          : vouchers // ignore: cast_nullable_to_non_nullable
+              as List<CartVoucherModel>,
+      discountPreviews: null == discountPreviews
+          ? _self._discountPreviews
+          : discountPreviews // ignore: cast_nullable_to_non_nullable
+              as Map<String, int>,
+      isVoucherBusy: null == isVoucherBusy
+          ? _self.isVoucherBusy
+          : isVoucherBusy // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }

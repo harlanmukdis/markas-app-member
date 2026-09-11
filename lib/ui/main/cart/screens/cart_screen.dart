@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/function/components.dart';
 import 'package:navy_wear/core/utils/app_routes.dart';
 import 'package:navy_wear/core/utils/app_styles.dart';
@@ -56,7 +57,7 @@ class _CartBody extends StatelessWidget {
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMessageFor(context, error)),
+              content: Text(_cartMessage(context, error)),
               backgroundColor: kErrorColor,
             ),
           );
@@ -83,6 +84,8 @@ class _CartBody extends StatelessWidget {
                       16.sbh,
                       for (final group in state.groups)
                         _SellerGroupCard(group: group, cubit: cubit),
+                      16.sbh,
+                      _VoucherSection(state: state, cubit: cubit),
                       16.sbh,
                       const _PriceDisclaimer(),
                     ],
@@ -491,4 +494,155 @@ class _EmptyCart extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Voucher keranjang.
+///
+/// Angka potongan yang tampil di sini datang dari `discount_amount_preview`
+/// dan **hanya ada tepat setelah voucher dipasang** — `GET /cart/view` tidak
+/// mengirimkannya. Karena itu setelah keranjang dimuat ulang yang tersisa
+/// cuma kodenya, dan itu memang jujur: server memvalidasi ulang voucher saat
+/// checkout terhadap nilai final, lalu **melewatinya diam-diam** kalau sudah
+/// tidak memenuhi syarat.
+class _VoucherSection extends StatefulWidget {
+  const _VoucherSection({required this.state, required this.cubit});
+
+  final CartState state;
+  final CartCubit cubit;
+
+  @override
+  State<_VoucherSection> createState() => _VoucherSectionState();
+}
+
+class _VoucherSectionState extends State<_VoucherSection> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _apply() {
+    widget.cubit.applyVoucher(_controller.text);
+    _controller.clear();
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+
+    return Container(
+      margin: 16.psh,
+      padding: 14.pa,
+      decoration: BoxDecoration(
+        color: isAppDarkMode() ? kDarkThirdColor : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: kLightThirdColor.withValues(alpha: .25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Voucher', style: AppStyles.styleSemiBold14(context)),
+          10.sbh,
+          for (final voucher in state.vouchers)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_offer_outlined,
+                      size: 16, color: kSuccessColor),
+                  8.sbw,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(voucher.code,
+                            style: AppStyles.styleSemiBold14(context)),
+                        Text(
+                          voucher.isPlatform
+                              ? 'Voucher Markas'
+                              : 'Voucher toko',
+                          style: AppStyles.styleRegular12(context)
+                              .copyWith(color: kLightThirdColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (state.discountPreviews[voucher.code] != null)
+                    Text(
+                      '-${formatRupiah(state.discountPreviews[voucher.code]!)}',
+                      style: AppStyles.styleSemiBold14(context)
+                          .copyWith(color: kSuccessColor),
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: state.isVoucherBusy
+                        ? null
+                        : () => widget.cubit.removeVoucher(voucher.code),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  textCapitalization: TextCapitalization.characters,
+                  style: AppStyles.styleRegular14(context),
+                  decoration: InputDecoration(
+                    hintText: 'Masukkan kode voucher',
+                    hintStyle: AppStyles.styleRegular12(context)
+                        .copyWith(color: kLightThirdColor),
+                    isDense: true,
+                    border: const OutlineInputBorder(),
+                  ),
+                  onSubmitted: (_) => _apply(),
+                ),
+              ),
+              8.sbw,
+              TextButton(
+                onPressed: state.isVoucherBusy ? null : _apply,
+                child: Text(
+                  state.isVoucherBusy ? 'Memeriksa…' : 'Pakai',
+                  style: AppStyles.styleSemiBold14(context),
+                ),
+              ),
+            ],
+          ),
+          if (state.vouchers.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Potongan final dihitung ulang saat checkout.',
+                style: AppStyles.styleRegular12(context)
+                    .copyWith(color: kLightThirdColor),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pesan untuk kegagalan yang khas keranjang.
+///
+/// Kode voucher tidak lewat [errorMessageFor] karena pesannya harus
+/// menyebutkan **tindakan** yang bisa diambil pembeli, dan kunci l10n-nya
+/// belum ada. Pola yang sama dipakai `_checkoutMessage` di layar checkout.
+String _cartMessage(BuildContext context, DataError error) {
+  switch (error.code) {
+    case ApiErrorCode.notFound:
+      return 'Kode voucher tidak ditemukan atau sudah tidak berlaku.';
+    case ApiErrorCode.emptyCart:
+      return 'Keranjang masih kosong — masukkan barang dulu sebelum '
+          'memakai voucher.';
+    case ApiErrorCode.sellerNotInCart:
+      return 'Voucher ini untuk toko yang barangnya belum ada di keranjang.';
+    case ApiErrorCode.alreadyAttached:
+      return 'Voucher ini sudah menempel di keranjang.';
+  }
+  return errorMessageFor(context, error);
 }

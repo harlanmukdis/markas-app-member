@@ -6,6 +6,7 @@ import 'package:navy_wear/ui/main/auth/screens/login_screen.dart';
 import 'package:navy_wear/ui/main/checkout/screens/checkout_screen.dart';
 import 'package:navy_wear/ui/main/order/screens/order_detail_screen.dart';
 import 'package:navy_wear/ui/main/order/screens/order_list_screen.dart';
+import 'package:navy_wear/ui/main/wallet/screens/wallet_screen.dart';
 import 'package:navy_wear/ui/main/product/screens/product_detail_screen.dart';
 import 'package:navy_wear/ui/main/auth/screens/register_screen.dart';
 import '../../features/auth/presentation/views/reset_password_view.dart';
@@ -64,6 +65,9 @@ class AppRoutes {
 
   /// Daftar pesanan.
   static const String orders = '/orders';
+
+  /// Dompet / saldo Markas.
+  static const String wallet = '/wallet';
 
   /// Detail pesanan. Path parameter, bukan `extra`, agar tahan refresh di web.
   static const String orderDetail = '/order';
@@ -144,6 +148,15 @@ final GoRouter router = GoRouter(
         return FadeThroughTransitionPageWrapper(
           transitionKey: state.pageKey,
           page: const CheckoutScreen(),
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.wallet,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return FadeThroughTransitionPageWrapper(
+          transitionKey: state.pageKey,
+          page: const WalletScreen(),
         );
       },
     ),

@@ -35,7 +35,9 @@ class CheckoutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => CheckoutCubit()..loadAddresses(),
+      create: (_) => CheckoutCubit()
+        ..loadAddresses()
+        ..loadCartVouchers(),
       child: const _CheckoutBody(),
     );
   }
@@ -54,6 +56,24 @@ class _CheckoutBody extends StatelessWidget {
       listener: (context, state) {
         final result = state.result;
         if (result != null) {
+          // Voucher yang tidak lagi memenuhi syarat dibuang server tanpa
+          // menggagalkan checkout. Peringatannya dipasang sebelum pindah
+          // layar dan bertahan lintas rute karena ScaffoldMessenger-nya milik
+          // MaterialApp, bukan Scaffold layar ini.
+          if (state.voucherSkipped) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Voucher ${state.cartVoucherCodes.join(", ")} tidak dipakai '
+                  'karena pesanan akhirnya tidak memenuhi syarat voucher. '
+                  'Tagihan di bawah sudah tanpa potongan itu.',
+                ),
+                backgroundColor: kWarningColor,
+                duration: const Duration(seconds: 8),
+              ),
+            );
+          }
+
           // Dua percabangan yang wajib dibedakan: order biasa langsung ke
           // pembayaran; order di atas ambang BELUM punya tagihan dan harus
           // menunggu konfirmasi toko lebih dulu.

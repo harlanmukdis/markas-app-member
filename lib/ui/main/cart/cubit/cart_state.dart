@@ -93,6 +93,19 @@ sealed class CartState with _$CartState {
 
     @Default(false) bool isClearing,
     String? message,
+
+    /// Voucher yang menempel di keranjang.
+    @Default(<CartVoucherModel>[]) List<CartVoucherModel> vouchers,
+
+    /// Pratinjau potongan per kode, dari `POST /cart/voucher`.
+    ///
+    /// Disimpan terpisah dari [vouchers] karena `GET /cart/view` **tidak**
+    /// mengirim angka ini — memuat ulang keranjang akan menghapusnya kalau
+    /// digabung. Angkanya juga bukan jaminan: server menghitung ulang saat
+    /// checkout.
+    @Default(<String, int>{}) Map<String, int> discountPreviews,
+
+    @Default(false) bool isVoucherBusy,
   }) = _CartState;
 
   List<CartLine> get allLines => groups.expand((g) => g.lines).toList();

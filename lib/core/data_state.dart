@@ -149,6 +149,27 @@ class DataError {
       kind == DataErrorKind.timeout ||
       code == ApiErrorCode.dbError;
 
+  /// Kurang saldo. `details` pada `INSUFFICIENT_BALANCE` membawa `balance`
+  /// dan `required` dalam rupiah penuh; [walletShortfall] adalah selisih yang
+  /// harus di-top-up. Null kalau error-nya bukan itu, sehingga UI tidak perlu
+  /// menebak.
+  int? get walletBalance => _detailInt('balance');
+  int? get walletRequired => _detailInt('required');
+  int? get walletShortfall {
+    final b = walletBalance;
+    final r = walletRequired;
+    if (b == null || r == null) return null;
+    final diff = r - b;
+    return diff > 0 ? diff : 0;
+  }
+
+  int? _detailInt(String key) {
+    final raw = details?[key];
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw) ?? double.tryParse(raw)?.toInt();
+    return null;
+  }
+
   /// Field wajib yang kosong, dari `details.missing` pada `VALIDATION_ERROR`.
   List<String> get missingFields {
     final raw = details?['missing'];
@@ -194,6 +215,21 @@ abstract final class ApiErrorCode {
 
   /// Armada terlalu besar untuk akses lokasi (FLD-02).
   static const fleetAccessBlocked = 'FLEET_ACCESS_BLOCKED';
+
+  /// Saldo dompet kurang untuk membayar order. `details` membawa `balance`
+  /// dan `required`; selisihnya wajib ditampilkan, bukan cuma "saldo kurang".
+  static const insufficientBalance = 'INSUFFICIENT_BALANCE';
+
+  /// Voucher: keranjang kosong, atau tokonya tidak ada di keranjang.
+  static const emptyCart = 'EMPTY_CART';
+  static const sellerNotInCart = 'SELLER_NOT_IN_CART';
+
+  /// Voucher sudah menempel di keranjang. **Tidak ada di daftar error brief**
+  /// — ditemukan saat menempel kode yang sama dua kali. Perlu ditangani
+  /// karena `POST /cart/clear` **tidak melepas voucher**: keranjang yang
+  /// sudah dikosongkan tetap membawa vouchernya, jadi kasus ini akan sering
+  /// terjadi, bukan kasus tepi.
+  static const alreadyAttached = 'ALREADY_ATTACHED';
   static const dbError = 'DB_ERROR';
 }
 

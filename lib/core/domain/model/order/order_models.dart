@@ -245,6 +245,15 @@ abstract class CheckoutResultModel with _$CheckoutResultModel {
     @IntJson() @JsonKey(name: 'order_id') required int orderId,
     @StringOrNullJson() @JsonKey(name: 'order_no') String? orderNo,
     @StringJson() @Default('') String status,
+
+    /// Rincian wajib tampil terpisah, bukan diringkas jadi satu angka.
+    /// Pada bahan bangunan ongkir rutin melampaui harga barangnya — satu
+    /// checkout nyata di backend ini: barang Rp 355.000, ongkir Rp 750.000.
+    /// Pembeli yang cuma melihat `grand_total` akan mengira barangnya yang
+    /// mahal.
+    @IntJson() @Default(0) int subtotal,
+    @IntJson() @JsonKey(name: 'shipping_total') @Default(0) int shippingTotal,
+    @IntJson() @JsonKey(name: 'discount_total') @Default(0) int discountTotal,
     @IntJson() @JsonKey(name: 'grand_total') @Default(0) int grandTotal,
     @BoolJson() @JsonKey(name: 'forced_bank_transfer') @Default(false)
     bool forcedBankTransfer,

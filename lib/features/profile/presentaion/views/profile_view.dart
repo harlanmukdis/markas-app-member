@@ -102,6 +102,21 @@ class GeneralWidgets extends StatelessWidget {
       children: [
         Text(l.general, style: AppStyles.styleMedium16(context)),
         10.sbh,
+        // Dua tujuan yang sebelumnya hanya bisa dicapai dengan mengetik URL.
+        // Judulnya ditulis langsung karena kunci l10n-nya belum ada — dan
+        // seluruh layar tujuannya memang berbahasa Indonesia.
+        _customListTile(
+          context,
+          title: 'Pesanan Saya',
+          icon: Icons.receipt_long_outlined,
+          onTap: () => router.push(AppRoutes.orders),
+        ),
+        _customListTile(
+          context,
+          title: 'Saldo Markas',
+          icon: Icons.account_balance_wallet_outlined,
+          onTap: () => router.push(AppRoutes.wallet),
+        ),
         _customListTile(
           context,
           title: l.profileInformation,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:navy_wear/core/utils/app_routes.dart';
 import 'package:navy_wear/core/domain/model/order/order_models.dart';
 import 'package:navy_wear/core/domain/model/payment/payment_model.dart';
 import 'package:navy_wear/core/function/components.dart';
@@ -258,8 +260,9 @@ class _MethodPicker extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              'Pesanan bernilai besar hanya bisa dibayar lewat transfer bank. '
-              'Detail rekening tujuan dikonfirmasi tim kami — hubungi CS '
+              'Pesanan bernilai besar tidak bisa dibayar lewat VA atau QRIS. '
+              'Saldo Markas tetap bisa dipakai; kalau memilih transfer bank, '
+              'detail rekening tujuan dikonfirmasi tim kami — hubungi CS '
               'setelah membuat tagihan.',
               style: AppStyles.styleRegular12(context)
                   .copyWith(color: kWarningColor),
@@ -268,17 +271,19 @@ class _MethodPicker extends StatelessWidget {
         for (final method in state.selectableMethods)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: CustomButton(
-              backColor: Colors.transparent,
-              elevation: 0,
-              onPressed: state.isInitiatingPayment
-                  ? null
-                  : () => cubit.initiatePayment(method),
-              child: Text(
-                'Bayar dengan ${method.label}',
-                style: AppStyles.styleSemiBold14(context),
-              ),
-            ),
+            child: method.isWalletPayment
+                ? _SaldoOption(state: state, cubit: cubit)
+                : CustomButton(
+                    backColor: Colors.transparent,
+                    elevation: 0,
+                    onPressed: state.isInitiatingPayment
+                        ? null
+                        : () => cubit.initiatePayment(method),
+                    child: Text(
+                      'Bayar dengan ${method.label}',
+                      style: AppStyles.styleSemiBold14(context),
+                    ),
+                  ),
           ),
         if (state.isInitiatingPayment)
           const Padding(
@@ -711,6 +716,66 @@ class _CancelButton extends StatelessWidget {
         'Batalkan pesanan',
         style: AppStyles.styleMedium14(context).copyWith(color: kDeleteColor),
       ),
+    );
+  }
+}
+
+/// Opsi bayar pakai saldo.
+///
+/// Dipisah dari metode lain karena ia satu-satunya yang bisa **gagal sebelum
+/// dikirim** dengan alasan yang bisa diperbaiki pembeli sendiri: saldo
+/// kurang. Menampilkan tombol "Bayar" yang pasti ditolak, lalu memunculkan
+/// error, membuang satu langkah — jadi kalau saldonya kurang tombolnya
+/// langsung berubah jadi ajakan isi saldo beserta kekurangannya.
+class _SaldoOption extends StatelessWidget {
+  const _SaldoOption({required this.state, required this.cubit});
+
+  final OrderDetailState state;
+  final OrderDetailCubit cubit;
+
+  @override
+  Widget build(BuildContext context) {
+    final balance = state.walletBalance;
+    final shortfall = state.walletShortfall;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (shortfall != null)
+          CustomButton(
+            backColor: Colors.transparent,
+            elevation: 0,
+            onPressed: () => context.push(AppRoutes.wallet),
+            child: Text(
+              'Isi saldo dulu — kurang ${formatRupiah(shortfall)}',
+              style: AppStyles.styleSemiBold14(context),
+            ),
+          )
+        else
+          CustomButton(
+            backColor: Colors.transparent,
+            elevation: 0,
+            onPressed: state.isInitiatingPayment
+                ? null
+                : () => cubit.initiatePayment(PaymentMethod.saldo),
+            child: Text(
+              'Bayar dengan Saldo Markas',
+              style: AppStyles.styleSemiBold14(context),
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 2),
+          child: Text(
+            [
+              if (balance != null) 'Saldo ${formatRupiah(balance)}',
+              'lunas seketika',
+              'kalau pesanan batal, dana kembali ke saldo — bukan ke rekening',
+            ].join(' · '),
+            style: AppStyles.styleRegular12(context)
+                .copyWith(color: kLightThirdColor),
+          ),
+        ),
+      ],
     );
   }
 }

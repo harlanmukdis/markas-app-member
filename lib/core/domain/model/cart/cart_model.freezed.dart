@@ -590,6 +590,11 @@ mixin _$CartModel {
   @JsonKey(name: 'grouped_by_seller')
   Map<int, List<CartItemModel>> get groupedBySeller;
 
+  /// Voucher yang sedang menempel. Di sini syaratnya lengkap tapi
+  /// **tanpa** `discount_amount_preview` — angka potongan hanya dikirim
+  /// oleh `POST /cart/voucher` saat dipasang.
+  List<CartVoucherModel> get vouchers;
+
   /// Create a copy of CartModel
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -607,17 +612,21 @@ mixin _$CartModel {
             other is CartModel &&
             (identical(other.cartId, cartId) || other.cartId == cartId) &&
             const DeepCollectionEquality()
-                .equals(other.groupedBySeller, groupedBySeller));
+                .equals(other.groupedBySeller, groupedBySeller) &&
+            const DeepCollectionEquality().equals(other.vouchers, vouchers));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, cartId,
-      const DeepCollectionEquality().hash(groupedBySeller));
+  int get hashCode => Object.hash(
+      runtimeType,
+      cartId,
+      const DeepCollectionEquality().hash(groupedBySeller),
+      const DeepCollectionEquality().hash(vouchers));
 
   @override
   String toString() {
-    return 'CartModel(cartId: $cartId, groupedBySeller: $groupedBySeller)';
+    return 'CartModel(cartId: $cartId, groupedBySeller: $groupedBySeller, vouchers: $vouchers)';
   }
 }
 
@@ -630,7 +639,8 @@ abstract mixin class $CartModelCopyWith<$Res> {
       {@IntOrNullJson() @JsonKey(name: 'cart_id') int? cartId,
       @GroupedBySellerConverter()
       @JsonKey(name: 'grouped_by_seller')
-      Map<int, List<CartItemModel>> groupedBySeller});
+      Map<int, List<CartItemModel>> groupedBySeller,
+      List<CartVoucherModel> vouchers});
 }
 
 /// @nodoc
@@ -647,6 +657,7 @@ class _$CartModelCopyWithImpl<$Res> implements $CartModelCopyWith<$Res> {
   $Res call({
     Object? cartId = freezed,
     Object? groupedBySeller = null,
+    Object? vouchers = null,
   }) {
     return _then(_self.copyWith(
       cartId: freezed == cartId
@@ -657,6 +668,10 @@ class _$CartModelCopyWithImpl<$Res> implements $CartModelCopyWith<$Res> {
           ? _self.groupedBySeller
           : groupedBySeller // ignore: cast_nullable_to_non_nullable
               as Map<int, List<CartItemModel>>,
+      vouchers: null == vouchers
+          ? _self.vouchers
+          : vouchers // ignore: cast_nullable_to_non_nullable
+              as List<CartVoucherModel>,
     ));
   }
 }
@@ -758,14 +773,15 @@ extension CartModelPatterns on CartModel {
             @IntOrNullJson() @JsonKey(name: 'cart_id') int? cartId,
             @GroupedBySellerConverter()
             @JsonKey(name: 'grouped_by_seller')
-            Map<int, List<CartItemModel>> groupedBySeller)?
+            Map<int, List<CartItemModel>> groupedBySeller,
+            List<CartVoucherModel> vouchers)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _CartModel() when $default != null:
-        return $default(_that.cartId, _that.groupedBySeller);
+        return $default(_that.cartId, _that.groupedBySeller, _that.vouchers);
       case _:
         return orElse();
     }
@@ -790,13 +806,14 @@ extension CartModelPatterns on CartModel {
             @IntOrNullJson() @JsonKey(name: 'cart_id') int? cartId,
             @GroupedBySellerConverter()
             @JsonKey(name: 'grouped_by_seller')
-            Map<int, List<CartItemModel>> groupedBySeller)
+            Map<int, List<CartItemModel>> groupedBySeller,
+            List<CartVoucherModel> vouchers)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _CartModel():
-        return $default(_that.cartId, _that.groupedBySeller);
+        return $default(_that.cartId, _that.groupedBySeller, _that.vouchers);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -820,13 +837,14 @@ extension CartModelPatterns on CartModel {
             @IntOrNullJson() @JsonKey(name: 'cart_id') int? cartId,
             @GroupedBySellerConverter()
             @JsonKey(name: 'grouped_by_seller')
-            Map<int, List<CartItemModel>> groupedBySeller)?
+            Map<int, List<CartItemModel>> groupedBySeller,
+            List<CartVoucherModel> vouchers)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _CartModel() when $default != null:
-        return $default(_that.cartId, _that.groupedBySeller);
+        return $default(_that.cartId, _that.groupedBySeller, _that.vouchers);
       case _:
         return null;
     }
@@ -841,8 +859,10 @@ class _CartModel extends CartModel {
       @GroupedBySellerConverter()
       @JsonKey(name: 'grouped_by_seller')
       final Map<int, List<CartItemModel>> groupedBySeller =
-          const <int, List<CartItemModel>>{}})
+          const <int, List<CartItemModel>>{},
+      final List<CartVoucherModel> vouchers = const <CartVoucherModel>[]})
       : _groupedBySeller = groupedBySeller,
+        _vouchers = vouchers,
         super._();
   factory _CartModel.fromJson(Map<String, dynamic> json) =>
       _$CartModelFromJson(json);
@@ -859,6 +879,22 @@ class _CartModel extends CartModel {
     if (_groupedBySeller is EqualUnmodifiableMapView) return _groupedBySeller;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(_groupedBySeller);
+  }
+
+  /// Voucher yang sedang menempel. Di sini syaratnya lengkap tapi
+  /// **tanpa** `discount_amount_preview` — angka potongan hanya dikirim
+  /// oleh `POST /cart/voucher` saat dipasang.
+  final List<CartVoucherModel> _vouchers;
+
+  /// Voucher yang sedang menempel. Di sini syaratnya lengkap tapi
+  /// **tanpa** `discount_amount_preview` — angka potongan hanya dikirim
+  /// oleh `POST /cart/voucher` saat dipasang.
+  @override
+  @JsonKey()
+  List<CartVoucherModel> get vouchers {
+    if (_vouchers is EqualUnmodifiableListView) return _vouchers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_vouchers);
   }
 
   /// Create a copy of CartModel
@@ -883,17 +919,21 @@ class _CartModel extends CartModel {
             other is _CartModel &&
             (identical(other.cartId, cartId) || other.cartId == cartId) &&
             const DeepCollectionEquality()
-                .equals(other._groupedBySeller, _groupedBySeller));
+                .equals(other._groupedBySeller, _groupedBySeller) &&
+            const DeepCollectionEquality().equals(other._vouchers, _vouchers));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, cartId,
-      const DeepCollectionEquality().hash(_groupedBySeller));
+  int get hashCode => Object.hash(
+      runtimeType,
+      cartId,
+      const DeepCollectionEquality().hash(_groupedBySeller),
+      const DeepCollectionEquality().hash(_vouchers));
 
   @override
   String toString() {
-    return 'CartModel(cartId: $cartId, groupedBySeller: $groupedBySeller)';
+    return 'CartModel(cartId: $cartId, groupedBySeller: $groupedBySeller, vouchers: $vouchers)';
   }
 }
 
@@ -909,7 +949,8 @@ abstract mixin class _$CartModelCopyWith<$Res>
       {@IntOrNullJson() @JsonKey(name: 'cart_id') int? cartId,
       @GroupedBySellerConverter()
       @JsonKey(name: 'grouped_by_seller')
-      Map<int, List<CartItemModel>> groupedBySeller});
+      Map<int, List<CartItemModel>> groupedBySeller,
+      List<CartVoucherModel> vouchers});
 }
 
 /// @nodoc
@@ -926,6 +967,7 @@ class __$CartModelCopyWithImpl<$Res> implements _$CartModelCopyWith<$Res> {
   $Res call({
     Object? cartId = freezed,
     Object? groupedBySeller = null,
+    Object? vouchers = null,
   }) {
     return _then(_CartModel(
       cartId: freezed == cartId
@@ -936,6 +978,10 @@ class __$CartModelCopyWithImpl<$Res> implements _$CartModelCopyWith<$Res> {
           ? _self._groupedBySeller
           : groupedBySeller // ignore: cast_nullable_to_non_nullable
               as Map<int, List<CartItemModel>>,
+      vouchers: null == vouchers
+          ? _self._vouchers
+          : vouchers // ignore: cast_nullable_to_non_nullable
+              as List<CartVoucherModel>,
     ));
   }
 }

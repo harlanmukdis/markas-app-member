@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:navy_wear/core/domain/model/voucher/voucher_models.dart';
 import 'package:navy_wear/util/json_converters.dart';
 
 part 'cart_model.freezed.dart';
@@ -56,6 +57,11 @@ abstract class CartModel with _$CartModel {
     @JsonKey(name: 'grouped_by_seller')
     @Default(<int, List<CartItemModel>>{})
     Map<int, List<CartItemModel>> groupedBySeller,
+
+    /// Voucher yang sedang menempel. Di sini syaratnya lengkap tapi
+    /// **tanpa** `discount_amount_preview` — angka potongan hanya dikirim
+    /// oleh `POST /cart/voucher` saat dipasang.
+    @Default(<CartVoucherModel>[]) List<CartVoucherModel> vouchers,
   }) = _CartModel;
 
   factory CartModel.fromJson(Map<String, dynamic> json) =>
@@ -65,6 +71,16 @@ abstract class CartModel with _$CartModel {
       groupedBySeller.values.expand((e) => e).toList();
 
   bool get isEmpty => allItems.isEmpty;
+
+  /// Aturan PRM-03: maksimal 1 voucher platform + 1 voucher toko per
+  /// sub-order. Dipakai UI untuk menonaktifkan tombol tambah voucher.
+  bool get hasPlatformVoucher => vouchers.any((v) => v.isPlatform);
+  CartVoucherModel? voucherForSeller(int sellerId) {
+    for (final v in vouchers) {
+      if (!v.isPlatform && v.sellerId == sellerId) return v;
+    }
+    return null;
+  }
   int get sellerCount => groupedBySeller.length;
 
   /// Ada item yang akan menggagalkan checkout.

@@ -3,6 +3,7 @@ import 'package:navy_wear/config/network/api_envelope.dart';
 import 'package:navy_wear/config/network/api_exception.dart';
 import 'package:navy_wear/core/domain/model/cart/cart_add_result.dart';
 import 'package:navy_wear/core/domain/model/cart/cart_model.dart';
+import 'package:navy_wear/core/domain/model/voucher/voucher_models.dart';
 
 /// Keranjang. **Semua endpoint di sini khusus `BUY_R`/`BUY_B`** — role lain
 /// dibalas `403`.
@@ -69,6 +70,53 @@ class CartService {
     try {
       final response =
           await _dio.post<dynamic>('/cart/remove', data: {'item_id': itemId});
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `POST /cart/voucher` — **jalur resmi pemakaian voucher**.
+  ///
+  /// Mengembalikan `discount_amount_preview`, yang namanya jujur: itu
+  /// *pratinjau*. Server memvalidasi ulang voucher saat checkout terhadap
+  /// nilai final, dan voucher yang tidak lagi memenuhi syarat **dilewati
+  /// diam-diam** tanpa menggagalkan checkout. Karena itu potongan hasil
+  /// checkout wajib dibandingkan dengan angka ini, bukan dianggap sama.
+  ///
+  /// [sellerId] hanya perlu diisi untuk voucher **platform** ketika keranjang
+  /// berisi barang dari lebih dari satu toko; voucher toko menentukan
+  /// targetnya sendiri.
+  Future<ApiEnvelope<CartVoucherModel>> attachVoucher({
+    required String code,
+    int? sellerId,
+  }) async {
+    const context = 'POST /cart/voucher';
+    try {
+      final response = await _dio.post<dynamic>(
+        '/cart/voucher',
+        data: {
+          'code': code,
+          if (sellerId != null) 'seller_id': sellerId,
+        },
+      );
+      return parseEnvelope(
+        response,
+        (raw) =>
+            CartVoucherModel.fromJson(Map<String, dynamic>.from(raw as Map)),
+        context: context,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `POST /cart/voucher_remove` — dikunci dengan `code`, bukan id.
+  Future<ApiEnvelope<dynamic>> removeVoucher(String code) async {
+    const context = 'POST /cart/voucher_remove';
+    try {
+      final response = await _dio
+          .post<dynamic>('/cart/voucher_remove', data: {'code': code});
       return parseEnvelope(response, (raw) => raw, context: context);
     } on DioException catch (e) {
       throw ApiException.fromDio(e, context: context);

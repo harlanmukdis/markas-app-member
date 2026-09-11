@@ -253,6 +253,15 @@ _CheckoutResultModel _$CheckoutResultModelFromJson(Map<String, dynamic> json) =>
       status: json['status'] == null
           ? ''
           : const StringJson().fromJson(json['status']),
+      subtotal: json['subtotal'] == null
+          ? 0
+          : const IntJson().fromJson(json['subtotal']),
+      shippingTotal: json['shipping_total'] == null
+          ? 0
+          : const IntJson().fromJson(json['shipping_total']),
+      discountTotal: json['discount_total'] == null
+          ? 0
+          : const IntJson().fromJson(json['discount_total']),
       grandTotal: json['grand_total'] == null
           ? 0
           : const IntJson().fromJson(json['grand_total']),
@@ -271,6 +280,9 @@ Map<String, dynamic> _$CheckoutResultModelToJson(
       'order_id': const IntJson().toJson(instance.orderId),
       'order_no': const StringOrNullJson().toJson(instance.orderNo),
       'status': const StringJson().toJson(instance.status),
+      'subtotal': const IntJson().toJson(instance.subtotal),
+      'shipping_total': const IntJson().toJson(instance.shippingTotal),
+      'discount_total': const IntJson().toJson(instance.discountTotal),
       'grand_total': const IntJson().toJson(instance.grandTotal),
       'forced_bank_transfer':
           const BoolJson().toJson(instance.forcedBankTransfer),

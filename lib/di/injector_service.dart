@@ -8,6 +8,7 @@ import 'package:navy_wear/core/data/datasources/remote/service/order_service.dar
 import 'package:navy_wear/core/data/datasources/remote/service/payment_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/voucher_service.dart';
+import 'package:navy_wear/core/data/datasources/remote/service/wallet_service.dart';
 import 'package:navy_wear/core/data/datasources/remote/service/wishlist_service.dart';
 import 'package:navy_wear/di/injector.dart';
 
@@ -59,4 +60,5 @@ void initializeService() {
   injector.registerLazySingleton<PaymentService>(() => PaymentService(api));
   injector.registerLazySingleton<WishlistService>(() => WishlistService(api));
   injector.registerLazySingleton<VoucherService>(() => VoucherService(api));
+  injector.registerLazySingleton<WalletService>(() => WalletService(api));
 }

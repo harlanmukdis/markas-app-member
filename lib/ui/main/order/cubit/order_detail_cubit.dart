@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:navy_wear/core/data_state.dart';
 import 'package:navy_wear/core/domain/model/order/order_models.dart';
 import 'package:navy_wear/core/domain/model/payment/payment_model.dart';
+import 'package:navy_wear/core/domain/model/wallet/wallet_models.dart';
 import 'package:navy_wear/core/domain/repositories/transaction_repositories.dart';
 import 'package:navy_wear/di/injector.dart';
 
@@ -16,6 +17,7 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
   OrderDetailCubit(this.orderId)
       : _orders = injector<OrderRepository>(),
         _payments = injector<PaymentRepository>(),
+        _wallet = injector<WalletRepository>(),
         super(const OrderDetailState());
 
   static OrderDetailCubit get(BuildContext context) =>
@@ -24,6 +26,7 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
   final int orderId;
   final OrderRepository _orders;
   final PaymentRepository _payments;
+  final WalletRepository _wallet;
 
   Timer? _poll;
 
@@ -45,7 +48,10 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
       case DataSuccess<OrderModel>(:final data):
         emit(state.copyWith(isLoading: false, order: data));
         // Pembayaran hanya relevan kalau tagihannya sudah terbit.
-        if (data.canPay) await refreshPayment();
+        if (data.canPay) {
+          await refreshPayment();
+          await refreshWalletBalance();
+        }
       case DataFailed(:final error):
         emit(state.copyWith(isLoading: false, error: error));
       default:
@@ -64,6 +70,19 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
     if (result case DataSuccess<PaymentModel>(:final data)) {
       emit(state.copyWith(payment: data));
       _schedulePolling(data);
+    }
+  }
+
+  /// Saldo dompet, untuk menyebut angkanya di tombol "Bayar dengan Saldo".
+  ///
+  /// Kegagalannya sengaja **tidak** ditampilkan sebagai error layar: saldo
+  /// cuma pelengkap tampilan, dan order tetap bisa dibayar dengan cara lain.
+  Future<void> refreshWalletBalance() async {
+    final result = await _wallet.balance();
+    if (isClosed) return;
+
+    if (result case DataSuccess<WalletBalanceModel>(:final data)) {
+      emit(state.copyWith(walletBalance: data.balance));
     }
   }
 
@@ -91,6 +110,13 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
         _schedulePolling(data);
       case DataFailed(:final error):
         emit(state.copyWith(isInitiatingPayment: false, error: error));
+        // Server baru saja menyebut saldo sebenarnya di `details.balance`.
+        // Dipakai supaya angka di layar langsung benar, tanpa panggilan
+        // tambahan.
+        if (error.code == ApiErrorCode.insufficientBalance &&
+            error.walletBalance != null) {
+          emit(state.copyWith(walletBalance: error.walletBalance));
+        }
       default:
         emit(state.copyWith(isInitiatingPayment: false));
     }

@@ -24,6 +24,14 @@ mixin _$CheckoutState {
   /// Hasil checkout yang berhasil — dipakai layar untuk memutuskan tujuan
   /// berikutnya.
   CheckoutResultModel? get result;
+
+  /// Kode voucher yang menempel di keranjang sebelum checkout.
+  ///
+  /// Sengaja kode, bukan angka pratinjau: `discount_amount_preview` hanya
+  /// dikirim sekali oleh `POST /cart/voucher` dan hilang begitu halaman
+  /// dimuat ulang — di web itu satu tombol refresh. Kode-nya selalu bisa
+  /// dibaca ulang dari `GET /cart/view`.
+  List<String> get cartVoucherCodes;
   DataError? get error;
 
   /// Create a copy of CheckoutState
@@ -51,6 +59,8 @@ mixin _$CheckoutState {
             (identical(other.isSavingAddress, isSavingAddress) ||
                 other.isSavingAddress == isSavingAddress) &&
             (identical(other.result, result) || other.result == result) &&
+            const DeepCollectionEquality()
+                .equals(other.cartVoucherCodes, cartVoucherCodes) &&
             (identical(other.error, error) || other.error == error));
   }
 
@@ -64,11 +74,12 @@ mixin _$CheckoutState {
       isSubmitting,
       isSavingAddress,
       result,
+      const DeepCollectionEquality().hash(cartVoucherCodes),
       error);
 
   @override
   String toString() {
-    return 'CheckoutState(isLoadingAddresses: $isLoadingAddresses, addresses: $addresses, selectedAddressId: $selectedAddressId, allOrNothing: $allOrNothing, isSubmitting: $isSubmitting, isSavingAddress: $isSavingAddress, result: $result, error: $error)';
+    return 'CheckoutState(isLoadingAddresses: $isLoadingAddresses, addresses: $addresses, selectedAddressId: $selectedAddressId, allOrNothing: $allOrNothing, isSubmitting: $isSubmitting, isSavingAddress: $isSavingAddress, result: $result, cartVoucherCodes: $cartVoucherCodes, error: $error)';
   }
 }
 
@@ -86,6 +97,7 @@ abstract mixin class $CheckoutStateCopyWith<$Res> {
       bool isSubmitting,
       bool isSavingAddress,
       CheckoutResultModel? result,
+      List<String> cartVoucherCodes,
       DataError? error});
 
   $CheckoutResultModelCopyWith<$Res>? get result;
@@ -111,6 +123,7 @@ class _$CheckoutStateCopyWithImpl<$Res>
     Object? isSubmitting = null,
     Object? isSavingAddress = null,
     Object? result = freezed,
+    Object? cartVoucherCodes = null,
     Object? error = freezed,
   }) {
     return _then(_self.copyWith(
@@ -142,6 +155,10 @@ class _$CheckoutStateCopyWithImpl<$Res>
           ? _self.result
           : result // ignore: cast_nullable_to_non_nullable
               as CheckoutResultModel?,
+      cartVoucherCodes: null == cartVoucherCodes
+          ? _self.cartVoucherCodes
+          : cartVoucherCodes // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -263,6 +280,7 @@ extension CheckoutStatePatterns on CheckoutState {
             bool isSubmitting,
             bool isSavingAddress,
             CheckoutResultModel? result,
+            List<String> cartVoucherCodes,
             DataError? error)?
         $default, {
     required TResult orElse(),
@@ -278,6 +296,7 @@ extension CheckoutStatePatterns on CheckoutState {
             _that.isSubmitting,
             _that.isSavingAddress,
             _that.result,
+            _that.cartVoucherCodes,
             _that.error);
       case _:
         return orElse();
@@ -307,6 +326,7 @@ extension CheckoutStatePatterns on CheckoutState {
             bool isSubmitting,
             bool isSavingAddress,
             CheckoutResultModel? result,
+            List<String> cartVoucherCodes,
             DataError? error)
         $default,
   ) {
@@ -321,6 +341,7 @@ extension CheckoutStatePatterns on CheckoutState {
             _that.isSubmitting,
             _that.isSavingAddress,
             _that.result,
+            _that.cartVoucherCodes,
             _that.error);
     }
   }
@@ -347,6 +368,7 @@ extension CheckoutStatePatterns on CheckoutState {
             bool isSubmitting,
             bool isSavingAddress,
             CheckoutResultModel? result,
+            List<String> cartVoucherCodes,
             DataError? error)?
         $default,
   ) {
@@ -361,6 +383,7 @@ extension CheckoutStatePatterns on CheckoutState {
             _that.isSubmitting,
             _that.isSavingAddress,
             _that.result,
+            _that.cartVoucherCodes,
             _that.error);
       case _:
         return null;
@@ -379,8 +402,10 @@ class _CheckoutState extends CheckoutState {
       this.isSubmitting = false,
       this.isSavingAddress = false,
       this.result,
+      final List<String> cartVoucherCodes = const <String>[],
       this.error})
       : _addresses = addresses,
+        _cartVoucherCodes = cartVoucherCodes,
         super._();
 
   @override
@@ -411,6 +436,30 @@ class _CheckoutState extends CheckoutState {
   /// berikutnya.
   @override
   final CheckoutResultModel? result;
+
+  /// Kode voucher yang menempel di keranjang sebelum checkout.
+  ///
+  /// Sengaja kode, bukan angka pratinjau: `discount_amount_preview` hanya
+  /// dikirim sekali oleh `POST /cart/voucher` dan hilang begitu halaman
+  /// dimuat ulang — di web itu satu tombol refresh. Kode-nya selalu bisa
+  /// dibaca ulang dari `GET /cart/view`.
+  final List<String> _cartVoucherCodes;
+
+  /// Kode voucher yang menempel di keranjang sebelum checkout.
+  ///
+  /// Sengaja kode, bukan angka pratinjau: `discount_amount_preview` hanya
+  /// dikirim sekali oleh `POST /cart/voucher` dan hilang begitu halaman
+  /// dimuat ulang — di web itu satu tombol refresh. Kode-nya selalu bisa
+  /// dibaca ulang dari `GET /cart/view`.
+  @override
+  @JsonKey()
+  List<String> get cartVoucherCodes {
+    if (_cartVoucherCodes is EqualUnmodifiableListView)
+      return _cartVoucherCodes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_cartVoucherCodes);
+  }
+
   @override
   final DataError? error;
 
@@ -440,6 +489,8 @@ class _CheckoutState extends CheckoutState {
             (identical(other.isSavingAddress, isSavingAddress) ||
                 other.isSavingAddress == isSavingAddress) &&
             (identical(other.result, result) || other.result == result) &&
+            const DeepCollectionEquality()
+                .equals(other._cartVoucherCodes, _cartVoucherCodes) &&
             (identical(other.error, error) || other.error == error));
   }
 
@@ -453,11 +504,12 @@ class _CheckoutState extends CheckoutState {
       isSubmitting,
       isSavingAddress,
       result,
+      const DeepCollectionEquality().hash(_cartVoucherCodes),
       error);
 
   @override
   String toString() {
-    return 'CheckoutState(isLoadingAddresses: $isLoadingAddresses, addresses: $addresses, selectedAddressId: $selectedAddressId, allOrNothing: $allOrNothing, isSubmitting: $isSubmitting, isSavingAddress: $isSavingAddress, result: $result, error: $error)';
+    return 'CheckoutState(isLoadingAddresses: $isLoadingAddresses, addresses: $addresses, selectedAddressId: $selectedAddressId, allOrNothing: $allOrNothing, isSubmitting: $isSubmitting, isSavingAddress: $isSavingAddress, result: $result, cartVoucherCodes: $cartVoucherCodes, error: $error)';
   }
 }
 
@@ -477,6 +529,7 @@ abstract mixin class _$CheckoutStateCopyWith<$Res>
       bool isSubmitting,
       bool isSavingAddress,
       CheckoutResultModel? result,
+      List<String> cartVoucherCodes,
       DataError? error});
 
   @override
@@ -503,6 +556,7 @@ class __$CheckoutStateCopyWithImpl<$Res>
     Object? isSubmitting = null,
     Object? isSavingAddress = null,
     Object? result = freezed,
+    Object? cartVoucherCodes = null,
     Object? error = freezed,
   }) {
     return _then(_CheckoutState(
@@ -534,6 +588,10 @@ class __$CheckoutStateCopyWithImpl<$Res>
           ? _self.result
           : result // ignore: cast_nullable_to_non_nullable
               as CheckoutResultModel?,
+      cartVoucherCodes: null == cartVoucherCodes
+          ? _self._cartVoucherCodes
+          : cartVoucherCodes // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable

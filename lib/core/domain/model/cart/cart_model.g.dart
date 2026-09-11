@@ -40,6 +40,10 @@ _CartModel _$CartModelFromJson(Map<String, dynamic> json) => _CartModel(
           ? const <int, List<CartItemModel>>{}
           : const GroupedBySellerConverter()
               .fromJson(json['grouped_by_seller']),
+      vouchers: (json['vouchers'] as List<dynamic>?)
+              ?.map((e) => CartVoucherModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <CartVoucherModel>[],
     );
 
 Map<String, dynamic> _$CartModelToJson(_CartModel instance) =>
@@ -47,4 +51,5 @@ Map<String, dynamic> _$CartModelToJson(_CartModel instance) =>
       'cart_id': const IntOrNullJson().toJson(instance.cartId),
       'grouped_by_seller':
           const GroupedBySellerConverter().toJson(instance.groupedBySeller),
+      'vouchers': instance.vouchers,
     };

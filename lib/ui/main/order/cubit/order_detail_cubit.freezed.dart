@@ -23,6 +23,11 @@ mixin _$OrderDetailState {
   bool get isCancelling;
   Set<int> get busyShipmentIds;
 
+  /// Saldo dompet, dimuat bersama order supaya tombol "Bayar dengan Saldo"
+  /// bisa menyebut angkanya. Null artinya belum/ gagal dimuat — UI tetap
+  /// menawarkan saldo, karena server yang berhak memutuskan.
+  int? get walletBalance;
+
   /// Create a copy of OrderDetailState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -47,7 +52,9 @@ mixin _$OrderDetailState {
             (identical(other.isCancelling, isCancelling) ||
                 other.isCancelling == isCancelling) &&
             const DeepCollectionEquality()
-                .equals(other.busyShipmentIds, busyShipmentIds));
+                .equals(other.busyShipmentIds, busyShipmentIds) &&
+            (identical(other.walletBalance, walletBalance) ||
+                other.walletBalance == walletBalance));
   }
 
   @override
@@ -60,11 +67,12 @@ mixin _$OrderDetailState {
       payment,
       isInitiatingPayment,
       isCancelling,
-      const DeepCollectionEquality().hash(busyShipmentIds));
+      const DeepCollectionEquality().hash(busyShipmentIds),
+      walletBalance);
 
   @override
   String toString() {
-    return 'OrderDetailState(isLoading: $isLoading, error: $error, message: $message, order: $order, payment: $payment, isInitiatingPayment: $isInitiatingPayment, isCancelling: $isCancelling, busyShipmentIds: $busyShipmentIds)';
+    return 'OrderDetailState(isLoading: $isLoading, error: $error, message: $message, order: $order, payment: $payment, isInitiatingPayment: $isInitiatingPayment, isCancelling: $isCancelling, busyShipmentIds: $busyShipmentIds, walletBalance: $walletBalance)';
   }
 }
 
@@ -82,7 +90,8 @@ abstract mixin class $OrderDetailStateCopyWith<$Res> {
       PaymentModel? payment,
       bool isInitiatingPayment,
       bool isCancelling,
-      Set<int> busyShipmentIds});
+      Set<int> busyShipmentIds,
+      int? walletBalance});
 
   $OrderModelCopyWith<$Res>? get order;
   $PaymentModelCopyWith<$Res>? get payment;
@@ -109,6 +118,7 @@ class _$OrderDetailStateCopyWithImpl<$Res>
     Object? isInitiatingPayment = null,
     Object? isCancelling = null,
     Object? busyShipmentIds = null,
+    Object? walletBalance = freezed,
   }) {
     return _then(_self.copyWith(
       isLoading: null == isLoading
@@ -143,6 +153,10 @@ class _$OrderDetailStateCopyWithImpl<$Res>
           ? _self.busyShipmentIds
           : busyShipmentIds // ignore: cast_nullable_to_non_nullable
               as Set<int>,
+      walletBalance: freezed == walletBalance
+          ? _self.walletBalance
+          : walletBalance // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 
@@ -274,7 +288,8 @@ extension OrderDetailStatePatterns on OrderDetailState {
             PaymentModel? payment,
             bool isInitiatingPayment,
             bool isCancelling,
-            Set<int> busyShipmentIds)?
+            Set<int> busyShipmentIds,
+            int? walletBalance)?
         $default, {
     required TResult orElse(),
   }) {
@@ -289,7 +304,8 @@ extension OrderDetailStatePatterns on OrderDetailState {
             _that.payment,
             _that.isInitiatingPayment,
             _that.isCancelling,
-            _that.busyShipmentIds);
+            _that.busyShipmentIds,
+            _that.walletBalance);
       case _:
         return orElse();
     }
@@ -318,7 +334,8 @@ extension OrderDetailStatePatterns on OrderDetailState {
             PaymentModel? payment,
             bool isInitiatingPayment,
             bool isCancelling,
-            Set<int> busyShipmentIds)
+            Set<int> busyShipmentIds,
+            int? walletBalance)
         $default,
   ) {
     final _that = this;
@@ -332,7 +349,8 @@ extension OrderDetailStatePatterns on OrderDetailState {
             _that.payment,
             _that.isInitiatingPayment,
             _that.isCancelling,
-            _that.busyShipmentIds);
+            _that.busyShipmentIds,
+            _that.walletBalance);
     }
   }
 
@@ -358,7 +376,8 @@ extension OrderDetailStatePatterns on OrderDetailState {
             PaymentModel? payment,
             bool isInitiatingPayment,
             bool isCancelling,
-            Set<int> busyShipmentIds)?
+            Set<int> busyShipmentIds,
+            int? walletBalance)?
         $default,
   ) {
     final _that = this;
@@ -372,7 +391,8 @@ extension OrderDetailStatePatterns on OrderDetailState {
             _that.payment,
             _that.isInitiatingPayment,
             _that.isCancelling,
-            _that.busyShipmentIds);
+            _that.busyShipmentIds,
+            _that.walletBalance);
       case _:
         return null;
     }
@@ -390,7 +410,8 @@ class _OrderDetailState extends OrderDetailState {
       this.payment,
       this.isInitiatingPayment = false,
       this.isCancelling = false,
-      final Set<int> busyShipmentIds = const <int>{}})
+      final Set<int> busyShipmentIds = const <int>{},
+      this.walletBalance})
       : _busyShipmentIds = busyShipmentIds,
         super._();
 
@@ -420,6 +441,12 @@ class _OrderDetailState extends OrderDetailState {
     return EqualUnmodifiableSetView(_busyShipmentIds);
   }
 
+  /// Saldo dompet, dimuat bersama order supaya tombol "Bayar dengan Saldo"
+  /// bisa menyebut angkanya. Null artinya belum/ gagal dimuat — UI tetap
+  /// menawarkan saldo, karena server yang berhak memutuskan.
+  @override
+  final int? walletBalance;
+
   /// Create a copy of OrderDetailState
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -444,7 +471,9 @@ class _OrderDetailState extends OrderDetailState {
             (identical(other.isCancelling, isCancelling) ||
                 other.isCancelling == isCancelling) &&
             const DeepCollectionEquality()
-                .equals(other._busyShipmentIds, _busyShipmentIds));
+                .equals(other._busyShipmentIds, _busyShipmentIds) &&
+            (identical(other.walletBalance, walletBalance) ||
+                other.walletBalance == walletBalance));
   }
 
   @override
@@ -457,11 +486,12 @@ class _OrderDetailState extends OrderDetailState {
       payment,
       isInitiatingPayment,
       isCancelling,
-      const DeepCollectionEquality().hash(_busyShipmentIds));
+      const DeepCollectionEquality().hash(_busyShipmentIds),
+      walletBalance);
 
   @override
   String toString() {
-    return 'OrderDetailState(isLoading: $isLoading, error: $error, message: $message, order: $order, payment: $payment, isInitiatingPayment: $isInitiatingPayment, isCancelling: $isCancelling, busyShipmentIds: $busyShipmentIds)';
+    return 'OrderDetailState(isLoading: $isLoading, error: $error, message: $message, order: $order, payment: $payment, isInitiatingPayment: $isInitiatingPayment, isCancelling: $isCancelling, busyShipmentIds: $busyShipmentIds, walletBalance: $walletBalance)';
   }
 }
 
@@ -481,7 +511,8 @@ abstract mixin class _$OrderDetailStateCopyWith<$Res>
       PaymentModel? payment,
       bool isInitiatingPayment,
       bool isCancelling,
-      Set<int> busyShipmentIds});
+      Set<int> busyShipmentIds,
+      int? walletBalance});
 
   @override
   $OrderModelCopyWith<$Res>? get order;
@@ -510,6 +541,7 @@ class __$OrderDetailStateCopyWithImpl<$Res>
     Object? isInitiatingPayment = null,
     Object? isCancelling = null,
     Object? busyShipmentIds = null,
+    Object? walletBalance = freezed,
   }) {
     return _then(_OrderDetailState(
       isLoading: null == isLoading
@@ -544,6 +576,10 @@ class __$OrderDetailStateCopyWithImpl<$Res>
           ? _self._busyShipmentIds
           : busyShipmentIds // ignore: cast_nullable_to_non_nullable
               as Set<int>,
+      walletBalance: freezed == walletBalance
+          ? _self.walletBalance
+          : walletBalance // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 

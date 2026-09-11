@@ -5,6 +5,7 @@ import 'package:navy_wear/core/domain/model/cart/cart_model.dart';
 import 'package:navy_wear/core/domain/model/order/order_models.dart';
 import 'package:navy_wear/core/domain/model/payment/payment_model.dart';
 import 'package:navy_wear/core/domain/model/voucher/voucher_models.dart';
+import 'package:navy_wear/core/domain/model/wallet/wallet_models.dart';
 import 'package:navy_wear/core/domain/model/wishlist/wishlist_item_model.dart';
 
 /// Buku alamat.
@@ -47,6 +48,14 @@ abstract interface class CartRepository {
 
   Future<DataState<void>> remove(int itemId);
   Future<DataState<void>> clear();
+
+  /// Menempelkan voucher ke keranjang. Hasilnya membawa pratinjau potongan
+  /// yang **bukan jaminan** — server menghitung ulang saat checkout.
+  Future<DataState<CartVoucherModel>> attachVoucher({
+    required String code,
+    int? sellerId,
+  });
+  Future<DataState<void>> removeVoucher(String code);
 }
 
 /// Checkout, pesanan, pengiriman.
@@ -111,4 +120,14 @@ abstract interface class VoucherRepository {
     required int subOrderSubtotal,
     int? subOrderId,
   });
+}
+
+/// Dompet / saldo Markas.
+abstract interface class WalletRepository {
+  Future<DataState<WalletBalanceModel>> balance();
+  Future<DataState<WalletTopupModel>> topup({
+    required TopupMethod method,
+    required int amount,
+  });
+  Future<DataState<List<WalletEntryModel>>> history({int limit, int offset});
 }
