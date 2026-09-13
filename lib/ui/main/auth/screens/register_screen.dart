@@ -51,13 +51,11 @@ class _RegisterBodyState extends State<_RegisterBody> {
   final _phone = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  final _npwp = TextEditingController();
-  final _nibSiup = TextEditingController();
+
 
   bool _obscure = true;
-  String _role = 'BUY_R';
 
-  bool get _isBusiness => _role == 'BUY_B';
+
 
   @override
   void dispose() {
@@ -65,8 +63,7 @@ class _RegisterBodyState extends State<_RegisterBody> {
     _phone.dispose();
     _email.dispose();
     _password.dispose();
-    _npwp.dispose();
-    _nibSiup.dispose();
+
     super.dispose();
   }
 
@@ -75,15 +72,10 @@ class _RegisterBodyState extends State<_RegisterBody> {
     FocusManager.instance.primaryFocus?.unfocus();
 
     AuthCubit.get(context).register(
-      phone: _phone.text.trim(),
+      email: _email.text.trim(),
       password: _password.text,
       fullName: _fullName.text.trim(),
-      role: _role,
-      email: _email.text.trim(),
-      // Dikirim hanya untuk B2B. Untuk retail server menolak nilai ini kalau
-      // ikut terkirim tanpa alasan, dan field-nya juga tidak ditampilkan.
-      npwp: _isBusiness ? _npwp.text.trim() : null,
-      nibSiupNo: _isBusiness ? _nibSiup.text.trim() : null,
+      phone: _phone.text.trim(),
     );
   }
 
@@ -143,24 +135,6 @@ class _RegisterBodyState extends State<_RegisterBody> {
                     16.sbh,
                   ],
 
-                  // --- tipe akun ---
-                  AuthFieldLabel(l.accountType, isRequired: true),
-                  8.sbh,
-                  _RoleSelector(
-                    role: _role,
-                    enabled: !isLoading,
-                    onChanged: (value) => setState(() => _role = value),
-                  ),
-                  if (_isBusiness) ...[
-                    8.sbh,
-                    Text(
-                      l.businessBuyerNote,
-                      style: AppStyles.styleRegular12(context)
-                          .copyWith(color: kLightThirdColor),
-                    ),
-                  ],
-                  16.sbh,
-
                   AuthFieldLabel(l.name, isRequired: true),
                   8.sbh,
                   CustomTextFormField(
@@ -188,9 +162,9 @@ class _RegisterBodyState extends State<_RegisterBody> {
                   ),
                   16.sbh,
 
-                  // Email opsional di API — ditandai supaya user tidak
-                  // mengira wajib lalu menyerah di tengah form.
-                  AuthFieldLabel(l.email),
+                  // Email kini **identitas login**, bukan pelengkap: API ini
+                  // masuk lewat email, bukan nomor HP.
+                  AuthFieldLabel(l.email, isRequired: true),
                   8.sbh,
                   CustomTextFormField(
                     filled: true,
@@ -199,6 +173,12 @@ class _RegisterBodyState extends State<_RegisterBody> {
                     hintText: l.enterYourEmail,
                     keyboardType: TextInputType.emailAddress,
                     textDirection: TextDirection.ltr,
+                    validator: (v) {
+                      final value = v?.trim() ?? '';
+                      if (value.isEmpty) return 'Email wajib diisi';
+                      if (!value.contains('@')) return 'Format email belum benar';
+                      return null;
+                    },
                   ),
                   16.sbh,
 
@@ -224,37 +204,6 @@ class _RegisterBodyState extends State<_RegisterBody> {
                       return null;
                     },
                   ),
-
-                  // --- khusus B2B ---
-                  if (_isBusiness) ...[
-                    16.sbh,
-                    AuthFieldLabel(l.npwpLabel, isRequired: true),
-                    8.sbh,
-                    CustomTextFormField(
-                      filled: true,
-                      controller: _npwp,
-                      readOnly: isLoading,
-                      hintText: l.enterYourNpwp,
-                      textDirection: TextDirection.ltr,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l.npwpRequiredForBusiness
-                          : null,
-                    ),
-                    16.sbh,
-                    AuthFieldLabel(l.nibSiupLabel, isRequired: true),
-                    8.sbh,
-                    CustomTextFormField(
-                      filled: true,
-                      controller: _nibSiup,
-                      readOnly: isLoading,
-                      hintText: l.enterYourNibSiup,
-                      textDirection: TextDirection.ltr,
-                      textInputAction: TextInputAction.done,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l.nibSiupRequiredForBusiness
-                          : null,
-                    ),
-                  ],
 
                   24.sbh,
                   CustomButton(
@@ -298,99 +247,3 @@ class _RegisterBodyState extends State<_RegisterBody> {
 }
 
 /// Pemilih `BUY_R` / `BUY_B`.
-class _RoleSelector extends StatelessWidget {
-  const _RoleSelector({
-    required this.role,
-    required this.onChanged,
-    required this.enabled,
-  });
-
-  final String role;
-  final ValueChanged<String> onChanged;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = S.of(context);
-    return Row(
-      children: [
-        Expanded(
-          child: _RoleOption(
-            label: l.retailBuyer,
-            value: 'BUY_R',
-            selected: role == 'BUY_R',
-            enabled: enabled,
-            onTap: onChanged,
-          ),
-        ),
-        12.sbw,
-        Expanded(
-          child: _RoleOption(
-            label: l.businessBuyer,
-            value: 'BUY_B',
-            selected: role == 'BUY_B',
-            enabled: enabled,
-            onTap: onChanged,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RoleOption extends StatelessWidget {
-  const _RoleOption({
-    required this.label,
-    required this.value,
-    required this.selected,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final String value;
-  final bool selected;
-  final bool enabled;
-  final ValueChanged<String> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = isAppDarkMode() ? kDarkPrimaryColor : kLightPrimaryColor;
-
-    return InkWell(
-      onTap: enabled ? () => onTap(value) : null,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: 12.pa,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? primary : kBorderColor,
-            width: selected ? 2 : 1,
-          ),
-          color: selected ? primary.withValues(alpha: .08) : null,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              size: 18,
-              color: selected ? primary : kLightThirdColor,
-            ),
-            8.sbw,
-            Expanded(
-              child: Text(
-                label,
-                style: AppStyles.styleMedium14(context).copyWith(
-                  color: selected
-                      ? primary
-                      : (isAppDarkMode() ? kDarkSecondColor : kLightSecondColor),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

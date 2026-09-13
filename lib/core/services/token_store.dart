@@ -75,24 +75,38 @@ class TokenStore {
     return null;
   }
 
-  /// `BUY_R` atau `BUY_B`.
+  /// Kode peran user, dipisah koma (`"buyer"`, atau `"buyer,seller"`).
+  ///
+  /// Di marketplace ini **satu akun boleh punya banyak peran**, jadi nilainya
+  /// bukan satu kode tunggal seperti API sebelumnya. Pakai [roles] atau
+  /// [hasRole]; membandingkan string mentah akan gagal untuk akun rangkap.
   String? get role => CachedHelper.getData(kUserRole) as String?;
+
+  /// Peran user sebagai daftar.
+  List<String> get roles {
+    final raw = role;
+    if (raw == null || raw.isEmpty) return const [];
+    return raw.split(',').where((e) => e.isNotEmpty).toList();
+  }
+
+  bool hasRole(String code) => roles.contains(code);
 
   /// Nama lengkap user, untuk sapaan di app bar dan halaman profil.
   /// Hanya `GET /auth/me` yang mengirimkannya.
   String? get userName => CachedHelper.getData(kUserName) as String?;
 
-  /// `RETAIL` atau `B2B`, dari `users.buyer_segment`.
+  /// Peninggalan API bahan bangunan; **tidak ada padanannya** di marketplace
+  /// ini. Dipertahankan sementara supaya lapisan katalog lama tetap
+  /// terkompilasi sampai ditulis ulang, dan selalu `null` di sini.
   String? get buyerSegment => CachedHelper.getData(kBuyerSegment) as String?;
 
-  /// Penentu **tunggal** apakah tier harga `PROJECT` dan seluruh modul
-  /// RFQ/kontrak boleh dirender.
+  /// **Selalu `false` di API marketplace ini.**
   ///
-  /// Menampilkan tier `PROJECT` ke pembeli retail berarti membocorkan harga
-  /// grosir (aturan PRD-06), dan endpoint RFQ membalas `403` untuk `BUY_R`
-  /// bahkan untuk `GET` — jadi menu-nya harus disembunyikan, bukan dibiarkan
-  /// lalu gagal.
-  bool get isB2B => role == 'BUY_B' || buyerSegment == 'B2B';
+  /// Segmen harga B2B/PROJECT adalah konsep dari backend bahan bangunan
+  /// sebelumnya dan tidak punya padanan di sini. Getter-nya belum dihapus
+  /// karena lapisan katalog lama masih memakainya; ikut terhapus saat
+  /// katalog ditulis ulang ke `/products`.
+  bool get isB2B => false;
 
   bool get isLoggedIn => _accessToken != null && userId != null;
 

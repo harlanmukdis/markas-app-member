@@ -127,89 +127,49 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 
 # Part 2 — Target architecture
 
-> ### 🔴 `GET /offers` is paginated since v2.4 — and it fails silently
+> ### 🔁 Backend ganti total pada 13 September 2026
 >
-> Default `per_page` is **20**, max 100, and the response carries `meta: {page, per_page, total, total_pages}`. Before v2.4 the endpoint returned every ACTIVE offer. Code that treats `data` as the complete list **produces no error at all** — the catalog just shows fewer products. Always read `meta`; `CatalogHomeState` exposes `page`/`totalPages`/`hasMorePages` for this.
+> Aplikasi ini sekarang berbicara ke **marketplace-api** (`~/Desktop/Harlan/marketplace-api`), sebuah **marketplace multi-vendor umum** model Tokopedia/Shopee — bukan lagi Markas Bangunan. Dokumennya di `<api-repo>/docs/00-…15-*.md` plus koleksi Postman di `<api-repo>/postman/`. Base URL: **`http://localhost:8000/api/v1`** (port 8000, bukan 80).
 >
-> Pagination applies only to buyer/public callers. A `SEL` token hits a different branch with no pagination and **no `meta`** — don't copy this pattern into the seller app.
+> Seluruh peringatan backend lama yang dulu ada di sini **dihapus**, bukan diarsipkan: semuanya menyangkut endpoint yang tidak ada lagi (`/offers`, `/sku-master`, `/cart/view`, RFQ, tier PROJECT), dan membiarkannya hanya menyesatkan. Riwayatnya ada di git sampai commit `b18380e`.
 >
-> ### 🆕 v2.4 bulk endpoints removed a real N+1
+> **Yang selamat tanpa perubahan:** amplop `{success, data, error}` + `meta`, nama kode error (`UNAUTHENTICATED`, `INVALID_CREDENTIALS`, `VALIDATION_ERROR`, `NOT_FOUND`), angka-sebagai-string, dan tinyint sebagai `"0"`/`"1"`. Jadi `DataState`, `parseEnvelope`, dan seluruh `json_converters` dipakai apa adanya.
 >
-> `GET /offers/prices?ids=` (cheapest RETAIL price per offer) and `GET /sku-master?ids=` (name/base_unit/weight per SKU) each answer for many ids in one call. `CatalogService.withPriceTiers` and `skusByIds` now use them, which is why the artificial 24-item cap on the home grid is gone. One grid page costs **4 calls** total: offers, prices, sku names, reviews-summary.
+> **Yang hilang beserta fiturnya:** satuan majemuk, kalkulator kebutuhan, tier harga PROJECT/B2B, RFQ & kontrak bertahap, struktur order tiga lapis, dan retur berbasis `shipment_id`. `TokenStore.isB2B` kini selalu `false` dan ikut terhapus saat lapisan katalog ditulis ulang.
 >
-> The bulk SKU response has **no `units[]`**, so it maps to `SkuBriefModel`, not `SkuModel` — returning a `SkuModel` with an empty `units` list would be indistinguishable from "this SKU genuinely has no sell units" and the unit picker would vanish without a trace.
+> ### ✅ Bug header `Authorization` case-sensitive SUDAH TIDAK ADA
 >
-> ### 🔴 Wishlist is entirely broken in v2.4 (backend regression)
+> Ini penghalang terbesar backend lama: hanya ejaan `Authorization` persis yang diterima, sehingga `dart:io` — yang melowercase nama header — membuat **seluruh Android/iOS/desktop tidak bisa memakai endpoint ber-token**. Di API ini ketiga ejaan sama-sama dijawab **200**, diverifikasi ke server dan dipatok di `test/integration/auth_service_test.dart`. Native hidup lagi, dan tidak ada lagi `skip: kIsWeb` di test integrasi.
 >
-> All three endpoints return `403 PERMISSION_DENIED` with the server's own message: `Unknown menu_cd (server misconfiguration): WISHLIST_VIEW` (also `WISHLIST_ADD`, `WISHLIST_REMOVE`). The v2.4 permission seed is missing those three rows. They worked in v2.2 and the integration test passed then; other permissioned endpoints are fine (`cart/add` 201, `offers/{id}/reviews` 200), so the permission system itself is healthy. The client layer is finished — drop the `skip` in `test/integration/transaction_flow_test.dart` once the seed lands.
+> ### 🔴 `verify-email` menaikkan status tapi tidak pernah menyetel `email_verified`
 >
-> ### ⚠️ `created_at` survives on exactly two endpoint groups
+> Sudah dibuktikan ke server: akun baru lahir `status: "pending_verification"`. `POST /auth/verify-email` mengubahnya jadi `"active"` — **tapi kolom `email_verified` tetap `"0"` selamanya**, sementara tokennya sudah terpakai (panggilan kedua dibalas `INVALID_TOKEN`).
 >
-> The v2.2 note said `created_at` was gone everywhere. It is gone from the database, but `/payments/*` and `/chat/messages` still return **`created_at`** because they alias the column. Never blind find-and-replace `created_at` → `created_date`. `PaymentModel` reads both via `@JsonKey(readValue:)`.
+> Karena itu `UserModel.isVerified` membaca **`status`**, bukan `email_verified`. Aplikasi yang menunggu kolom itu berubah akan menahan user di layar "verifikasi dulu" tanpa jalan keluar.
 >
-> ### 🔴 Backend v2.2 renamed fields the release notes did not mention
+> Verifikasi juga **bukan gerbang login**: akun `pending_verification` tetap diberi token. Jangan memblokir masuk karenanya.
 >
-> The v2.2 refactor notes list only `created_at` → `created_date` and `updated_at` → `modified_date`. Verified against the running backend, **`GET /auth/me` also renamed two more fields** — and only that endpoint:
+> ### ⚠️ Tiga kontrak yang berbeda dari dokumen dan koleksi Postman
 >
-> | concept | `/auth/login` | `/auth/me` v2.1 | `/auth/me` v2.2 |
-> |---|---|---|---|
-> | user id | `user_id` (int) | `id` (String) | **`seq`** (String) |
-> | name | — | `full_name` | **`name`** |
+> Semuanya ditemukan dengan menembak server, bukan membaca dokumen:
 >
-> Every other endpoint (`/offers`, `/categories`, `/brands`, `/orders`, `/addresses`, `/wishlist`) still uses `id`. `UserModel` therefore reads all spellings via `@JsonKey(readValue:)` rather than trusting one; the integration test pins it so a third rename fails loudly instead of silently producing `id: 0`.
+> | hal | yang tertulis | yang sebenarnya |
+> |---|---|---|
+> | `POST /auth/register` → `phone` | tampak opsional di contoh Postman | **wajib**; tanpa itu `422 VALIDATION_ERROR` "Field wajib belum lengkap" dengan `details: null` — tidak menyebut field mana |
+> | `POST /auth/register` → respons | — | **tanpa token apa pun**, hanya `user_id` + `dev_verification_token`. Wajib disusul `login`; itu sebabnya `AuthRepository.register` menggabungkan keduanya |
+> | `PATCH /me` → respons | — | `data: null`. Perubahannya tersimpan, tapi user hasilnya tidak dikembalikan — repository membaca ulang `GET /me` |
 >
-> **Lesson that keeps repeating on this project: probe the endpoint, don't trust the release note.** Three assumptions from BE docs have now been wrong — `/offers?category_id=` existed when I assumed it did not, `price_tiers` is empty in every list response when the doc implied otherwise, and `/offers` with no filter returns everything when both the doc and I said there was no "all products" endpoint.
+> Login juga **berbasis email**, bukan nomor HP, dan responsnya **tidak membawa data user sama sekali** — identitas hanya dari `GET /me`. `expires_in` = **900 detik**, bukan 2 jam, jadi refresh berjalan sering dan single-flight di `TokenRefresher` jadi penting.
 >
-> ### 🔴 Server deadlines are 5 hours off (v2.2, still open)
+> ### ⚠️ URL tak dikenal membalas HTML, bukan amplop JSON
 >
-> PHP and MySQL clocks disagree by 5 hours, so a 24-hour payment window is stored as 19 hours after `created_date`. **Do not correct this with an offset in Flutter** — when the backend is fixed the correction makes it wrong twice. Until then show absolute times via `formatServerDeadline()` and do not build countdowns that look precise. `formatCountdown()` carries the same warning at its definition.
-
-> ### 🆕 `SALDO` is the only payment method that actually completes
+> CodeIgniter menyajikan halaman 404 HTML untuk rute tak terdaftar. Body itu sampai ke `ApiException` sebagai `ClientErrorCode.badResponse`, dan sebelum diperbaiki ia lolos sebagai `isDataNotFound` — artinya salah ketik URL di aplikasi tampil ke user sebagai "data tidak ditemukan". `DataError.isRouteNotFound` kini ikut menganggap `badResponse` + 404 sebagai kesalahan rute.
 >
-> The brief documents six methods on `POST /payments/initiate`. Only `SALDO` finishes: the server answers `status: "LUNAS"` immediately, with no gateway and no `expires_at`. VA and QRIS still run on `MOCK_GATEWAY`, so their `va_number` / `qris_payload` are fake strings no bank will accept. `PaymentMethod.renderable` is therefore `[saldo, va, qris]` with `saldo` first, and `selectable(forcedBankTransfer: true)` keeps `saldo` — it is **exempt** from the forced-bank-transfer rule, and dropping it would push the buyer onto the one path whose destination account number does not exist anywhere in the API.
+> ### ⚠️ Peran kini jamak, dan database uji masih kosong
 >
-> `INSUFFICIENT_BALANCE` carries `details: {balance, required}`. `DataError.walletShortfall` turns that into the number to show; never compute the shortfall from a locally cached balance.
+> Satu akun boleh merangkap Buyer, Seller, Affiliate, dan seterusnya; `GET /me` mengembalikan `roles[]` berisi `{code, name}` plus `stores[]`. **Jangan** menulis `user.role == 'buyer'` — pakai `hasRole`/`isBuyer`.
 >
-> ### 🔴 `created_at` survives on a **third** endpoint the brief does not list
->
-> The brief names `/chat/messages` and `/payments/*` as the only holdouts. `POST /wallet/topup` also returns **`created_at`** — while `GET /wallet/history`, in the same module, returns `created_date`. Verified against the running backend. `WalletTopupModel` reads both spellings via `@JsonKey(readValue:)`, and an integration test pins it so a future cleanup does not break silently.
->
-> Its `expires_at` is also 19 hours after `created_at`, not 24 — the same 5-hour clock skew as `payment_deadline`.
->
-> ### 🔴 `POST /cart/clear` does **not** detach vouchers
->
-> Emptying the cart removes the items and leaves the voucher attached. Re-attaching the same code then fails with **`409 ALREADY_ATTACHED`** — a code that appears in no brief. This is a routine path, not an edge case, so `_cartMessage()` in the cart screen explains it in a sentence a buyer can act on. An integration test pins the behaviour and will go red if the server ever starts detaching, at which point the 409 handling can go.
->
-> ### 🔴 Order status lags shipment status, so a "Dikirim" tab is not buildable
->
-> The brief suggests five order tabs, with "Dikirim" keyed to shipment status `DIKIRIM`. Two facts block it: `GET /orders` carries **no shipment data at all** (no `sub_orders`, no `shipments`), and the order-level status does not advance with the shipment. Order 3 in the test data is order `DIBAYAR` / sub-order `BERJALAN` / shipment `SAMPAI` — the goods have already arrived while the order still reads "paid". Filling a "Dikirim" tab would cost one `GET /orders/{id}` per order, the exact N+1 the brief warns against elsewhere, and filtering on order status alone would leave it permanently empty. `OrderTab` therefore stays at four order-level tabs.
-
-> ### 🔴 Backend blocker: the `Authorization` header is case-sensitive
->
-> Every protected endpoint returns `401 UNAUTHENTICATED` unless the header name is spelled **exactly** `Authorization`. This violates RFC 7230 §3.2 (HTTP field names are case-insensitive) and it breaks **all native Dart/Flutter clients**, because `dart:io`'s `HttpHeaders` lowercases field names and Dio does not opt out.
->
-> Verified against the running backend:
->
-> | request | result |
-> |---|---|
-> | `curl -H "Authorization: Bearer …"` | **200** |
-> | `curl -H "authorization: Bearer …"` | **401** |
-> | `curl -H "AUTHORIZATION: Bearer …"` | **401** |
-> | `HttpHeaders.set(..., preserveHeaderCase: true)` | **200** |
-> | `HttpHeaders.set(...)` (Dart default, what Dio sends) | **401** |
->
-> **Fix belongs in the backend** — read the header case-insensitively (`$_SERVER['HTTP_AUTHORIZATION']` is populated regardless of the incoming case; an exact-key lookup into `apache_request_headers()` is not). A client-side workaround exists but needs a custom `HttpClientAdapter` (~80 lines, platform-conditional) versus a one-line backend change, so it was deliberately not built.
->
-> **Impact by platform — verified in a real browser:** Flutter **web is unaffected**. Dio's browser adapter sends the field name as written, so the capital `Authorization` set by `AuthInterceptor` arrives intact. Proven by running the real stack in Chrome:
->
-> ```bash
-> flutter test --platform chrome test/integration/   # 6/6 pass, incl. GET /auth/me
-> flutter test test/integration/                     # GET /auth/me skipped on native
-> ```
->
-> A standalone browser probe confirmed the same at the transport level: XHR and `fetch` both return **200** with `Authorization` and **401** with `authorization`.
->
-> **Android/iOS/desktop remain unusable for anything past login.** The `GET /auth/me` contract test carries a `skip: kIsWeb ? false : '…'` so it runs on web and is skipped on native; drop the condition once the backend is fixed.
+> Database backend belum di-seed: `/products` dan `/categories` mengembalikan daftar kosong, dan `/search/*` membalas `SEARCH_UNAVAILABLE` karena Elasticsearch belum terpasang. Karena itu lapisan katalog, keranjang, checkout, dan order **sengaja belum ditulis** — menulis model dari dokumen saja sudah tiga kali terbukti salah di proyek ini.
 
 **Status: foundation (steps 1-5) plus the auth domain implemented.** What exists today:
 
@@ -235,11 +195,11 @@ The kit's social-login buttons were dropped, not ported — the backend has no O
 
 A `@freezed` class with custom getters or methods **must** declare a private constructor (`const UserModel._();`), otherwise generation fails with `Getters require a MyClass._() constructor`. Also prefer getters **inside** the class over an `extension`: an extension is only in scope where its own library is imported, so `user.isB2B` silently fails to resolve in a file that imported the model only transitively.
 
-**Backend contract**: the member app talks to Markas Bangunan (CodeIgniter 3 + JWT). The API is documented in **`BRIEF-FE-MEMBER.md`** (11 September 2026, branch `wip-harlan`) — ask the user for it if it is not in the repo root. That brief **supersedes** `API-MEMBER-APP.md`, `MEMBER-APP-FEATURE-MAP.md`, `PROMPT-PENYESUAIAN-v2.2.md`, and `PROMPT-PENYESUAIAN-v2.4.md`; those were written before the refactor and are stale on field names and feature lists. Even so, the brief is not complete — four things below were found by probing and contradict or extend it. Three deviations from the generic plan below were forced by that API and are deliberate:
+**Backend contract**: the member app talks to **marketplace-api** (CodeIgniter 3 modular HMVC + JWT), a multi-vendor marketplace. Reference material lives in that repo, not this one: `docs/03-api-documentation.md` for endpoints, `docs/02-database-schema.md` + `database/schema/*.sql` for field shapes, `docs/04-rbac-permission-matrix.md` for roles, and `postman/Marketplace-API.postman_collection.json` for the authoritative request bodies. Three deviations from the generic plan below were forced by the API and are deliberate:
 
-1. **`DataSuccess` carries `meta` and `statusCode`.** The API puts business decisions in `meta` (`forced_bank_transfer` decides which payment methods may render; `note` explains an auto-rejected return), and uses **200 vs 201** to distinguish "returned the existing record" from "created a new one" (`POST /payments/initiate`, `POST /chat/threads`). A repository that forwards only `data` loses both.
+1. **`DataSuccess` carries `meta` and `statusCode`.** Paginated endpoints put `page`/`per_page`/`total` in `meta`, and status codes distinguish created-vs-returned. A repository that forwards only `data` loses both.
 2. **Every numeric and boolean model field must use a converter from `lib/util/json_converters.dart`.** The same logical field arrives as a number from one endpoint and a string from another (`"grand_total": 6500000` from `POST /checkout`, `"grand_total": "6500000"` from `GET /orders/{id}`), and `tinyint` booleans arrive as `"0"`/`"1"`.
-3. **Two endpoints must never get a service method** — `GET /shipments` (no id; unfiltered, leaks every buyer's shipments platform-wide) and `POST /vouchers/apply` (no auth check, trusts client-supplied `discount_amount`). See `lib/di/injector_service.dart` for the note that keeps this decision discoverable.
+3. **Admin- and seller-scoped endpoints must never get a member service method.** The collection mixes them in freely (`/admin/*`, `/stores/{id}/products`, `/orders/{id}/accept|pack|ship`, `/payments/callback/*`). They answer `403` for a buyer token at best, and calling them is a sign the wrong flow is being built.
 
 This is the layering the project is being moved toward: **data → domain → presentation** per feature, wired with `get_it` for DI and `go_router` for navigation.
 

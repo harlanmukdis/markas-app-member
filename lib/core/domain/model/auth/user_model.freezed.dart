@@ -15,52 +15,49 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserModel {
   @IntJson()
-  @JsonKey(name: 'seq', readValue: _readUserId)
   int get id;
-  @StringJson()
-  String get phone;
   @StringOrNullJson()
   String? get email;
   @StringOrNullJson()
-  @JsonKey(name: 'name', readValue: _readUserName)
+  String? get phone;
+  @StringOrNullJson()
+  @JsonKey(name: 'full_name')
   String? get fullName;
+  @StringOrNullJson()
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl;
 
-  /// `BUY_R` (retail) atau `BUY_B` (B2B/kontraktor).
+  /// `pending_verification` / `active` / `suspended` / `banned` — huruf
+  /// kecil di API ini, berbeda dari API lama yang memakai huruf besar.
+  ///
+  /// **Inilah penanda terverifikasi yang benar**, bukan [emailVerified].
+  /// Akun baru lahir sebagai `pending_verification`, dan
+  /// `POST /auth/verify-email` mengubahnya jadi `active`.
   @StringJson()
-  String get role;
+  String get status;
 
-  /// `RETAIL` atau `B2B`. Server yang menentukan segmen harga saat checkout
-  /// dari kolom ini — **tidak bisa dikirim dari client**.
-  @StringOrNullJson()
-  @JsonKey(name: 'buyer_segment')
-  String? get buyerSegment;
-  @StringOrNullJson()
-  String? get npwp;
-  @StringOrNullJson()
-  @JsonKey(name: 'nib_siup_no')
-  String? get nibSiupNo;
+  /// Dikirim sebagai `"0"`/`"1"` (tinyint), bukan boolean JSON.
+  ///
+  /// 🔴 **Jangan dipakai sebagai penanda verifikasi.** Sudah diuji ke
+  /// server: `verify-email` menaikkan [status] ke `active` tapi
+  /// membiarkan kolom ini `"0"` selamanya. Aplikasi yang menunggu nilai ini
+  /// berubah akan menahan user di layar "verifikasi dulu" tanpa jalan
+  /// keluar. Pakai [isVerified].
+  @BoolJson()
+  @JsonKey(name: 'email_verified')
+  bool get emailVerified;
+  @BoolJson()
+  @JsonKey(name: 'phone_verified')
+  bool get phoneVerified;
 
-  /// Terisi kalau berkas B2B sudah diverifikasi admin.
+  /// API ini memakai `created_at` secara konsisten di seluruh endpoint —
+  /// tidak ada lagi campuran `created_date`/`created_at` seperti backend
+  /// sebelumnya.
   @ServerDateTimeJson()
-  @JsonKey(name: 'b2b_verified_at')
-  DateTime? get b2bVerifiedAt;
-  @IntOrNullJson()
-  @JsonKey(name: 'seller_id')
-  int? get sellerId;
-
-  /// `ACTIVE` atau `SUSPENDED`.
-  @StringJson()
-  String
-      get status; // Backend v2.2 mengganti nama kolom waktu: `created_at`/`updated_at`
-// HILANG TOTAL dari semua respons, diganti `created_date`/
-// `modified_date`. Nama Dart-nya ikut diselaraskan supaya tidak ada
-// celah antara nama field di kode dan di API.
-  @ServerDateTimeJson()
-  @JsonKey(name: 'created_date')
-  DateTime? get createdDate;
-  @ServerDateTimeJson()
-  @JsonKey(name: 'modified_date')
-  DateTime? get modifiedDate;
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt;
+  List<UserRoleModel> get roles;
+  List<UserStoreModel> get stores;
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -78,25 +75,21 @@ mixin _$UserModel {
         (other.runtimeType == runtimeType &&
             other is UserModel &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.fullName, fullName) ||
                 other.fullName == fullName) &&
-            (identical(other.role, role) || other.role == role) &&
-            (identical(other.buyerSegment, buyerSegment) ||
-                other.buyerSegment == buyerSegment) &&
-            (identical(other.npwp, npwp) || other.npwp == npwp) &&
-            (identical(other.nibSiupNo, nibSiupNo) ||
-                other.nibSiupNo == nibSiupNo) &&
-            (identical(other.b2bVerifiedAt, b2bVerifiedAt) ||
-                other.b2bVerifiedAt == b2bVerifiedAt) &&
-            (identical(other.sellerId, sellerId) ||
-                other.sellerId == sellerId) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl) &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.createdDate, createdDate) ||
-                other.createdDate == createdDate) &&
-            (identical(other.modifiedDate, modifiedDate) ||
-                other.modifiedDate == modifiedDate));
+            (identical(other.emailVerified, emailVerified) ||
+                other.emailVerified == emailVerified) &&
+            (identical(other.phoneVerified, phoneVerified) ||
+                other.phoneVerified == phoneVerified) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            const DeepCollectionEquality().equals(other.roles, roles) &&
+            const DeepCollectionEquality().equals(other.stores, stores));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -104,22 +97,20 @@ mixin _$UserModel {
   int get hashCode => Object.hash(
       runtimeType,
       id,
-      phone,
       email,
+      phone,
       fullName,
-      role,
-      buyerSegment,
-      npwp,
-      nibSiupNo,
-      b2bVerifiedAt,
-      sellerId,
+      avatarUrl,
       status,
-      createdDate,
-      modifiedDate);
+      emailVerified,
+      phoneVerified,
+      createdAt,
+      const DeepCollectionEquality().hash(roles),
+      const DeepCollectionEquality().hash(stores));
 
   @override
   String toString() {
-    return 'UserModel(id: $id, phone: $phone, email: $email, fullName: $fullName, role: $role, buyerSegment: $buyerSegment, npwp: $npwp, nibSiupNo: $nibSiupNo, b2bVerifiedAt: $b2bVerifiedAt, sellerId: $sellerId, status: $status, createdDate: $createdDate, modifiedDate: $modifiedDate)';
+    return 'UserModel(id: $id, email: $email, phone: $phone, fullName: $fullName, avatarUrl: $avatarUrl, status: $status, emailVerified: $emailVerified, phoneVerified: $phoneVerified, createdAt: $createdAt, roles: $roles, stores: $stores)';
   }
 }
 
@@ -129,27 +120,17 @@ abstract mixin class $UserModelCopyWith<$Res> {
       _$UserModelCopyWithImpl;
   @useResult
   $Res call(
-      {@IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
-      @StringJson() String phone,
+      {@IntJson() int id,
       @StringOrNullJson() String? email,
-      @StringOrNullJson()
-      @JsonKey(name: 'name', readValue: _readUserName)
-      String? fullName,
-      @StringJson() String role,
-      @StringOrNullJson() @JsonKey(name: 'buyer_segment') String? buyerSegment,
-      @StringOrNullJson() String? npwp,
-      @StringOrNullJson() @JsonKey(name: 'nib_siup_no') String? nibSiupNo,
-      @ServerDateTimeJson()
-      @JsonKey(name: 'b2b_verified_at')
-      DateTime? b2bVerifiedAt,
-      @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+      @StringOrNullJson() String? phone,
+      @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+      @StringOrNullJson() @JsonKey(name: 'avatar_url') String? avatarUrl,
       @StringJson() String status,
-      @ServerDateTimeJson()
-      @JsonKey(name: 'created_date')
-      DateTime? createdDate,
-      @ServerDateTimeJson()
-      @JsonKey(name: 'modified_date')
-      DateTime? modifiedDate});
+      @BoolJson() @JsonKey(name: 'email_verified') bool emailVerified,
+      @BoolJson() @JsonKey(name: 'phone_verified') bool phoneVerified,
+      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
+      List<UserRoleModel> roles,
+      List<UserStoreModel> stores});
 }
 
 /// @nodoc
@@ -165,72 +146,62 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
   @override
   $Res call({
     Object? id = null,
-    Object? phone = null,
     Object? email = freezed,
+    Object? phone = freezed,
     Object? fullName = freezed,
-    Object? role = null,
-    Object? buyerSegment = freezed,
-    Object? npwp = freezed,
-    Object? nibSiupNo = freezed,
-    Object? b2bVerifiedAt = freezed,
-    Object? sellerId = freezed,
+    Object? avatarUrl = freezed,
     Object? status = null,
-    Object? createdDate = freezed,
-    Object? modifiedDate = freezed,
+    Object? emailVerified = null,
+    Object? phoneVerified = null,
+    Object? createdAt = freezed,
+    Object? roles = null,
+    Object? stores = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
           ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      phone: null == phone
-          ? _self.phone
-          : phone // ignore: cast_nullable_to_non_nullable
-              as String,
       email: freezed == email
           ? _self.email
           : email // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phone: freezed == phone
+          ? _self.phone
+          : phone // ignore: cast_nullable_to_non_nullable
               as String?,
       fullName: freezed == fullName
           ? _self.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String?,
-      role: null == role
-          ? _self.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as String,
-      buyerSegment: freezed == buyerSegment
-          ? _self.buyerSegment
-          : buyerSegment // ignore: cast_nullable_to_non_nullable
+      avatarUrl: freezed == avatarUrl
+          ? _self.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      npwp: freezed == npwp
-          ? _self.npwp
-          : npwp // ignore: cast_nullable_to_non_nullable
-              as String?,
-      nibSiupNo: freezed == nibSiupNo
-          ? _self.nibSiupNo
-          : nibSiupNo // ignore: cast_nullable_to_non_nullable
-              as String?,
-      b2bVerifiedAt: freezed == b2bVerifiedAt
-          ? _self.b2bVerifiedAt
-          : b2bVerifiedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      sellerId: freezed == sellerId
-          ? _self.sellerId
-          : sellerId // ignore: cast_nullable_to_non_nullable
-              as int?,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      createdDate: freezed == createdDate
-          ? _self.createdDate
-          : createdDate // ignore: cast_nullable_to_non_nullable
+      emailVerified: null == emailVerified
+          ? _self.emailVerified
+          : emailVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      phoneVerified: null == phoneVerified
+          ? _self.phoneVerified
+          : phoneVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      createdAt: freezed == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      modifiedDate: freezed == modifiedDate
-          ? _self.modifiedDate
-          : modifiedDate // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      roles: null == roles
+          ? _self.roles
+          : roles // ignore: cast_nullable_to_non_nullable
+              as List<UserRoleModel>,
+      stores: null == stores
+          ? _self.stores
+          : stores // ignore: cast_nullable_to_non_nullable
+              as List<UserStoreModel>,
     ));
   }
 }
@@ -329,29 +300,19 @@ extension UserModelPatterns on UserModel {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-            @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
-            @StringJson() String phone,
+            @IntJson() int id,
             @StringOrNullJson() String? email,
-            @StringOrNullJson()
-            @JsonKey(name: 'name', readValue: _readUserName)
-            String? fullName,
-            @StringJson() String role,
-            @StringOrNullJson()
-            @JsonKey(name: 'buyer_segment')
-            String? buyerSegment,
-            @StringOrNullJson() String? npwp,
-            @StringOrNullJson() @JsonKey(name: 'nib_siup_no') String? nibSiupNo,
-            @ServerDateTimeJson()
-            @JsonKey(name: 'b2b_verified_at')
-            DateTime? b2bVerifiedAt,
-            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+            @StringOrNullJson() String? phone,
+            @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+            @StringOrNullJson() @JsonKey(name: 'avatar_url') String? avatarUrl,
             @StringJson() String status,
+            @BoolJson() @JsonKey(name: 'email_verified') bool emailVerified,
+            @BoolJson() @JsonKey(name: 'phone_verified') bool phoneVerified,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_date')
-            DateTime? createdDate,
-            @ServerDateTimeJson()
-            @JsonKey(name: 'modified_date')
-            DateTime? modifiedDate)?
+            @JsonKey(name: 'created_at')
+            DateTime? createdAt,
+            List<UserRoleModel> roles,
+            List<UserStoreModel> stores)?
         $default, {
     required TResult orElse(),
   }) {
@@ -360,18 +321,16 @@ extension UserModelPatterns on UserModel {
       case _UserModel() when $default != null:
         return $default(
             _that.id,
-            _that.phone,
             _that.email,
+            _that.phone,
             _that.fullName,
-            _that.role,
-            _that.buyerSegment,
-            _that.npwp,
-            _that.nibSiupNo,
-            _that.b2bVerifiedAt,
-            _that.sellerId,
+            _that.avatarUrl,
             _that.status,
-            _that.createdDate,
-            _that.modifiedDate);
+            _that.emailVerified,
+            _that.phoneVerified,
+            _that.createdAt,
+            _that.roles,
+            _that.stores);
       case _:
         return orElse();
     }
@@ -393,29 +352,19 @@ extension UserModelPatterns on UserModel {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-            @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
-            @StringJson() String phone,
+            @IntJson() int id,
             @StringOrNullJson() String? email,
-            @StringOrNullJson()
-            @JsonKey(name: 'name', readValue: _readUserName)
-            String? fullName,
-            @StringJson() String role,
-            @StringOrNullJson()
-            @JsonKey(name: 'buyer_segment')
-            String? buyerSegment,
-            @StringOrNullJson() String? npwp,
-            @StringOrNullJson() @JsonKey(name: 'nib_siup_no') String? nibSiupNo,
-            @ServerDateTimeJson()
-            @JsonKey(name: 'b2b_verified_at')
-            DateTime? b2bVerifiedAt,
-            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+            @StringOrNullJson() String? phone,
+            @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+            @StringOrNullJson() @JsonKey(name: 'avatar_url') String? avatarUrl,
             @StringJson() String status,
+            @BoolJson() @JsonKey(name: 'email_verified') bool emailVerified,
+            @BoolJson() @JsonKey(name: 'phone_verified') bool phoneVerified,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_date')
-            DateTime? createdDate,
-            @ServerDateTimeJson()
-            @JsonKey(name: 'modified_date')
-            DateTime? modifiedDate)
+            @JsonKey(name: 'created_at')
+            DateTime? createdAt,
+            List<UserRoleModel> roles,
+            List<UserStoreModel> stores)
         $default,
   ) {
     final _that = this;
@@ -423,18 +372,16 @@ extension UserModelPatterns on UserModel {
       case _UserModel():
         return $default(
             _that.id,
-            _that.phone,
             _that.email,
+            _that.phone,
             _that.fullName,
-            _that.role,
-            _that.buyerSegment,
-            _that.npwp,
-            _that.nibSiupNo,
-            _that.b2bVerifiedAt,
-            _that.sellerId,
+            _that.avatarUrl,
             _that.status,
-            _that.createdDate,
-            _that.modifiedDate);
+            _that.emailVerified,
+            _that.phoneVerified,
+            _that.createdAt,
+            _that.roles,
+            _that.stores);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -455,29 +402,19 @@ extension UserModelPatterns on UserModel {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-            @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
-            @StringJson() String phone,
+            @IntJson() int id,
             @StringOrNullJson() String? email,
-            @StringOrNullJson()
-            @JsonKey(name: 'name', readValue: _readUserName)
-            String? fullName,
-            @StringJson() String role,
-            @StringOrNullJson()
-            @JsonKey(name: 'buyer_segment')
-            String? buyerSegment,
-            @StringOrNullJson() String? npwp,
-            @StringOrNullJson() @JsonKey(name: 'nib_siup_no') String? nibSiupNo,
-            @ServerDateTimeJson()
-            @JsonKey(name: 'b2b_verified_at')
-            DateTime? b2bVerifiedAt,
-            @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+            @StringOrNullJson() String? phone,
+            @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+            @StringOrNullJson() @JsonKey(name: 'avatar_url') String? avatarUrl,
             @StringJson() String status,
+            @BoolJson() @JsonKey(name: 'email_verified') bool emailVerified,
+            @BoolJson() @JsonKey(name: 'phone_verified') bool phoneVerified,
             @ServerDateTimeJson()
-            @JsonKey(name: 'created_date')
-            DateTime? createdDate,
-            @ServerDateTimeJson()
-            @JsonKey(name: 'modified_date')
-            DateTime? modifiedDate)?
+            @JsonKey(name: 'created_at')
+            DateTime? createdAt,
+            List<UserRoleModel> roles,
+            List<UserStoreModel> stores)?
         $default,
   ) {
     final _that = this;
@@ -485,18 +422,16 @@ extension UserModelPatterns on UserModel {
       case _UserModel() when $default != null:
         return $default(
             _that.id,
-            _that.phone,
             _that.email,
+            _that.phone,
             _that.fullName,
-            _that.role,
-            _that.buyerSegment,
-            _that.npwp,
-            _that.nibSiupNo,
-            _that.b2bVerifiedAt,
-            _that.sellerId,
+            _that.avatarUrl,
             _that.status,
-            _that.createdDate,
-            _that.modifiedDate);
+            _that.emailVerified,
+            _that.phoneVerified,
+            _that.createdAt,
+            _that.roles,
+            _that.stores);
       case _:
         return null;
     }
@@ -507,89 +442,92 @@ extension UserModelPatterns on UserModel {
 @JsonSerializable()
 class _UserModel extends UserModel {
   const _UserModel(
-      {@IntJson()
-      @JsonKey(name: 'seq', readValue: _readUserId)
-      required this.id,
-      @StringJson() required this.phone,
+      {@IntJson() required this.id,
       @StringOrNullJson() this.email,
-      @StringOrNullJson()
-      @JsonKey(name: 'name', readValue: _readUserName)
-      this.fullName,
-      @StringJson() required this.role,
-      @StringOrNullJson() @JsonKey(name: 'buyer_segment') this.buyerSegment,
-      @StringOrNullJson() this.npwp,
-      @StringOrNullJson() @JsonKey(name: 'nib_siup_no') this.nibSiupNo,
-      @ServerDateTimeJson()
-      @JsonKey(name: 'b2b_verified_at')
-      this.b2bVerifiedAt,
-      @IntOrNullJson() @JsonKey(name: 'seller_id') this.sellerId,
-      @StringJson() required this.status,
-      @ServerDateTimeJson() @JsonKey(name: 'created_date') this.createdDate,
-      @ServerDateTimeJson() @JsonKey(name: 'modified_date') this.modifiedDate})
-      : super._();
+      @StringOrNullJson() this.phone,
+      @StringOrNullJson() @JsonKey(name: 'full_name') this.fullName,
+      @StringOrNullJson() @JsonKey(name: 'avatar_url') this.avatarUrl,
+      @StringJson() this.status = '',
+      @BoolJson() @JsonKey(name: 'email_verified') this.emailVerified = false,
+      @BoolJson() @JsonKey(name: 'phone_verified') this.phoneVerified = false,
+      @ServerDateTimeJson() @JsonKey(name: 'created_at') this.createdAt,
+      final List<UserRoleModel> roles = const <UserRoleModel>[],
+      final List<UserStoreModel> stores = const <UserStoreModel>[]})
+      : _roles = roles,
+        _stores = stores,
+        super._();
   factory _UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
 
   @override
   @IntJson()
-  @JsonKey(name: 'seq', readValue: _readUserId)
   final int id;
-  @override
-  @StringJson()
-  final String phone;
   @override
   @StringOrNullJson()
   final String? email;
   @override
   @StringOrNullJson()
-  @JsonKey(name: 'name', readValue: _readUserName)
+  final String? phone;
+  @override
+  @StringOrNullJson()
+  @JsonKey(name: 'full_name')
   final String? fullName;
-
-  /// `BUY_R` (retail) atau `BUY_B` (B2B/kontraktor).
-  @override
-  @StringJson()
-  final String role;
-
-  /// `RETAIL` atau `B2B`. Server yang menentukan segmen harga saat checkout
-  /// dari kolom ini — **tidak bisa dikirim dari client**.
   @override
   @StringOrNullJson()
-  @JsonKey(name: 'buyer_segment')
-  final String? buyerSegment;
-  @override
-  @StringOrNullJson()
-  final String? npwp;
-  @override
-  @StringOrNullJson()
-  @JsonKey(name: 'nib_siup_no')
-  final String? nibSiupNo;
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
 
-  /// Terisi kalau berkas B2B sudah diverifikasi admin.
+  /// `pending_verification` / `active` / `suspended` / `banned` — huruf
+  /// kecil di API ini, berbeda dari API lama yang memakai huruf besar.
+  ///
+  /// **Inilah penanda terverifikasi yang benar**, bukan [emailVerified].
+  /// Akun baru lahir sebagai `pending_verification`, dan
+  /// `POST /auth/verify-email` mengubahnya jadi `active`.
   @override
-  @ServerDateTimeJson()
-  @JsonKey(name: 'b2b_verified_at')
-  final DateTime? b2bVerifiedAt;
-  @override
-  @IntOrNullJson()
-  @JsonKey(name: 'seller_id')
-  final int? sellerId;
-
-  /// `ACTIVE` atau `SUSPENDED`.
-  @override
+  @JsonKey()
   @StringJson()
   final String status;
-// Backend v2.2 mengganti nama kolom waktu: `created_at`/`updated_at`
-// HILANG TOTAL dari semua respons, diganti `created_date`/
-// `modified_date`. Nama Dart-nya ikut diselaraskan supaya tidak ada
-// celah antara nama field di kode dan di API.
+
+  /// Dikirim sebagai `"0"`/`"1"` (tinyint), bukan boolean JSON.
+  ///
+  /// 🔴 **Jangan dipakai sebagai penanda verifikasi.** Sudah diuji ke
+  /// server: `verify-email` menaikkan [status] ke `active` tapi
+  /// membiarkan kolom ini `"0"` selamanya. Aplikasi yang menunggu nilai ini
+  /// berubah akan menahan user di layar "verifikasi dulu" tanpa jalan
+  /// keluar. Pakai [isVerified].
+  @override
+  @BoolJson()
+  @JsonKey(name: 'email_verified')
+  final bool emailVerified;
+  @override
+  @BoolJson()
+  @JsonKey(name: 'phone_verified')
+  final bool phoneVerified;
+
+  /// API ini memakai `created_at` secara konsisten di seluruh endpoint —
+  /// tidak ada lagi campuran `created_date`/`created_at` seperti backend
+  /// sebelumnya.
   @override
   @ServerDateTimeJson()
-  @JsonKey(name: 'created_date')
-  final DateTime? createdDate;
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
+  final List<UserRoleModel> _roles;
   @override
-  @ServerDateTimeJson()
-  @JsonKey(name: 'modified_date')
-  final DateTime? modifiedDate;
+  @JsonKey()
+  List<UserRoleModel> get roles {
+    if (_roles is EqualUnmodifiableListView) return _roles;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_roles);
+  }
+
+  final List<UserStoreModel> _stores;
+  @override
+  @JsonKey()
+  List<UserStoreModel> get stores {
+    if (_stores is EqualUnmodifiableListView) return _stores;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_stores);
+  }
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -612,25 +550,21 @@ class _UserModel extends UserModel {
         (other.runtimeType == runtimeType &&
             other is _UserModel &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.fullName, fullName) ||
                 other.fullName == fullName) &&
-            (identical(other.role, role) || other.role == role) &&
-            (identical(other.buyerSegment, buyerSegment) ||
-                other.buyerSegment == buyerSegment) &&
-            (identical(other.npwp, npwp) || other.npwp == npwp) &&
-            (identical(other.nibSiupNo, nibSiupNo) ||
-                other.nibSiupNo == nibSiupNo) &&
-            (identical(other.b2bVerifiedAt, b2bVerifiedAt) ||
-                other.b2bVerifiedAt == b2bVerifiedAt) &&
-            (identical(other.sellerId, sellerId) ||
-                other.sellerId == sellerId) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl) &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.createdDate, createdDate) ||
-                other.createdDate == createdDate) &&
-            (identical(other.modifiedDate, modifiedDate) ||
-                other.modifiedDate == modifiedDate));
+            (identical(other.emailVerified, emailVerified) ||
+                other.emailVerified == emailVerified) &&
+            (identical(other.phoneVerified, phoneVerified) ||
+                other.phoneVerified == phoneVerified) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            const DeepCollectionEquality().equals(other._roles, _roles) &&
+            const DeepCollectionEquality().equals(other._stores, _stores));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -638,22 +572,20 @@ class _UserModel extends UserModel {
   int get hashCode => Object.hash(
       runtimeType,
       id,
-      phone,
       email,
+      phone,
       fullName,
-      role,
-      buyerSegment,
-      npwp,
-      nibSiupNo,
-      b2bVerifiedAt,
-      sellerId,
+      avatarUrl,
       status,
-      createdDate,
-      modifiedDate);
+      emailVerified,
+      phoneVerified,
+      createdAt,
+      const DeepCollectionEquality().hash(_roles),
+      const DeepCollectionEquality().hash(_stores));
 
   @override
   String toString() {
-    return 'UserModel(id: $id, phone: $phone, email: $email, fullName: $fullName, role: $role, buyerSegment: $buyerSegment, npwp: $npwp, nibSiupNo: $nibSiupNo, b2bVerifiedAt: $b2bVerifiedAt, sellerId: $sellerId, status: $status, createdDate: $createdDate, modifiedDate: $modifiedDate)';
+    return 'UserModel(id: $id, email: $email, phone: $phone, fullName: $fullName, avatarUrl: $avatarUrl, status: $status, emailVerified: $emailVerified, phoneVerified: $phoneVerified, createdAt: $createdAt, roles: $roles, stores: $stores)';
   }
 }
 
@@ -666,27 +598,17 @@ abstract mixin class _$UserModelCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@IntJson() @JsonKey(name: 'seq', readValue: _readUserId) int id,
-      @StringJson() String phone,
+      {@IntJson() int id,
       @StringOrNullJson() String? email,
-      @StringOrNullJson()
-      @JsonKey(name: 'name', readValue: _readUserName)
-      String? fullName,
-      @StringJson() String role,
-      @StringOrNullJson() @JsonKey(name: 'buyer_segment') String? buyerSegment,
-      @StringOrNullJson() String? npwp,
-      @StringOrNullJson() @JsonKey(name: 'nib_siup_no') String? nibSiupNo,
-      @ServerDateTimeJson()
-      @JsonKey(name: 'b2b_verified_at')
-      DateTime? b2bVerifiedAt,
-      @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
+      @StringOrNullJson() String? phone,
+      @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+      @StringOrNullJson() @JsonKey(name: 'avatar_url') String? avatarUrl,
       @StringJson() String status,
-      @ServerDateTimeJson()
-      @JsonKey(name: 'created_date')
-      DateTime? createdDate,
-      @ServerDateTimeJson()
-      @JsonKey(name: 'modified_date')
-      DateTime? modifiedDate});
+      @BoolJson() @JsonKey(name: 'email_verified') bool emailVerified,
+      @BoolJson() @JsonKey(name: 'phone_verified') bool phoneVerified,
+      @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
+      List<UserRoleModel> roles,
+      List<UserStoreModel> stores});
 }
 
 /// @nodoc
@@ -702,72 +624,771 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   $Res call({
     Object? id = null,
-    Object? phone = null,
     Object? email = freezed,
+    Object? phone = freezed,
     Object? fullName = freezed,
-    Object? role = null,
-    Object? buyerSegment = freezed,
-    Object? npwp = freezed,
-    Object? nibSiupNo = freezed,
-    Object? b2bVerifiedAt = freezed,
-    Object? sellerId = freezed,
+    Object? avatarUrl = freezed,
     Object? status = null,
-    Object? createdDate = freezed,
-    Object? modifiedDate = freezed,
+    Object? emailVerified = null,
+    Object? phoneVerified = null,
+    Object? createdAt = freezed,
+    Object? roles = null,
+    Object? stores = null,
   }) {
     return _then(_UserModel(
       id: null == id
           ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      phone: null == phone
-          ? _self.phone
-          : phone // ignore: cast_nullable_to_non_nullable
-              as String,
       email: freezed == email
           ? _self.email
           : email // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phone: freezed == phone
+          ? _self.phone
+          : phone // ignore: cast_nullable_to_non_nullable
               as String?,
       fullName: freezed == fullName
           ? _self.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String?,
-      role: null == role
-          ? _self.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as String,
-      buyerSegment: freezed == buyerSegment
-          ? _self.buyerSegment
-          : buyerSegment // ignore: cast_nullable_to_non_nullable
+      avatarUrl: freezed == avatarUrl
+          ? _self.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      npwp: freezed == npwp
-          ? _self.npwp
-          : npwp // ignore: cast_nullable_to_non_nullable
-              as String?,
-      nibSiupNo: freezed == nibSiupNo
-          ? _self.nibSiupNo
-          : nibSiupNo // ignore: cast_nullable_to_non_nullable
-              as String?,
-      b2bVerifiedAt: freezed == b2bVerifiedAt
-          ? _self.b2bVerifiedAt
-          : b2bVerifiedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      sellerId: freezed == sellerId
-          ? _self.sellerId
-          : sellerId // ignore: cast_nullable_to_non_nullable
-              as int?,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      createdDate: freezed == createdDate
-          ? _self.createdDate
-          : createdDate // ignore: cast_nullable_to_non_nullable
+      emailVerified: null == emailVerified
+          ? _self.emailVerified
+          : emailVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      phoneVerified: null == phoneVerified
+          ? _self.phoneVerified
+          : phoneVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      createdAt: freezed == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      modifiedDate: freezed == modifiedDate
-          ? _self.modifiedDate
-          : modifiedDate // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      roles: null == roles
+          ? _self._roles
+          : roles // ignore: cast_nullable_to_non_nullable
+              as List<UserRoleModel>,
+      stores: null == stores
+          ? _self._stores
+          : stores // ignore: cast_nullable_to_non_nullable
+              as List<UserStoreModel>,
+    ));
+  }
+}
+
+/// @nodoc
+mixin _$UserRoleModel {
+  @StringJson()
+  String get code;
+  @StringOrNullJson()
+  String? get name;
+
+  /// Create a copy of UserRoleModel
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $UserRoleModelCopyWith<UserRoleModel> get copyWith =>
+      _$UserRoleModelCopyWithImpl<UserRoleModel>(
+          this as UserRoleModel, _$identity);
+
+  /// Serializes this UserRoleModel to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is UserRoleModel &&
+            (identical(other.code, code) || other.code == code) &&
+            (identical(other.name, name) || other.name == name));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, code, name);
+
+  @override
+  String toString() {
+    return 'UserRoleModel(code: $code, name: $name)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $UserRoleModelCopyWith<$Res> {
+  factory $UserRoleModelCopyWith(
+          UserRoleModel value, $Res Function(UserRoleModel) _then) =
+      _$UserRoleModelCopyWithImpl;
+  @useResult
+  $Res call({@StringJson() String code, @StringOrNullJson() String? name});
+}
+
+/// @nodoc
+class _$UserRoleModelCopyWithImpl<$Res>
+    implements $UserRoleModelCopyWith<$Res> {
+  _$UserRoleModelCopyWithImpl(this._self, this._then);
+
+  final UserRoleModel _self;
+  final $Res Function(UserRoleModel) _then;
+
+  /// Create a copy of UserRoleModel
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? code = null,
+    Object? name = freezed,
+  }) {
+    return _then(_self.copyWith(
+      code: null == code
+          ? _self.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [UserRoleModel].
+extension UserRoleModelPatterns on UserRoleModel {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_UserRoleModel value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _UserRoleModel() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_UserRoleModel value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserRoleModel():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_UserRoleModel value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserRoleModel() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            @StringJson() String code, @StringOrNullJson() String? name)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _UserRoleModel() when $default != null:
+        return $default(_that.code, _that.name);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            @StringJson() String code, @StringOrNullJson() String? name)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserRoleModel():
+        return $default(_that.code, _that.name);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            @StringJson() String code, @StringOrNullJson() String? name)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserRoleModel() when $default != null:
+        return $default(_that.code, _that.name);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _UserRoleModel implements UserRoleModel {
+  const _UserRoleModel(
+      {@StringJson() this.code = '', @StringOrNullJson() this.name});
+  factory _UserRoleModel.fromJson(Map<String, dynamic> json) =>
+      _$UserRoleModelFromJson(json);
+
+  @override
+  @JsonKey()
+  @StringJson()
+  final String code;
+  @override
+  @StringOrNullJson()
+  final String? name;
+
+  /// Create a copy of UserRoleModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$UserRoleModelCopyWith<_UserRoleModel> get copyWith =>
+      __$UserRoleModelCopyWithImpl<_UserRoleModel>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$UserRoleModelToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _UserRoleModel &&
+            (identical(other.code, code) || other.code == code) &&
+            (identical(other.name, name) || other.name == name));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, code, name);
+
+  @override
+  String toString() {
+    return 'UserRoleModel(code: $code, name: $name)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$UserRoleModelCopyWith<$Res>
+    implements $UserRoleModelCopyWith<$Res> {
+  factory _$UserRoleModelCopyWith(
+          _UserRoleModel value, $Res Function(_UserRoleModel) _then) =
+      __$UserRoleModelCopyWithImpl;
+  @override
+  @useResult
+  $Res call({@StringJson() String code, @StringOrNullJson() String? name});
+}
+
+/// @nodoc
+class __$UserRoleModelCopyWithImpl<$Res>
+    implements _$UserRoleModelCopyWith<$Res> {
+  __$UserRoleModelCopyWithImpl(this._self, this._then);
+
+  final _UserRoleModel _self;
+  final $Res Function(_UserRoleModel) _then;
+
+  /// Create a copy of UserRoleModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? code = null,
+    Object? name = freezed,
+  }) {
+    return _then(_UserRoleModel(
+      code: null == code
+          ? _self.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+mixin _$UserStoreModel {
+  @IntJson()
+  int get id;
+  @StringOrNullJson()
+  String? get name;
+  @StringOrNullJson()
+  String? get slug;
+  @StringOrNullJson()
+  String? get status;
+
+  /// Create a copy of UserStoreModel
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $UserStoreModelCopyWith<UserStoreModel> get copyWith =>
+      _$UserStoreModelCopyWithImpl<UserStoreModel>(
+          this as UserStoreModel, _$identity);
+
+  /// Serializes this UserStoreModel to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is UserStoreModel &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.slug, slug) || other.slug == slug) &&
+            (identical(other.status, status) || other.status == status));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, name, slug, status);
+
+  @override
+  String toString() {
+    return 'UserStoreModel(id: $id, name: $name, slug: $slug, status: $status)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $UserStoreModelCopyWith<$Res> {
+  factory $UserStoreModelCopyWith(
+          UserStoreModel value, $Res Function(UserStoreModel) _then) =
+      _$UserStoreModelCopyWithImpl;
+  @useResult
+  $Res call(
+      {@IntJson() int id,
+      @StringOrNullJson() String? name,
+      @StringOrNullJson() String? slug,
+      @StringOrNullJson() String? status});
+}
+
+/// @nodoc
+class _$UserStoreModelCopyWithImpl<$Res>
+    implements $UserStoreModelCopyWith<$Res> {
+  _$UserStoreModelCopyWithImpl(this._self, this._then);
+
+  final UserStoreModel _self;
+  final $Res Function(UserStoreModel) _then;
+
+  /// Create a copy of UserStoreModel
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = freezed,
+    Object? slug = freezed,
+    Object? status = freezed,
+  }) {
+    return _then(_self.copyWith(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      slug: freezed == slug
+          ? _self.slug
+          : slug // ignore: cast_nullable_to_non_nullable
+              as String?,
+      status: freezed == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [UserStoreModel].
+extension UserStoreModelPatterns on UserStoreModel {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_UserStoreModel value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _UserStoreModel() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_UserStoreModel value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserStoreModel():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_UserStoreModel value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserStoreModel() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            @IntJson() int id,
+            @StringOrNullJson() String? name,
+            @StringOrNullJson() String? slug,
+            @StringOrNullJson() String? status)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _UserStoreModel() when $default != null:
+        return $default(_that.id, _that.name, _that.slug, _that.status);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            @IntJson() int id,
+            @StringOrNullJson() String? name,
+            @StringOrNullJson() String? slug,
+            @StringOrNullJson() String? status)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserStoreModel():
+        return $default(_that.id, _that.name, _that.slug, _that.status);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            @IntJson() int id,
+            @StringOrNullJson() String? name,
+            @StringOrNullJson() String? slug,
+            @StringOrNullJson() String? status)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UserStoreModel() when $default != null:
+        return $default(_that.id, _that.name, _that.slug, _that.status);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _UserStoreModel implements UserStoreModel {
+  const _UserStoreModel(
+      {@IntJson() required this.id,
+      @StringOrNullJson() this.name,
+      @StringOrNullJson() this.slug,
+      @StringOrNullJson() this.status});
+  factory _UserStoreModel.fromJson(Map<String, dynamic> json) =>
+      _$UserStoreModelFromJson(json);
+
+  @override
+  @IntJson()
+  final int id;
+  @override
+  @StringOrNullJson()
+  final String? name;
+  @override
+  @StringOrNullJson()
+  final String? slug;
+  @override
+  @StringOrNullJson()
+  final String? status;
+
+  /// Create a copy of UserStoreModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$UserStoreModelCopyWith<_UserStoreModel> get copyWith =>
+      __$UserStoreModelCopyWithImpl<_UserStoreModel>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$UserStoreModelToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _UserStoreModel &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.slug, slug) || other.slug == slug) &&
+            (identical(other.status, status) || other.status == status));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, name, slug, status);
+
+  @override
+  String toString() {
+    return 'UserStoreModel(id: $id, name: $name, slug: $slug, status: $status)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$UserStoreModelCopyWith<$Res>
+    implements $UserStoreModelCopyWith<$Res> {
+  factory _$UserStoreModelCopyWith(
+          _UserStoreModel value, $Res Function(_UserStoreModel) _then) =
+      __$UserStoreModelCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {@IntJson() int id,
+      @StringOrNullJson() String? name,
+      @StringOrNullJson() String? slug,
+      @StringOrNullJson() String? status});
+}
+
+/// @nodoc
+class __$UserStoreModelCopyWithImpl<$Res>
+    implements _$UserStoreModelCopyWith<$Res> {
+  __$UserStoreModelCopyWithImpl(this._self, this._then);
+
+  final _UserStoreModel _self;
+  final $Res Function(_UserStoreModel) _then;
+
+  /// Create a copy of UserStoreModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? name = freezed,
+    Object? slug = freezed,
+    Object? status = freezed,
+  }) {
+    return _then(_UserStoreModel(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      slug: freezed == slug
+          ? _self.slug
+          : slug // ignore: cast_nullable_to_non_nullable
+              as String?,
+      status: freezed == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

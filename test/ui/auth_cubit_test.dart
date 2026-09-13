@@ -9,17 +9,17 @@ import 'package:marketplace_app_member/ui/main/auth/cubit/auth_cubit.dart';
 
 const _user = UserModel(
   id: 3,
+  email: 'budi@example.id',
   phone: '081200000001',
-  role: 'BUY_R',
-  buyerSegment: 'RETAIL',
-  status: 'ACTIVE',
+  fullName: 'Budi',
+  status: 'active',
+  roles: [UserRoleModel(code: 'buyer', name: 'Buyer')],
 );
 
 const _session = AuthSessionModel(
-  userId: 3,
   accessToken: 'access',
   refreshToken: 'refresh',
-  role: 'BUY_R',
+  expiresIn: 900,
 );
 
 DataError _error(String code, {int? status}) => DataError(
@@ -42,21 +42,17 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<DataState<AuthSessionModel>> login({
+    required String email,
     required String password,
-    String? phone,
-    String? email,
   }) async =>
       loginResult;
 
   @override
   Future<DataState<AuthSessionModel>> register({
-    required String phone,
+    required String email,
     required String password,
     required String fullName,
-    required String role,
-    String? email,
-    String? npwp,
-    String? nibSiupNo,
+    required String phone,
   }) async =>
       registerResult;
 
@@ -65,6 +61,25 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async => loggedOut = true;
+
+  @override
+  Future<DataState<UserModel>> updateProfile({
+    String? fullName,
+    String? avatarUrl,
+  }) async =>
+      meResult;
+
+  @override
+  Future<DataState<void>> forgotPassword(String email) async =>
+      const DataSuccess(null);
+
+  @override
+  Future<DataState<void>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async =>
+      const DataSuccess(null);
+
 }
 
 void main() {
@@ -92,12 +107,13 @@ void main() {
       final states = <AuthState>[];
       cubit.stream.listen(states.add);
 
-      await cubit.login(phone: '081200000001', password: 'secret123');
+      await cubit.login(email: 'budi@example.id', password: 'secret123');
       await Future<void>.delayed(Duration.zero);
 
       expect(states.first, isA<AuthLoading>());
       expect(cubit.state, isA<AuthAuthenticated>());
-      expect((cubit.state as AuthAuthenticated).user?.buyerSegment, 'RETAIL');
+      // Peran datang sebagai daftar sekarang, bukan satu kode.
+      expect((cubit.state as AuthAuthenticated).user?.isBuyer, isTrue);
       await cubit.close();
     });
 
@@ -106,7 +122,7 @@ void main() {
           DataFailed(_error(ApiErrorCode.invalidCredentials, status: 401));
 
       final cubit = AuthCubit();
-      await cubit.login(phone: '081200000001', password: 'salah');
+      await cubit.login(email: 'budi@example.id', password: 'salah');
 
       expect(cubit.state, isA<AuthUnauthenticated>());
       expect((cubit.state as AuthUnauthenticated).error?.code,
@@ -120,7 +136,7 @@ void main() {
       repository.meResult = DataFailed(_error('CLIENT_NETWORK'));
 
       final cubit = AuthCubit();
-      await cubit.login(phone: '081200000001', password: 'secret123');
+      await cubit.login(email: 'budi@example.id', password: 'secret123');
 
       expect(cubit.state, isA<AuthAuthenticated>());
       expect((cubit.state as AuthAuthenticated).user, isNull);
@@ -135,10 +151,10 @@ void main() {
 
       final cubit = AuthCubit();
       await cubit.register(
-        phone: '081200000001',
+        email: 'budi@example.id',
         password: 'secret123',
         fullName: 'Budi',
-        role: 'BUY_R',
+        phone: '081200000001',
       );
 
       // Bukan authenticated (tidak ada refresh token) dan bukan gagal

@@ -70,12 +70,12 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> login({
-    required String phone,
+    required String email,
     required String password,
   }) async {
     emit(const AuthState.loading());
 
-    final result = await _repository.login(phone: phone, password: password);
+    final result = await _repository.login(email: email, password: password);
 
     switch (result) {
       case DataFailed(:final error):
@@ -89,24 +89,18 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> register({
-    required String phone,
+    required String email,
     required String password,
     required String fullName,
-    required String role,
-    String? email,
-    String? npwp,
-    String? nibSiupNo,
+    required String phone,
   }) async {
     emit(const AuthState.loading());
 
     final result = await _repository.register(
-      phone: phone,
+      email: email,
       password: password,
       fullName: fullName,
-      role: role,
-      email: email,
-      npwp: npwp,
-      nibSiupNo: nibSiupNo,
+      phone: phone,
     );
 
     switch (result) {

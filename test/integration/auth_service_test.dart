@@ -1,181 +1,280 @@
-/// Uji `AuthService` terhadap backend Markas yang **benar-benar jalan**.
+/// Kontrak `/auth/*` dan `/me` terhadap marketplace-api yang **benar-benar
+/// jalan** di `API_BASE_URL`.
 ///
 /// ```bash
 /// flutter test test/integration/
 /// ```
 ///
-/// Sengaja memakai nomor HP tetap yang sudah terdaftar, bukan nomor acak per
-/// run — supaya tabel `users` di database dev tidak terus bertambah setiap
-/// kali test dijalankan. Konsekuensinya, bentuk respons `register` yang sukses
-/// diverifikasi lewat jalur 409 `PHONE_TAKEN` di sini; bentuk suksesnya
-/// didokumentasikan di `AuthSessionModel`.
+/// Tidak lagi di-skip di native: bug header `Authorization` case-sensitive
+/// yang memblokir seluruh endpoint ber-token di backend lama **sudah tidak
+/// ada di API ini** — `Authorization`, `authorization`, dan `AUTHORIZATION`
+/// ketiganya dijawab 200. Test di bawah ikut memastikan itu tetap begitu.
+///
+/// Test ini **membuat user baru** setiap dijalankan (email di-stempel waktu),
+/// karena tidak ada akun uji yang di-seed backend.
 library;
 
-import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:marketplace_app_member/config/env/env.dart';
 import 'package:marketplace_app_member/config/network/api_exception.dart';
 import 'package:marketplace_app_member/config/network/dio_client.dart';
 import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
-
-/// Akun uji resmi dari tim backend.
-///
-/// Dipakai apa adanya, bukan nomor acak per run, supaya tabel `users` di
-/// database dev tidak terus bertambah setiap kali test dijalankan.
-const _retailPhone = '081100000001';
-const _b2bPhone = '081100000002';
-const _password = 'password123';
+import 'package:marketplace_app_member/core/data_state.dart';
 
 void main() {
-  late AuthService service;
+  late AuthService auth;
+  late Dio dio;
 
-  setUpAll(() {
-    service = AuthService(DioClient.createBare(Env.apiBaseUrl));
+  late String email;
+  late String phone;
+  const password = 'RahasiaAman123';
+
+  setUp(() {
+    dio = DioClient.createBare(Env.apiBaseUrl);
+    auth = AuthService(dio);
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    email = 'uji.$stamp@marketplace.local';
+    // Nomor juga harus unik: nomor yang sudah dipakai dibalas PHONE_TAKEN.
+    phone = '08${stamp.toString().substring(stamp.toString().length - 10)}';
   });
 
-  test('login mengembalikan refresh token dan role', () async {
-    final session = await service.login(phone: _retailPhone, password: _password);
-
-    expect(session.statusCode, 200);
-    expect(
-      session.data.refreshToken,
-      isNotNull,
-      reason: 'hanya login yang memberi refresh token — register tidak',
+  Future<String> registerAndLogin() async {
+    await auth.register(
+      email: email,
+      password: password,
+      fullName: 'Pembeli Uji',
+      phone: phone,
     );
-    expect(session.data.role, 'BUY_R');
-    expect(session.data.expiresIn, 7200);
-    expect(session.data.userId, greaterThan(0));
-  });
+    final session = await auth.login(email: email, password: password);
+    dio.options.headers['Authorization'] = 'Bearer ${session.data.accessToken}';
+    return session.data.accessToken;
+  }
 
-  test(
-    'GET /auth/me mem-parse id String jadi int',
-    // Dijalankan di web, di-skip di native. Bug backend-nya hanya menjegal
-    // klien native: Dart dart:io me-lowercase nama header, sedangkan adapter
-    // browser mengirimnya sesuai ejaan yang ditulis.
-    //   flutter test --platform chrome test/integration/
-    skip: kIsWeb
-        ? false
-        : 'DIBLOKIR BUG BACKEND (native saja): endpoint terproteksi hanya menerima nama '
-        'header dengan ejaan persis `Authorization`. Dart selalu me-lowercase '
-        'nama header (`authorization`), sehingga SEMUA request terautentikasi '
-        'dari klien native Dart/Flutter balik 401. Dibuktikan: curl dengan '
-        '`Authorization` -> 200, dengan `authorization` -> 401; dan '
-        'HttpHeaders.set(..., preserveHeaderCase: true) -> 200 sementara '
-        'default -> 401. Perbaikannya di BE (baca header case-insensitive, '
-        'mis. lewat \$_SERVER[HTTP_AUTHORIZATION]). Hapus skip ini setelah '
-        'diperbaiki. Test ini LOLOS di --platform chrome.',
-    () async {
-    final session = await service.login(phone: _retailPhone, password: _password);
-
-    final dio = DioClient.createBare(Env.apiBaseUrl);
-    dio.options.headers['Authorization'] =
-        'Bearer ${session.data.accessToken}';
-    final authed = AuthService(dio);
-
-    final profile = await authed.me();
-
-    // Backend mengirim `"id": "3"` (String) di sini, tapi `"user_id": 3` (int)
-    // di login. Converter yang membuat keduanya sampai sebagai int.
-    expect(profile.data.id, isA<int>());
-    expect(profile.data.id, session.data.userId);
-    expect(profile.data.buyerSegment, 'RETAIL');
-    expect(profile.data.isB2B, isFalse);
-    expect(profile.data.isSuspended, isFalse);
-    expect(profile.data.phone, _retailPhone);
-
-    // Backend v2.2 mengganti nama field di endpoint INI saja: id user jadi
-    // `seq` dan nama jadi `name`, sementara /offers, /categories, /brands dan
-    // sisanya tetap `id`. Perubahan itu TIDAK disebutkan di catatan rilis —
-    // dua assert ini yang menangkapnya, dan yang akan menangkapnya lagi kalau
-    // penamaannya berubah sekali lagi.
-    expect(profile.data.fullName, isNotNull);
-    expect(profile.data.fullName, isNotEmpty);
-    expect(profile.data.createdDate, isNotNull,
-        reason: 'v2.2: created_at -> created_date');
-    },
-  );
-
-  test('password salah jadi INVALID_CREDENTIALS, bukan sesi kedaluwarsa',
-      () async {
-    try {
-      await service.login(phone: _retailPhone, password: 'jelas-salah');
-      fail('seharusnya melempar');
-    } on ApiException catch (e) {
-      expect(e.error.code, 'INVALID_CREDENTIALS');
-      expect(e.error.statusCode, 401);
-    }
-  });
-
-  test('nomor sudah terdaftar jadi 409 PHONE_TAKEN', () async {
-    try {
-      await service.register(
-        phone: _retailPhone,
-        password: _password,
-        fullName: 'Tes Integrasi Claude',
-        role: 'BUY_R',
+  group('pendaftaran', () {
+    test('register TIDAK mengembalikan token, hanya user_id', () async {
+      final env = await auth.register(
+        email: email,
+        password: password,
+        fullName: 'Pembeli Uji',
+        phone: phone,
       );
-      fail('seharusnya melempar — nomor ini sudah terdaftar');
-    } on ApiException catch (e) {
-      expect(e.error.code, 'PHONE_TAKEN');
-      expect(e.error.statusCode, 409);
-      expect(e.error.isConflict, isTrue);
-    }
-  });
 
-  test('B2B tanpa npwp/nib ditolak 422 dengan daftar field yang kurang',
-      () async {
-    try {
-      await service.register(
-        phone: '081299000${DateTime.now().millisecond}',
-        password: _password,
-        fullName: 'Tes B2B Tanpa Dokumen',
-        role: 'BUY_B',
+      expect(env.data.userId, greaterThan(0));
+      // Inilah alasan AuthRepositoryImpl.register menyusulkan login sendiri:
+      // kalau berhenti di sini, user yang baru daftar tidak punya sesi.
+      expect(env.data.devVerificationToken, isNotNull,
+          reason: 'backend dev mode mengembalikan token verifikasi; '
+              'di produksi field ini hilang dan alurnya lewat email');
+    });
+
+    test('email yang sama ditolak pada pendaftaran kedua', () async {
+      await auth.register(
+        email: email,
+        password: password,
+        fullName: 'Pembeli Uji',
+        phone: phone,
       );
-      fail('seharusnya melempar — BUY_B wajib npwp dan nib_siup_no');
-    } on ApiException catch (e) {
-      expect(e.error.statusCode, 422);
-      expect(e.error.code, 'VALIDATION_ERROR');
-    }
+
+      await expectLater(
+        auth.register(
+          email: email,
+          password: password,
+          fullName: 'Pembeli Uji Lagi',
+          phone: '08${DateTime.now().microsecondsSinceEpoch % 1000000000}',
+        ),
+        throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('field wajib kosong dibalas VALIDATION_ERROR', () async {
+      try {
+        await auth.register(
+            email: '', password: '', fullName: '', phone: '');
+        fail('seharusnya ditolak');
+      } on ApiException catch (e) {
+        expect(e.error.code, ApiErrorCode.validationError);
+      }
+    });
   });
 
-  test(
-    'akun B2B membuka gating tier PROJECT dan modul RFQ',
-    // Sama seperti test /auth/me di atas: hanya bisa dijalankan di web
-    // sampai bug case-sensitivity header di backend diperbaiki.
-    skip: kIsWeb
-        ? false
-        : 'DIBLOKIR BUG BACKEND (native saja): header Authorization '
-            'case-sensitive. Jalankan dengan --platform chrome.',
-    () async {
-      final session =
-          await service.login(phone: _b2bPhone, password: _password);
-      expect(session.data.role, 'BUY_B');
+  group('login', () {
+    test('login memakai EMAIL, dan tidak membawa data user', () async {
+      await auth.register(
+        email: email,
+        password: password,
+        fullName: 'Pembeli Uji',
+        phone: phone,
+      );
 
-      final dio = DioClient.createBare(Env.apiBaseUrl);
+      final env = await auth.login(email: email, password: password);
+
+      expect(env.data.accessToken, isNotEmpty);
+      expect(env.data.refreshToken, isNotNull);
+      // 900 detik. Jauh lebih pendek dari 2 jam di backend lama, jadi refresh
+      // berjalan sering dan single-flight di TokenRefresher jadi penting.
+      expect(env.data.expiresIn, 900);
+      expect(env.data.requiresReconsent, isFalse);
+    });
+
+    test('password salah dibalas INVALID_CREDENTIALS', () async {
+      await auth.register(
+        email: email,
+        password: password,
+        fullName: 'Pembeli Uji',
+        phone: phone,
+      );
+
+      try {
+        await auth.login(email: email, password: 'salah-sekali');
+        fail('seharusnya ditolak');
+      } on ApiException catch (e) {
+        expect(e.error.code, ApiErrorCode.invalidCredentials);
+      }
+    });
+
+    test('akun yang BELUM verifikasi email tetap boleh masuk', () async {
+      // Sudah diuji ke server: verifikasi email bukan gerbang login. Jangan
+      // memblokir masuk hanya karena email_verified masih false.
+      await auth.register(
+        email: email,
+        password: password,
+        fullName: 'Pembeli Uji',
+        phone: phone,
+      );
+
+      final env = await auth.login(email: email, password: password);
+      expect(env.data.accessToken, isNotEmpty);
+    });
+  });
+
+  group('profil', () {
+    test('GET /me membawa peran sebagai DAFTAR, bukan satu kode', () async {
+      await registerAndLogin();
+      final env = await auth.me();
+      final user = env.data;
+
+      expect(user.id, greaterThan(0));
+      expect(user.email, email);
+      expect(user.fullName, 'Pembeli Uji');
+      // Akun baru belum aktif sampai emailnya diverifikasi — tapi login
+      // tetap boleh (lihat test di grup "login").
+      expect(user.status, 'pending_verification');
+      expect(user.needsEmailVerification, isTrue);
+      expect(user.isVerified, isFalse);
+
+      // Satu akun bisa merangkap peran, jadi ini list. Membandingkan
+      // `user.role == 'buyer'` seperti API lama akan salah untuk akun rangkap.
+      expect(user.roles, isNotEmpty);
+      expect(user.isBuyer, isTrue);
+      expect(user.stores, isEmpty, reason: 'pembeli baru belum punya toko');
+
+      // Dikirim sebagai "0"/"1", bukan boolean JSON.
+      expect(user.emailVerified, isFalse);
+      expect(user.createdAt, isNotNull);
+    });
+
+    test('PATCH /me mengubah nama — profil tidak lagi read-only', () async {
+      await registerAndLogin();
+
+      final env = await auth.updateProfile(fullName: 'Pembeli Uji Diubah');
+
+      // Responsnya `data: null` — tidak memantulkan user hasil perubahan.
+      // Itu sebabnya repository membaca ulang /me setelah menyimpan.
+      expect(env.data, isNull);
+
+      final reread = await auth.me();
+      expect(reread.data.fullName, 'Pembeli Uji Diubah',
+          reason: 'perubahannya harus benar-benar tersimpan');
+    });
+
+    test('tanpa token dibalas UNAUTHENTICATED', () async {
+      try {
+        await auth.me();
+        fail('seharusnya ditolak');
+      } on ApiException catch (e) {
+        expect(e.error.code, ApiErrorCode.unauthenticated);
+        expect(e.error.isUnauthenticated, isTrue);
+      }
+    });
+
+    test('header Authorization TIDAK sensitif huruf', () async {
+      // Regresi yang paling mahal di backend sebelumnya: hanya ejaan
+      // "Authorization" persis yang diterima, sehingga seluruh Dart native
+      // (yang melowercase nama header) tidak bisa memakai endpoint ber-token.
+      // Kalau test ini merah, Android/iOS mati lagi.
+      final token = await registerAndLogin();
+
+      for (final spelling in ['Authorization', 'authorization', 'AUTHORIZATION']) {
+        final probe = DioClient.createBare(Env.apiBaseUrl);
+        probe.options.headers.remove('Authorization');
+        probe.options.headers[spelling] = 'Bearer $token';
+
+        final response = await probe.get<dynamic>('/me');
+        expect(response.statusCode, 200, reason: 'gagal dengan ejaan "$spelling"');
+      }
+    });
+  });
+
+  group('verifikasi email', () {
+    test('🔴 verify-email mengonsumsi token TAPI tidak menandai terverifikasi',
+        () async {
+      // Bug backend yang sudah dibuktikan: panggilan pertama sukses,
+      // panggilan kedua dengan token yang sama dibalas INVALID_TOKEN (jadi
+      // token benar-benar dipakai), tapi GET /me tetap email_verified "0".
+      // Akibatnya akun tidak akan pernah bisa terverifikasi.
+      //
+      // Test ini akan MERAH ketika backend diperbaiki — itu kabar baik, dan
+      // saat itu ekspektasinya dibalik jadi isTrue.
+      final registered = await auth.register(
+        email: email,
+        password: password,
+        fullName: 'Pembeli Uji',
+        phone: phone,
+      );
+      final token = registered.data.devVerificationToken;
+      expect(token, isNotNull);
+
+      await auth.verifyEmail(token: token!);
+
+      await expectLater(
+        auth.verifyEmail(token: token),
+        throwsA(isA<ApiException>()),
+        reason: 'token sekali pakai — panggilan kedua harus ditolak',
+      );
+
+      final session = await auth.login(email: email, password: password);
       dio.options.headers['Authorization'] =
           'Bearer ${session.data.accessToken}';
-      final profile = await AuthService(dio).me();
+      final me = await auth.me();
 
-      expect(profile.data.buyerSegment, 'B2B');
+      // Yang benar-benar berubah adalah status.
+      expect(me.data.status, 'active');
+      expect(me.data.isVerified, isTrue);
 
-      // Penentu tunggal apakah tier harga PROJECT boleh dirender dan menu
-      // RFQ boleh muncul (aturan PRD-06).
-      expect(profile.data.isB2B, isTrue);
-      expect(profile.data.npwp, isNotNull);
+      // Yang TIDAK berubah: kolom email_verified. Inilah sebabnya
+      // UserModel.isVerified membaca status, bukan kolom ini.
+      expect(me.data.emailVerified, isFalse,
+          reason: 'BUG BACKEND: verify-email menaikkan status ke active tapi '
+              'tidak pernah menyetel email_verified. Kalau test ini gagal, '
+              'backend sudah diperbaiki — ubah jadi isTrue dan isVerified '
+              'boleh dikembalikan membaca kolom ini.');
+    });
+  });
 
-      // NPWP sudah diisi tapi admin belum memverifikasi — UI perlu
-      // membedakan ini dari akun B2B yang sudah terverifikasi.
-      expect(profile.data.b2bVerifiedAt, isNull);
-      expect(profile.data.isPendingB2BVerification, isTrue);
-    },
-  );
+  group('lupa password', () {
+    test('forgot-password diterima server', () async {
+      // Endpoint ini sama sekali tidak ada di backend sebelumnya, sehingga
+      // layar reset password kit tidak punya yang bisa dipanggil.
+      await auth.register(
+        email: email,
+        password: password,
+        fullName: 'Pembeli Uji',
+        phone: phone,
+      );
 
-  test('GET /auth/me tanpa token ditolak 401', () async {
-    try {
-      await service.me();
-      fail('seharusnya melempar');
-    } on ApiException catch (e) {
-      expect(e.error.isUnauthenticated, isTrue);
-    }
+      final env = await auth.forgotPassword(email: email);
+      expect(env.statusCode, anyOf(200, 201, 202));
+    });
   });
 }

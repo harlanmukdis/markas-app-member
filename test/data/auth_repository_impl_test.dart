@@ -10,73 +10,88 @@ import 'package:marketplace_app_member/core/domain/model/auth/auth_session_model
 import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
 import 'package:marketplace_app_member/core/services/token_store.dart';
 
-/// Service palsu — meniru dua bentuk respons berbeda yang sudah diverifikasi
-/// dari backend: `register` tanpa `refresh_token`/`role`, `login` dengan
-/// keduanya.
+/// Service palsu yang meniru bentuk respons yang **sudah diverifikasi** ke
+/// marketplace-api: `register` tanpa token sama sekali, `login` tanpa data
+/// user, `PATCH /me` tanpa isi.
 class _FakeAuthService extends AuthService {
   _FakeAuthService() : super(Dio());
 
   bool registerCalled = false;
   bool loginCalled = false;
+  bool logoutCalled = false;
+  int meCalls = 0;
+  String? patchedName;
+
   ApiException? loginError;
   ApiException? registerError;
+  ApiException? logoutError;
 
   @override
-  Future<ApiEnvelope<AuthSessionModel>> register({
-    required String phone,
+  Future<ApiEnvelope<RegisterResultModel>> register({
+    required String email,
     required String password,
     required String fullName,
-    required String role,
-    String? email,
-    String? npwp,
-    String? nibSiupNo,
+    required String phone,
   }) async {
     registerCalled = true;
     if (registerError != null) throw registerError!;
     return const ApiEnvelope(
-      data: AuthSessionModel(
-        userId: 3,
-        accessToken: 'access-dari-register',
-        expiresIn: 7200,
-        // Sengaja: backend TIDAK mengirim keduanya di endpoint register.
-        refreshToken: null,
-        role: null,
-      ),
+      // Register hanya mengembalikan ini — tidak ada access token, tidak ada
+      // refresh token.
+      data: RegisterResultModel(userId: 3, devVerificationToken: 'dev-token'),
       statusCode: 201,
     );
   }
 
   @override
   Future<ApiEnvelope<AuthSessionModel>> login({
+    required String email,
     required String password,
-    String? phone,
-    String? email,
   }) async {
     loginCalled = true;
     if (loginError != null) throw loginError!;
     return const ApiEnvelope(
       data: AuthSessionModel(
-        userId: 3,
         accessToken: 'access-dari-login',
-        refreshToken: 'refresh-30-hari',
-        role: 'BUY_R',
-        expiresIn: 7200,
+        refreshToken: 'refresh-token',
+        expiresIn: 900,
       ),
       statusCode: 200,
     );
   }
 
   @override
-  Future<ApiEnvelope<UserModel>> me() async => const ApiEnvelope(
-        data: UserModel(
-          id: 3,
-          phone: '081200000001',
-          role: 'BUY_R',
-          buyerSegment: 'RETAIL',
-          status: 'ACTIVE',
-        ),
-        statusCode: 200,
-      );
+  Future<ApiEnvelope<dynamic>> logout({required String refreshToken}) async {
+    logoutCalled = true;
+    if (logoutError != null) throw logoutError!;
+    return const ApiEnvelope(data: null, statusCode: 200);
+  }
+
+  @override
+  Future<ApiEnvelope<UserModel>> me() async {
+    meCalls++;
+    return ApiEnvelope(
+      data: UserModel(
+        id: 3,
+        email: 'budi@example.id',
+        phone: '081200000001',
+        fullName: patchedName ?? 'Budi',
+        status: 'pending_verification',
+        roles: const [UserRoleModel(code: 'buyer', name: 'Buyer')],
+      ),
+      statusCode: 200,
+    );
+  }
+
+  @override
+  Future<ApiEnvelope<dynamic>> updateProfile({
+    String? fullName,
+    String? avatarUrl,
+  }) async {
+    patchedName = fullName;
+    // Bentuk aslinya: sukses tapi `data: null`.
+    return const ApiEnvelope(data: null, statusCode: 200);
+  }
 }
 
 /// TokenStore palsu yang mencatat apa yang tersimpan, tanpa menyentuh
@@ -87,9 +102,13 @@ class _FakeTokenStore extends TokenStore {
   final List<Map<String, Object?>> sessions = [];
   final List<Map<String, Object?>> profiles = [];
   bool cleared = false;
+  String? storedRefreshToken = 'refresh-lama';
 
   @override
   bool get hasSession => sessions.isNotEmpty;
+
+  @override
+  String? get refreshToken => storedRefreshToken;
 
   @override
   Future<void> saveSession({
@@ -103,8 +122,7 @@ class _FakeTokenStore extends TokenStore {
     sessions.add({
       'accessToken': accessToken,
       'refreshToken': refreshToken,
-      'userId': userId,
-      'role': role,
+      'expiresIn': expiresIn,
     });
   }
 
@@ -115,12 +133,7 @@ class _FakeTokenStore extends TokenStore {
     String? buyerSegment,
     String? fullName,
   }) async {
-    profiles.add({
-      'userId': userId,
-      'role': role,
-      'buyerSegment': buyerSegment,
-      'fullName': fullName,
-    });
+    profiles.add({'userId': userId, 'role': role, 'fullName': fullName});
   }
 
   @override
@@ -148,43 +161,47 @@ void main() {
   });
 
   group('register wajib dilanjutkan login otomatis', () {
-    test('memanggil login dan menyimpan refresh token', () async {
+    test('memanggil login, karena register tidak memberi token apa pun',
+        () async {
       final result = await repository.register(
-        phone: '081200000001',
+        email: 'budi@example.id',
         password: 'secret123',
         fullName: 'Budi',
-        role: 'BUY_R',
+        phone: '081200000001',
       );
 
       expect(service.registerCalled, isTrue);
       expect(
         service.loginCalled,
         isTrue,
-        reason: 'tanpa login, sesi mati setelah 2 jam tanpa bisa dipulihkan',
+        reason: 'tanpa login susulan, user yang baru mendaftar tidak punya '
+            'sesi sama sekali',
       );
 
       final success = result as DataSuccess<AuthSessionModel>;
       expect(success.meta['auto_login'], isTrue);
-      expect(success.data.refreshToken, 'refresh-30-hari');
+      expect(success.meta['user_id'], 3);
+      expect(success.data.refreshToken, 'refresh-token');
 
-      // Sesi disimpan dua kali: dari register (jaring aman) lalu dari login.
-      expect(tokens.sessions, hasLength(2));
-      expect(tokens.sessions.first['refreshToken'], isNull);
-      expect(tokens.sessions.last['refreshToken'], 'refresh-30-hari');
+      // Hanya satu sesi tersimpan: dari login. Register tidak menghasilkan
+      // apa pun yang bisa disimpan.
+      expect(tokens.sessions, hasLength(1));
+      expect(tokens.sessions.single['refreshToken'], 'refresh-token');
     });
 
-    test('role diambil dari input client karena register tidak mengirimnya',
-        () async {
+    test('identitas dibaca dari /me, karena login tidak membawanya', () async {
       await repository.register(
-        phone: '081200000002',
+        email: 'budi@example.id',
         password: 'secret123',
-        fullName: 'Sinta',
-        role: 'BUY_B',
+        fullName: 'Budi',
+        phone: '081200000001',
       );
 
-      // Respons register tidak memuat `role`; tanpa fallback ini, gating B2B
-      // tidak punya dasar sampai `GET /auth/me` dipanggil.
-      expect(tokens.sessions.first['role'], 'BUY_B');
+      expect(service.meCalls, 1,
+          reason: 'respons login kosong dari data user — /me satu-satunya '
+              'sumber id, nama, dan peran');
+      expect(tokens.profiles.single['role'], 'buyer');
+      expect(tokens.profiles.single['userId'], 3);
     });
 
     test('login otomatis gagal tetap dilaporkan SUKSES dengan penanda',
@@ -192,18 +209,18 @@ void main() {
       service.loginError = _apiError('CLIENT_NETWORK', status: 0);
 
       final result = await repository.register(
-        phone: '081200000003',
+        email: 'agus@example.id',
         password: 'secret123',
         fullName: 'Agus',
-        role: 'BUY_R',
+        phone: '081200000003',
       );
 
       // Akunnya sungguh terbentuk. Melaporkan gagal akan membuat user
-      // mendaftar ulang dan kena 409 PHONE_TAKEN.
+      // mendaftar ulang dan kena EMAIL_TAKEN / PHONE_TAKEN.
       expect(result, isA<DataSuccess<AuthSessionModel>>());
       final success = result as DataSuccess<AuthSessionModel>;
       expect(success.meta['auto_login'], isFalse);
-      expect(success.data.role, 'BUY_R');
+      expect(success.meta['user_id'], 3);
     });
 
     test('register gagal tidak memanggil login dan mengembalikan DataFailed',
@@ -211,16 +228,16 @@ void main() {
       service.registerError = _apiError('PHONE_TAKEN');
 
       final result = await repository.register(
-        phone: '081200000001',
+        email: 'budi@example.id',
         password: 'secret123',
         fullName: 'Budi',
-        role: 'BUY_R',
+        phone: '081200000001',
       );
 
       expect(service.loginCalled, isFalse);
       expect(result, isA<DataFailed<AuthSessionModel>>());
-      expect((result as DataFailed<AuthSessionModel>).error.code,
-          'PHONE_TAKEN');
+      expect(
+          (result as DataFailed<AuthSessionModel>).error.code, 'PHONE_TAKEN');
     });
   });
 
@@ -228,8 +245,10 @@ void main() {
     test('kegagalan login jadi DataFailed, bukan exception', () async {
       service.loginError = _apiError('INVALID_CREDENTIALS', status: 401);
 
-      final result =
-          await repository.login(phone: '0812', password: 'salah');
+      final result = await repository.login(
+        email: 'budi@example.id',
+        password: 'salah',
+      );
 
       expect(result, isA<DataFailed<AuthSessionModel>>());
       final error = (result as DataFailed<AuthSessionModel>).error;
@@ -238,15 +257,66 @@ void main() {
     });
   });
 
-  group('me menyimpan buyer_segment', () {
-    test('buyer_segment disimpan tanpa menyentuh token', () async {
+  group('profil', () {
+    test('me menyimpan identitas tanpa menyentuh token', () async {
       final result = await repository.me();
 
       expect(result, isA<DataSuccess<UserModel>>());
       expect(tokens.profiles, hasLength(1));
-      expect(tokens.profiles.single['buyerSegment'], 'RETAIL');
+      expect(tokens.profiles.single['fullName'], 'Budi');
       // Penting: tidak lewat saveSession, jadi tidak butuh access token.
       expect(tokens.sessions, isEmpty);
+    });
+
+    test('updateProfile membaca ulang /me karena PATCH tidak mengembalikan isi',
+        () async {
+      final result = await repository.updateProfile(fullName: 'Budi Pratama');
+
+      final success = result as DataSuccess<UserModel>;
+      expect(success.data.fullName, 'Budi Pratama',
+          reason: 'nilainya harus datang dari pembacaan ulang, bukan dari '
+              'apa yang dikirim');
+      expect(service.meCalls, 1);
+    });
+
+    test('peran dibaca sebagai daftar, bukan satu kode', () async {
+      final result = await repository.me() as DataSuccess<UserModel>;
+
+      expect(result.data.roles.map((r) => r.code), ['buyer']);
+      expect(result.data.isBuyer, isTrue);
+      expect(result.data.isSeller, isFalse);
+      // Akun baru belum aktif, tapi itu tidak menghalangi login.
+      expect(result.data.needsEmailVerification, isTrue);
+    });
+  });
+
+  group('logout', () {
+    test('mencabut sesi di server lalu menghapus lokal', () async {
+      await repository.logout();
+
+      expect(service.logoutCalled, isTrue,
+          reason: 'API ini punya endpoint logout — refresh token benar-benar '
+              'bisa dicabut, tidak cuma dibuang dari perangkat');
+      expect(tokens.cleared, isTrue);
+    });
+
+    test('server gagal dicabut TETAP menghapus sesi lokal', () async {
+      service.logoutError = _apiError('CLIENT_NETWORK', status: 0);
+
+      await repository.logout();
+
+      // User yang menekan "keluar" harus selalu keluar. Refresh token yang
+      // gagal dicabut akan kedaluwarsa sendiri.
+      expect(tokens.cleared, isTrue);
+    });
+
+    test('tanpa refresh token tersimpan, server tidak dipanggil', () async {
+      tokens.storedRefreshToken = null;
+
+      await repository.logout();
+
+      expect(service.logoutCalled, isFalse);
+      expect(tokens.cleared, isTrue);
     });
   });
 }

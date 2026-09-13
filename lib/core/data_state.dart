@@ -124,7 +124,14 @@ class DataError {
   /// `"Endpoint not found"` berarti bug di sisi app dan **tidak boleh**
   /// ditampilkan sebagai "data tidak ditemukan".
   bool get isRouteNotFound =>
-      statusCode == 404 && message.toLowerCase().contains('endpoint not found');
+      statusCode == 404 &&
+      (message.toLowerCase().contains('endpoint not found') ||
+          // marketplace-api membalas URL tak dikenal dengan **halaman HTML
+          // 404** dari CodeIgniter, bukan amplop JSON. Body seperti itu
+          // sampai ke sini sebagai `badResponse`, dan itu justru bukti kuat
+          // bahwa request-nya tidak pernah mencapai handler API — salah URL,
+          // bukan data kosong.
+          code == ClientErrorCode.badResponse);
 
   /// Tidak berhak — entah karena role atau karena sistem izin. Digabung
   /// karena bagi user keduanya sama artinya: menu itu harus disembunyikan.

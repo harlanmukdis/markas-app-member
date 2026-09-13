@@ -4,93 +4,108 @@ import 'package:marketplace_app_member/util/json_converters.dart';
 part 'user_model.freezed.dart';
 part 'user_model.g.dart';
 
-/// Profil user dari `GET /auth/me`.
+/// Profil user dari `GET /me`.
 ///
-/// Endpoint ini punya penamaan yang **berbeda dari endpoint lain**, dan
-/// namanya sudah berubah dua kali:
+/// Perubahan mendasar dari API lama: **satu akun boleh punya banyak peran**
+/// sekaligus, jadi tidak ada lagi satu kolom `role`. `roles[]` berisi
+/// `{code, name}`, dan `stores[]` berisi toko yang dimiliki user — pembeli
+/// yang juga berjualan tetap satu akun, bukan dua.
 ///
-/// | konsep | `/auth/login` | `/auth/me` v2.1 | `/auth/me` v2.2 |
-/// |---|---|---|---|
-/// | id user | `user_id` (int) | `id` (String) | **`seq`** (String) |
-/// | nama | — | `full_name` | **`name`** |
-///
-/// Backend v2.2 memakai `seq` dan `name`, sementara seluruh endpoint lain
-/// (`/offers`, `/categories`, `/brands`, …) tetap `id`. Perubahan ini **tidak
-/// disebutkan** di catatan rilis v2.2, yang hanya menyebut penggantian kolom
-/// waktu — jadi [_readUserId] dan [_readUserName] membaca semua ejaan yang
-/// pernah dipakai. Kalau backend mengubahnya lagi atau merevert, model ini
-/// tidak ikut pecah.
+/// Karena itu jangan pernah menulis `user.role == 'buyer'`; pakai [isBuyer]
+/// / [hasRole], supaya akun yang merangkap peran tidak salah dibaca.
 @freezed
 abstract class UserModel with _$UserModel {
-  /// Wajib ada karena kelas ini punya getter kustom di bawah — tanpa
-  /// konstruktor privat ini `freezed` menolak dengan
-  /// "Getters require a MyClass._() constructor".
   const UserModel._();
 
   const factory UserModel({
-    @IntJson() @JsonKey(name: 'seq', readValue: _readUserId) required int id,
-    @StringJson() required String phone,
+    @IntJson() required int id,
     @StringOrNullJson() String? email,
-    @StringOrNullJson() @JsonKey(name: 'name', readValue: _readUserName)
-    String? fullName,
+    @StringOrNullJson() String? phone,
+    @StringOrNullJson() @JsonKey(name: 'full_name') String? fullName,
+    @StringOrNullJson() @JsonKey(name: 'avatar_url') String? avatarUrl,
 
-    /// `BUY_R` (retail) atau `BUY_B` (B2B/kontraktor).
-    @StringJson() required String role,
+    /// `pending_verification` / `active` / `suspended` / `banned` — huruf
+    /// kecil di API ini, berbeda dari API lama yang memakai huruf besar.
+    ///
+    /// **Inilah penanda terverifikasi yang benar**, bukan [emailVerified].
+    /// Akun baru lahir sebagai `pending_verification`, dan
+    /// `POST /auth/verify-email` mengubahnya jadi `active`.
+    @StringJson() @Default('') String status,
 
-    /// `RETAIL` atau `B2B`. Server yang menentukan segmen harga saat checkout
-    /// dari kolom ini — **tidak bisa dikirim dari client**.
-    @StringOrNullJson() @JsonKey(name: 'buyer_segment') String? buyerSegment,
+    /// Dikirim sebagai `"0"`/`"1"` (tinyint), bukan boolean JSON.
+    ///
+    /// 🔴 **Jangan dipakai sebagai penanda verifikasi.** Sudah diuji ke
+    /// server: `verify-email` menaikkan [status] ke `active` tapi
+    /// membiarkan kolom ini `"0"` selamanya. Aplikasi yang menunggu nilai ini
+    /// berubah akan menahan user di layar "verifikasi dulu" tanpa jalan
+    /// keluar. Pakai [isVerified].
+    @BoolJson() @JsonKey(name: 'email_verified') @Default(false)
+    bool emailVerified,
+    @BoolJson() @JsonKey(name: 'phone_verified') @Default(false)
+    bool phoneVerified,
 
-    @StringOrNullJson() String? npwp,
-    @StringOrNullJson() @JsonKey(name: 'nib_siup_no') String? nibSiupNo,
+    /// API ini memakai `created_at` secara konsisten di seluruh endpoint —
+    /// tidak ada lagi campuran `created_date`/`created_at` seperti backend
+    /// sebelumnya.
+    @ServerDateTimeJson() @JsonKey(name: 'created_at') DateTime? createdAt,
 
-    /// Terisi kalau berkas B2B sudah diverifikasi admin.
-    @ServerDateTimeJson() @JsonKey(name: 'b2b_verified_at')
-    DateTime? b2bVerifiedAt,
-
-    @IntOrNullJson() @JsonKey(name: 'seller_id') int? sellerId,
-
-    /// `ACTIVE` atau `SUSPENDED`.
-    @StringJson() required String status,
-
-    // Backend v2.2 mengganti nama kolom waktu: `created_at`/`updated_at`
-    // HILANG TOTAL dari semua respons, diganti `created_date`/
-    // `modified_date`. Nama Dart-nya ikut diselaraskan supaya tidak ada
-    // celah antara nama field di kode dan di API.
-    @ServerDateTimeJson() @JsonKey(name: 'created_date')
-    DateTime? createdDate,
-    @ServerDateTimeJson() @JsonKey(name: 'modified_date')
-    DateTime? modifiedDate,
+    @Default(<UserRoleModel>[]) List<UserRoleModel> roles,
+    @Default(<UserStoreModel>[]) List<UserStoreModel> stores,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
 
-  /// Penentu apakah tier harga `PROJECT` dan modul RFQ/kontrak boleh dirender.
+  bool hasRole(String code) => roles.any((r) => r.code == code);
+
+  bool get isBuyer => hasRole('buyer');
+  bool get isSeller => hasRole('seller') || stores.isNotEmpty;
+
+  bool get isActive => status == 'active';
+  bool get isSuspended => status == 'suspended' || status == 'banned';
+
+  /// Email sudah diverifikasi.
   ///
-  /// Menampilkan tier `PROJECT` ke pembeli retail berarti membocorkan harga
-  /// grosir (aturan PRD-06), dan endpoint RFQ membalas `403` untuk `BUY_R`
-  /// bahkan untuk `GET` — jadi menunya harus disembunyikan, bukan dibiarkan
-  /// lalu gagal.
-  bool get isB2B => role == 'BUY_B' || buyerSegment == 'B2B';
+  /// Dibaca dari [status], bukan `email_verified` — lihat catatan di field
+  /// itu. Verifikasi **bukan syarat login**: akun `pending_verification`
+  /// tetap mendapat token, jadi jangan memakai ini untuk memblokir masuk.
+  bool get isVerified => isActive;
 
-  /// Akun ditangguhkan — butuh layar khusus, bukan pesan error biasa.
-  bool get isSuspended => status == 'SUSPENDED';
+  bool get needsEmailVerification => status == 'pending_verification';
 
-  /// Berkas B2B sudah diserahkan tapi belum diverifikasi admin.
-  bool get isPendingB2BVerification => isB2B && b2bVerifiedAt == null;
-
-  String get displayName =>
-      (fullName != null && fullName!.trim().isNotEmpty) ? fullName! : phone;
+  /// Nama yang layak ditampilkan. Email dipakai sebagai cadangan karena
+  /// `full_name` boleh kosong, dan menampilkan string kosong di header
+  /// terlihat seperti layar gagal dimuat.
+  String get displayName {
+    final name = fullName;
+    if (name != null && name.trim().isNotEmpty) return name.trim();
+    return email ?? phone ?? 'Pengguna';
+  }
 }
 
-/// Membaca id user dari ejaan mana pun yang dipakai backend.
-///
-/// Urutannya sesuai yang paling baru lebih dulu, supaya nilai v2.2 menang
-/// kalau backend suatu saat mengirim keduanya sekaligus.
-Object? _readUserId(Map<dynamic, dynamic> json, String key) =>
-    json['seq'] ?? json['id'] ?? json['user_id'];
+/// Satu peran yang dimiliki user. `code` yang dipakai logika; `name` untuk
+/// ditampilkan.
+@freezed
+abstract class UserRoleModel with _$UserRoleModel {
+  const factory UserRoleModel({
+    @StringJson() @Default('') String code,
+    @StringOrNullJson() String? name,
+  }) = _UserRoleModel;
 
-/// Membaca nama user dari ejaan mana pun yang dipakai backend.
-Object? _readUserName(Map<dynamic, dynamic> json, String key) =>
-    json['name'] ?? json['full_name'];
+  factory UserRoleModel.fromJson(Map<String, dynamic> json) =>
+      _$UserRoleModelFromJson(json);
+}
+
+/// Toko milik user. Kosong untuk pembeli biasa.
+@freezed
+abstract class UserStoreModel with _$UserStoreModel {
+  const factory UserStoreModel({
+    @IntJson() required int id,
+    @StringOrNullJson() String? name,
+    @StringOrNullJson() String? slug,
+    @StringOrNullJson() String? status,
+  }) = _UserStoreModel;
+
+  factory UserStoreModel.fromJson(Map<String, dynamic> json) =>
+      _$UserStoreModelFromJson(json);
+}

@@ -5,7 +5,7 @@ import 'package:marketplace_app_member/config/network/interceptors/auth_intercep
 import 'package:marketplace_app_member/core/domain/model/auth/auth_session_model.dart';
 import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
 
-/// Panggilan HTTP untuk `/auth/*`.
+/// Panggilan HTTP untuk `/auth/*` dan `/me`.
 ///
 /// Sesuai kontrak lapisan: menangkap [DioException] dan melemparkannya kembali
 /// sebagai [ApiException] berkonteks. Tidak mengubah status login — itu tugas
@@ -21,38 +21,39 @@ class AuthService {
 
   /// `POST /auth/register`.
   ///
-  /// [npwp] dan [nibSiupNo] **wajib** kalau [role] adalah `BUY_B`; server
-  /// membalas `422 VALIDATION_ERROR` kalau kosong.
-  Future<ApiEnvelope<AuthSessionModel>> register({
-    required String phone,
+  /// Tidak ada field `role`: di marketplace ini satu akun bisa merangkap
+  /// banyak peran, dan peran `buyer` diberikan server secara otomatis.
+  ///
+  /// ⚠️ Responsnya **tanpa token**. Untuk membawa user langsung masuk,
+  /// pemanggil harus melanjutkan dengan [login] memakai kredensial yang sama
+  /// — lihat `AuthRepositoryImpl.register`.
+  ///
+  /// [phone] **wajib**, walau contoh di koleksi Postman tidak menandainya
+  /// begitu: tanpa nomor, server membalas `422 VALIDATION_ERROR` dengan pesan
+  /// "Field wajib belum lengkap" dan `details: null` — tidak menyebut field
+  /// mana. Nomor yang sudah dipakai akun lain dibalas `PHONE_TAKEN`.
+  Future<ApiEnvelope<RegisterResultModel>> register({
+    required String email,
     required String password,
     required String fullName,
-    required String role,
-    String? email,
-    String? npwp,
-    String? nibSiupNo,
+    required String phone,
   }) async {
     const context = 'POST /auth/register';
     try {
       final response = await _dio.post<dynamic>(
         '/auth/register',
-        // Field opsional dibuang kalau kosong, bukan dikirim sebagai null:
-        // backend memvalidasi keberadaan field, dan `"email": null` bisa
-        // dianggap email kosong yang tidak valid.
-        data: _compact({
-          'phone': phone,
+        data: {
+          'email': email,
           'password': password,
           'full_name': fullName,
-          'role': role,
-          'email': email,
-          'npwp': npwp,
-          'nib_siup_no': nibSiupNo,
-        }),
+          'phone': phone,
+        },
         options: noAuthOptions(),
       );
       return parseEnvelope(
         response,
-        (raw) => AuthSessionModel.fromJson(Map<String, dynamic>.from(raw as Map)),
+        (raw) => RegisterResultModel.fromJson(
+            Map<String, dynamic>.from(raw as Map)),
         context: context,
       );
     } on DioException catch (e) {
@@ -60,34 +61,26 @@ class AuthService {
     }
   }
 
-  /// `POST /auth/login`. Salah satu dari [phone] atau [email] wajib diisi.
+  /// `POST /auth/login` — **berbasis email**, bukan nomor HP.
+  ///
+  /// Verifikasi email belum menjadi syarat: akun yang belum terverifikasi
+  /// tetap mendapat token (sudah diuji ke server). Jadi jangan memblokir
+  /// masuk hanya karena `email_verified` masih false.
   Future<ApiEnvelope<AuthSessionModel>> login({
+    required String email,
     required String password,
-    String? phone,
-    String? email,
   }) async {
-    assert(
-      (phone != null && phone.isNotEmpty) || (email != null && email.isNotEmpty),
-      'login butuh phone atau email',
-    );
-
     const context = 'POST /auth/login';
     try {
       final response = await _dio.post<dynamic>(
         '/auth/login',
-        data: _compact({
-          'phone': phone,
-          'email': email,
-          'password': password,
-        }),
-        // Ditandai noAuth supaya 401 `INVALID_CREDENTIALS` dari password yang
-        // salah tidak disalahartikan sebagai token kedaluwarsa — kalau tidak,
-        // interceptor akan mencoba refresh lalu memaksa logout.
+        data: {'email': email, 'password': password},
         options: noAuthOptions(),
       );
       return parseEnvelope(
         response,
-        (raw) => AuthSessionModel.fromJson(Map<String, dynamic>.from(raw as Map)),
+        (raw) =>
+            AuthSessionModel.fromJson(Map<String, dynamic>.from(raw as Map)),
         context: context,
       );
     } on DioException catch (e) {
@@ -95,13 +88,102 @@ class AuthService {
     }
   }
 
-  /// `GET /auth/me`. Butuh bearer token.
+  /// `POST /auth/logout` — mencabut refresh token di server.
   ///
-  /// Ini satu-satunya sumber `buyer_segment` — `login` hanya mengirim `role`.
-  Future<ApiEnvelope<UserModel>> me() async {
-    const context = 'GET /auth/me';
+  /// Endpoint ini **tidak ada** di API sebelumnya; dulu logout hanya berarti
+  /// membuang token di perangkat, sehingga refresh token tetap sah sampai
+  /// kedaluwarsa. Sekarang bisa dicabut betulan.
+  Future<ApiEnvelope<dynamic>> logout({required String refreshToken}) async {
+    const context = 'POST /auth/logout';
     try {
-      final response = await _dio.get<dynamic>('/auth/me');
+      final response = await _dio.post<dynamic>(
+        '/auth/logout',
+        data: {'refresh_token': refreshToken},
+      );
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `POST /auth/verify-email`.
+  ///
+  /// 🔴 Sudah diverifikasi ke server: endpoint ini **mengonsumsi token tapi
+  /// tidak menandai akun terverifikasi**. Panggilan kedua dengan token yang
+  /// sama dibalas `INVALID_TOKEN`, sementara `GET /me` tetap menunjukkan
+  /// `email_verified: "0"`. Jangan bangun alur yang menunggu status itu
+  /// berubah — user akan terjebak selamanya.
+  Future<ApiEnvelope<dynamic>> verifyEmail({required String token}) async {
+    const context = 'POST /auth/verify-email';
+    try {
+      final response = await _dio.post<dynamic>(
+        '/auth/verify-email',
+        data: {'token': token},
+        options: noAuthOptions(),
+      );
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  Future<ApiEnvelope<dynamic>> resendVerification({
+    required String email,
+  }) async {
+    const context = 'POST /auth/resend-verification';
+    try {
+      final response = await _dio.post<dynamic>(
+        '/auth/resend-verification',
+        data: {'email': email},
+        options: noAuthOptions(),
+      );
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `POST /auth/forgot-password`.
+  ///
+  /// Endpoint ini **baru ada di API ini**. Di backend sebelumnya tidak ada
+  /// sama sekali, sehingga layar reset password kit tidak punya yang bisa
+  /// dipanggil.
+  Future<ApiEnvelope<dynamic>> forgotPassword({required String email}) async {
+    const context = 'POST /auth/forgot-password';
+    try {
+      final response = await _dio.post<dynamic>(
+        '/auth/forgot-password',
+        data: {'email': email},
+        options: noAuthOptions(),
+      );
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  Future<ApiEnvelope<dynamic>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    const context = 'POST /auth/reset-password';
+    try {
+      final response = await _dio.post<dynamic>(
+        '/auth/reset-password',
+        data: {'token': token, 'new_password': newPassword},
+        options: noAuthOptions(),
+      );
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
+  }
+
+  /// `GET /me` — dulu `GET /auth/me`.
+  Future<ApiEnvelope<UserModel>> me() async {
+    const context = 'GET /me';
+    try {
+      final response = await _dio.get<dynamic>('/me');
       return parseEnvelope(
         response,
         (raw) => UserModel.fromJson(Map<String, dynamic>.from(raw as Map)),
@@ -112,12 +194,32 @@ class AuthService {
     }
   }
 
-  Map<String, dynamic> _compact(Map<String, dynamic> source) {
-    return {
-      for (final entry in source.entries)
-        if (entry.value != null &&
-            !(entry.value is String && (entry.value as String).trim().isEmpty))
-          entry.key: entry.value,
-    };
+  /// `PATCH /me` — profil kini **bisa diubah**.
+  ///
+  /// API sebelumnya tidak punya endpoint ini sama sekali, jadi layar profil
+  /// terpaksa read-only.
+  ///
+  /// Responsnya `data: null` — perubahannya tersimpan tapi user hasilnya
+  /// tidak dikembalikan. Karena itu return-nya `dynamic`, bukan [UserModel];
+  /// pemanggil yang butuh data terbaru harus membaca [me] lagi (lihat
+  /// `AuthRepositoryImpl.updateProfile`). Mencoba mem-parse respons ini jadi
+  /// user akan gagal dengan "Null is not a subtype of Map".
+  Future<ApiEnvelope<dynamic>> updateProfile({
+    String? fullName,
+    String? avatarUrl,
+  }) async {
+    const context = 'PATCH /me';
+    try {
+      final response = await _dio.patch<dynamic>(
+        '/me',
+        data: {
+          if (fullName != null) 'full_name': fullName,
+          if (avatarUrl != null) 'avatar_url': avatarUrl,
+        },
+      );
+      return parseEnvelope(response, (raw) => raw, context: context);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e, context: context);
+    }
   }
 }

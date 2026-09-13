@@ -13,10 +13,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _user = UserModel(
   id: 3,
+  email: 'budi@example.id',
   phone: '081200000001',
-  role: 'BUY_R',
-  buyerSegment: 'RETAIL',
-  status: 'ACTIVE',
+  fullName: 'Budi',
+  status: 'active',
+  roles: [UserRoleModel(code: 'buyer', name: 'Buyer')],
 );
 
 class _FakeAuthRepository implements AuthRepository {
@@ -31,26 +32,41 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<DataState<AuthSessionModel>> login({
+    required String email,
     required String password,
-    String? phone,
-    String? email,
   }) async =>
       throw UnimplementedError();
 
   @override
   Future<DataState<AuthSessionModel>> register({
-    required String phone,
+    required String email,
     required String password,
     required String fullName,
-    required String role,
-    String? email,
-    String? npwp,
-    String? nibSiupNo,
+    required String phone,
   }) async =>
       throw UnimplementedError();
 
   @override
   Future<void> logout() async {}
+
+  @override
+  Future<DataState<UserModel>> updateProfile({
+    String? fullName,
+    String? avatarUrl,
+  }) async =>
+      meResult;
+
+  @override
+  Future<DataState<void>> forgotPassword(String email) async =>
+      const DataSuccess(null);
+
+  @override
+  Future<DataState<void>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async =>
+      const DataSuccess(null);
+
 }
 
 /// Rute yang sedang aktif menurut `go_router`.

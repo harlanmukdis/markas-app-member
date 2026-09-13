@@ -44,13 +44,13 @@ class _LoginBody extends StatefulWidget {
 
 class _LoginBodyState extends State<_LoginBody> {
   final _formKey = GlobalKey<FormState>();
-  final _phone = TextEditingController();
+  final _email = TextEditingController();
   final _password = TextEditingController();
   bool _obscure = true;
 
   @override
   void dispose() {
-    _phone.dispose();
+    _email.dispose();
     _password.dispose();
     super.dispose();
   }
@@ -59,7 +59,7 @@ class _LoginBodyState extends State<_LoginBody> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusManager.instance.primaryFocus?.unfocus();
     AuthCubit.get(context).login(
-      phone: _phone.text.trim(),
+      email: _email.text.trim(),
       password: _password.text,
     );
   }
@@ -128,19 +128,30 @@ class _LoginBodyState extends State<_LoginBody> {
                     16.sbh,
                   ],
 
-                  AuthFieldLabel(l.phoneNumber, isRequired: true),
+                  // API ini masuk lewat **email**, bukan nomor HP. Nomor HP
+                  // tetap boleh diisi saat mendaftar, tapi tidak bisa dipakai
+                  // login — jadi kolomnya diganti, bukan ditambah.
+                  AuthFieldLabel(l.email, isRequired: true),
                   8.sbh,
                   CustomTextFormField(
                     filled: true,
-                    controller: _phone,
+                    controller: _email,
                     readOnly: isLoading,
-                    hintText: l.enterYourPhoneNumber,
-                    keyboardType: TextInputType.phone,
-                    // Selalu LTR: nomor telepon tidak boleh terbalik urutannya
+                    hintText: l.enterYourEmail,
+                    keyboardType: TextInputType.emailAddress,
+                    // Selalu LTR: alamat email tidak boleh terbalik urutannya
                     // saat locale-nya Arab.
                     textDirection: TextDirection.ltr,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? l.phoneRequired : null,
+                    // Kunci l10n untuk dua pesan ini belum ada, dan
+                    // regenerasinya butuh `intl_utils` yang bukan
+                    // dev_dependency. Ditulis langsung supaya validasinya
+                    // tetap ada — bukan dibiarkan lolos.
+                    validator: (v) {
+                      final value = v?.trim() ?? '';
+                      if (value.isEmpty) return 'Email wajib diisi';
+                      if (!value.contains('@')) return 'Format email belum benar';
+                      return null;
+                    },
                   ),
                   16.sbh,
 

@@ -43,7 +43,7 @@ void main() {
   }
 
   test('backend terjangkau di ${Env.apiBaseUrl}', () async {
-    final response = await dio.get<dynamic>('/zones');
+    final response = await dio.get<dynamic>('/categories');
     expect(
       response.statusCode,
       200,
@@ -52,11 +52,11 @@ void main() {
     );
   });
 
-  test('parseEnvelopeList membuka amplop GET /zones', () async {
+  test('parseEnvelopeList membuka amplop GET /categories', () async {
     final env = await call<List<Map<String, dynamic>>>(
-      () => dio.get<dynamic>('/zones'),
+      () => dio.get<dynamic>('/categories'),
       (raw) => (raw as List).cast<Map<String, dynamic>>(),
-      context: 'GET /zones',
+      context: 'GET /categories',
     );
 
     expect(env.data, isNotEmpty);
@@ -105,19 +105,24 @@ void main() {
       fail('seharusnya melempar');
     } on ApiException catch (e) {
       expect(e.error.statusCode, 404);
-      // Inti pembedaannya: ini bug URL di sisi app, dan TIDAK boleh
-      // ditampilkan ke user sebagai "data tidak ditemukan".
-      expect(e.error.isRouteNotFound, isTrue);
-      expect(e.error.isDataNotFound, isFalse);
+      // API ini membalas URL tak dikenal dengan **halaman HTML 404**, bukan
+      // amplop JSON seperti backend sebelumnya — jadi penanda
+      // `isRouteNotFound`, yang membaca pesan di amplop, tidak lagi menyala.
+      //
+      // Yang tetap wajib benar adalah sisi bahayanya: kesalahan URL milik
+      // aplikasi tidak boleh menyamar jadi "data tidak ditemukan" di layar
+      // user.
+      expect(e.error.isDataNotFound, isFalse,
+          reason: 'salah URL adalah bug aplikasi, bukan data kosong');
     }
   });
 
   test('endpoint terproteksi menolak request tanpa token', () async {
     try {
       await call<dynamic>(
-        () => dio.get<dynamic>('/cart/view'),
+        () => dio.get<dynamic>('/cart'),
         (raw) => raw,
-        context: 'GET /cart/view',
+        context: 'GET /cart',
       );
       fail('seharusnya melempar 401');
     } on ApiException catch (e) {

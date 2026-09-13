@@ -8,40 +8,57 @@ import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
 abstract interface class AuthRepository {
   /// Mendaftar **lalu login otomatis**, dalam satu operasi.
   ///
-  /// Digabung dengan sengaja. `POST /auth/register` tidak mengembalikan
-  /// `refresh_token` maupun `role`, jadi kalau app berhenti di situ, sesi user
-  /// mati setelah 2 jam tanpa bisa dipulihkan dan gating B2B tidak punya
-  /// dasar. Menyatukannya di sini membuat urutan itu tidak mungkin terlupakan
-  /// oleh pemanggil.
+  /// Digabung dengan sengaja, dan di API ini alasannya makin kuat:
+  /// `POST /auth/register` **tidak mengembalikan token sama sekali**, hanya
+  /// `user_id`. Kalau app berhenti di situ, user yang baru mendaftar berdiri
+  /// di layar tanpa sesi apa pun. Menyatukannya di sini membuat urutan itu
+  /// tidak mungkin terlupakan pemanggil.
   ///
   /// Kalau pendaftaran berhasil tapi login otomatisnya gagal, hasilnya tetap
-  /// [DataSuccess] — akunnya sungguh terbentuk, dan `meta['auto_login']` diisi
-  /// `false` supaya UI bisa mengarahkan user ke layar login alih-alih
-  /// menyatakan pendaftaran gagal.
+  /// [DataSuccess] dengan `meta['auto_login'] = false` — akunnya sungguh
+  /// terbentuk, jadi mengarahkan user ke layar login jauh lebih benar
+  /// daripada bilang pendaftaran gagal dan membuatnya mencoba lagi dengan
+  /// email yang kini sudah terpakai.
   Future<DataState<AuthSessionModel>> register({
-    required String phone,
+    required String email,
     required String password,
     required String fullName,
-    required String role,
-    String? email,
-    String? npwp,
-    String? nibSiupNo,
+    required String phone,
   });
 
-  /// Login dan simpan sesi. Salah satu dari [phone]/[email] wajib.
+  /// Login dan simpan sesi. API ini **berbasis email**, bukan nomor HP.
   Future<DataState<AuthSessionModel>> login({
+    required String email,
     required String password,
-    String? phone,
-    String? email,
   });
 
-  /// Profil user aktif. Juga menyimpan `buyer_segment` ke penyimpanan lokal.
+  /// Profil user aktif. Sekaligus menyimpan identitas ke penyimpanan lokal.
+  ///
+  /// Wajib dipanggil setelah login: respons login tidak membawa data user
+  /// sama sekali, jadi ini satu-satunya sumber id, nama, dan peran.
   Future<DataState<UserModel>> me();
 
-  /// Menghapus sesi lokal.
+  /// `PATCH /me`.
+  Future<DataState<UserModel>> updateProfile({
+    String? fullName,
+    String? avatarUrl,
+  });
+
+  /// Meminta tautan reset password ke email.
+  Future<DataState<void>> forgotPassword(String email);
+
+  /// Menyetel password baru dengan token dari email.
+  Future<DataState<void>> resetPassword({
+    required String token,
+    required String newPassword,
+  });
+
+  /// Mencabut sesi di server **dan** menghapusnya di perangkat.
   ///
-  /// Tidak ada endpoint logout di backend — refresh token tidak bisa dicabut
-  /// dari sisi app, jadi logout murni membuang token yang tersimpan.
+  /// Berbeda dari API sebelumnya yang tidak punya endpoint logout: refresh
+  /// token sekarang benar-benar dicabut, bukan sekadar dibuang dari
+  /// perangkat. Kegagalan jaringan tidak menghalangi penghapusan lokal —
+  /// user yang menekan "keluar" harus selalu keluar.
   Future<void> logout();
 
   /// Ada token tersimpan yang bisa dipakai memulihkan sesi.
