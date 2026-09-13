@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/config/network/interceptors/auth_interceptor.dart';
-import 'package:navy_wear/core/domain/model/auth/auth_session_model.dart';
-import 'package:navy_wear/core/domain/model/auth/user_model.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/config/network/interceptors/auth_interceptor.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/auth_session_model.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
 
 /// Panggilan HTTP untuk `/auth/*`.
 ///

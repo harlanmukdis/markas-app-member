@@ -1,11 +1,11 @@
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart'
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/catalog_service.dart'
     show OfferSort;
-import 'package:navy_wear/core/domain/model/catalog/brand_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
-import 'package:navy_wear/core/domain/model/review/review_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/brand_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/category_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/offer_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/sku_model.dart';
+import 'package:marketplace_app_member/core/domain/model/review/review_model.dart';
 
 /// Katalog: kategori, SKU master, penawaran, pencarian.
 abstract interface class CatalogRepository {

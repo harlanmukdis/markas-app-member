@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:navy_wear/core/utils/extensions.dart';
+import 'package:marketplace_app_member/core/utils/extensions.dart';
 
 import '../../../../core/function/components.dart';
 import '../../../../core/function/custom_app_bar.dart';

@@ -15,13 +15,13 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:navy_wear/config/env/env.dart';
-import 'package:navy_wear/config/network/dio_client.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/address_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/cart_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/order_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/wishlist_service.dart';
+import 'package:marketplace_app_member/config/env/env.dart';
+import 'package:marketplace_app_member/config/network/dio_client.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/address_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/cart_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/order_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/wishlist_service.dart';
 
 const _phone = '081100000001';
 const _password = 'password123';

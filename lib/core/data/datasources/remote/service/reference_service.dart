@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
-import 'package:navy_wear/core/domain/model/reference/reference_models.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/seller_model.dart';
+import 'package:marketplace_app_member/core/domain/model/reference/reference_models.dart';
 
 /// Data referensi yang jarang berubah: zona, jenis armada, parameter
 /// konfigurasi, dan direktori toko.

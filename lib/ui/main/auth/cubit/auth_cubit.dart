@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/auth/user_model.dart';
-import 'package:navy_wear/core/domain/repositories/auth_repository.dart';
-import 'package:navy_wear/core/services/auth_events.dart';
-import 'package:navy_wear/di/injector.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
+import 'package:marketplace_app_member/core/domain/repositories/auth_repository.dart';
+import 'package:marketplace_app_member/core/services/auth_events.dart';
+import 'package:marketplace_app_member/di/injector.dart';
 
 part 'auth_cubit.freezed.dart';
 part 'auth_state.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:navy_wear/core/utils/app_styles.dart';
-import 'package:navy_wear/core/utils/constant.dart';
+import 'package:marketplace_app_member/core/utils/app_styles.dart';
+import 'package:marketplace_app_member/core/utils/constant.dart';
 
 /// Label status berwarna.
 ///

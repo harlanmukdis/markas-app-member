@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:navy_wear/core/function/components.dart';
-import 'package:navy_wear/core/function/custom_app_bar.dart';
-import 'package:navy_wear/core/utils/app_routes.dart';
-import 'package:navy_wear/core/utils/app_styles.dart';
-import 'package:navy_wear/core/utils/constant.dart';
-import 'package:navy_wear/core/utils/extensions.dart';
-import 'package:navy_wear/core/widgets/custom_buttons.dart';
-import 'package:navy_wear/core/widgets/custom_text_form_field.dart';
-import 'package:navy_wear/generated/l10n.dart';
-import 'package:navy_wear/ui/main/auth/cubit/auth_cubit.dart';
-import 'package:navy_wear/ui/main/auth/widgets/auth_error_banner.dart';
-import 'package:navy_wear/ui/main/auth/widgets/auth_field_label.dart';
+import 'package:marketplace_app_member/core/function/components.dart';
+import 'package:marketplace_app_member/core/function/custom_app_bar.dart';
+import 'package:marketplace_app_member/core/utils/app_routes.dart';
+import 'package:marketplace_app_member/core/utils/app_styles.dart';
+import 'package:marketplace_app_member/core/utils/constant.dart';
+import 'package:marketplace_app_member/core/utils/extensions.dart';
+import 'package:marketplace_app_member/core/widgets/custom_buttons.dart';
+import 'package:marketplace_app_member/core/widgets/custom_text_form_field.dart';
+import 'package:marketplace_app_member/generated/l10n.dart';
+import 'package:marketplace_app_member/ui/main/auth/cubit/auth_cubit.dart';
+import 'package:marketplace_app_member/ui/main/auth/widgets/auth_error_banner.dart';
+import 'package:marketplace_app_member/ui/main/auth/widgets/auth_field_label.dart';
 
 /// Layar login.
 ///

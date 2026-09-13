@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
-import 'package:navy_wear/core/data/repositories/auth_repository_impl.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/auth/auth_session_model.dart';
-import 'package:navy_wear/core/domain/model/auth/user_model.dart';
-import 'package:navy_wear/core/services/token_store.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
+import 'package:marketplace_app_member/core/data/repositories/auth_repository_impl.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/auth_session_model.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
+import 'package:marketplace_app_member/core/services/token_store.dart';
 
 /// Service palsu — meniru dua bentuk respons berbeda yang sudah diverifikasi
 /// dari backend: `register` tanpa `refresh_token`/`role`, `login` dengan

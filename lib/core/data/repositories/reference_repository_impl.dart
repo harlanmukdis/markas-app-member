@@ -1,10 +1,10 @@
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
-import 'package:navy_wear/core/domain/model/reference/reference_models.dart';
-import 'package:navy_wear/core/domain/repositories/reference_repository.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/reference_service.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/seller_model.dart';
+import 'package:marketplace_app_member/core/domain/model/reference/reference_models.dart';
+import 'package:marketplace_app_member/core/domain/repositories/reference_repository.dart';
 
 class ReferenceRepositoryImpl implements ReferenceRepository {
   ReferenceRepositoryImpl(this._service);

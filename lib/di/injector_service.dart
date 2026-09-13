@@ -1,16 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:navy_wear/config/network/dio_client.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/address_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/cart_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/order_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/payment_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/voucher_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/wallet_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/wishlist_service.dart';
-import 'package:navy_wear/di/injector.dart';
+import 'package:marketplace_app_member/config/network/dio_client.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/address_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/cart_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/catalog_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/order_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/payment_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/reference_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/voucher_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/wallet_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/wishlist_service.dart';
+import 'package:marketplace_app_member/di/injector.dart';
 
 /// Pendaftaran seluruh `*Service` (lapisan yang benar-benar memanggil HTTP).
 ///

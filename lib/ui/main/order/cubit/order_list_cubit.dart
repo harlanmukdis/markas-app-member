@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/order/order_models.dart';
-import 'package:navy_wear/core/domain/repositories/transaction_repositories.dart';
-import 'package:navy_wear/di/injector.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/order/order_models.dart';
+import 'package:marketplace_app_member/core/domain/repositories/transaction_repositories.dart';
+import 'package:marketplace_app_member/di/injector.dart';
 
 part 'order_list_cubit.freezed.dart';
 part 'order_list_state.dart';

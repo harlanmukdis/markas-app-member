@@ -1,10 +1,10 @@
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/auth/auth_session_model.dart';
-import 'package:navy_wear/core/domain/model/auth/user_model.dart';
-import 'package:navy_wear/core/domain/repositories/auth_repository.dart';
-import 'package:navy_wear/core/services/token_store.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/auth_session_model.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
+import 'package:marketplace_app_member/core/domain/repositories/auth_repository.dart';
+import 'package:marketplace_app_member/core/services/token_store.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._service, this._tokens);

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:navy_wear/core/utils/extensions.dart';
+import 'package:marketplace_app_member/core/utils/extensions.dart';
 
 import '../function/components.dart';
 import 'constant.dart';

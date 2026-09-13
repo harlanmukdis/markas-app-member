@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:navy_wear/util/json_converters.dart';
+import 'package:marketplace_app_member/util/json_converters.dart';
 
 part 'auth_session_model.freezed.dart';
 part 'auth_session_model.g.dart';

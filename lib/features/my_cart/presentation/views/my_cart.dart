@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:navy_wear/core/utils/extensions.dart';
-import 'package:navy_wear/features/my_cart/presentation/views/widgets/checkout_details.dart';
+import 'package:marketplace_app_member/core/utils/extensions.dart';
+import 'package:marketplace_app_member/features/my_cart/presentation/views/widgets/checkout_details.dart';
 
 import '../../../../core/function/components.dart';
 import '../../../../core/utils/app_images.dart';

@@ -1,6 +1,6 @@
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/data_state.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
 
 /// Pembungkus bersama yang menegakkan kontrak **repository tidak pernah
 /// throw** (Part 2 CLAUDE.md).

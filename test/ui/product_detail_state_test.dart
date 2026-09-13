@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
-import 'package:navy_wear/ui/main/product/cubit/product_detail_cubit.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/offer_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/sku_model.dart';
+import 'package:marketplace_app_member/ui/main/product/cubit/product_detail_cubit.dart';
 
 /// Keramik dari data uji: `sku_id 6`, satuan pcs / dus / m².
 const _pcs = SkuUnitModel(id: 1, unitName: 'pcs', conversionFactorToBase: 1);

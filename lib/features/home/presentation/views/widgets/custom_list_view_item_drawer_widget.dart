@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:navy_wear/core/utils/extensions.dart';
+import 'package:marketplace_app_member/core/utils/extensions.dart';
 
 import '../../../../../core/function/components.dart';
 import '../../../../../core/function/get_responsive_font_size.dart';

@@ -1,23 +1,23 @@
-import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/address_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/cart_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/order_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/payment_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/voucher_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/wallet_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/wishlist_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
-import 'package:navy_wear/core/data/repositories/auth_repository_impl.dart';
-import 'package:navy_wear/core/data/repositories/transaction_repositories_impl.dart';
-import 'package:navy_wear/core/data/repositories/catalog_repository_impl.dart';
-import 'package:navy_wear/core/data/repositories/reference_repository_impl.dart';
-import 'package:navy_wear/core/domain/repositories/auth_repository.dart';
-import 'package:navy_wear/core/domain/repositories/transaction_repositories.dart';
-import 'package:navy_wear/core/domain/repositories/catalog_repository.dart';
-import 'package:navy_wear/core/domain/repositories/reference_repository.dart';
-import 'package:navy_wear/core/services/token_store.dart';
-import 'package:navy_wear/di/injector.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/address_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/cart_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/order_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/payment_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/voucher_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/wallet_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/wishlist_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/catalog_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/reference_service.dart';
+import 'package:marketplace_app_member/core/data/repositories/auth_repository_impl.dart';
+import 'package:marketplace_app_member/core/data/repositories/transaction_repositories_impl.dart';
+import 'package:marketplace_app_member/core/data/repositories/catalog_repository_impl.dart';
+import 'package:marketplace_app_member/core/data/repositories/reference_repository_impl.dart';
+import 'package:marketplace_app_member/core/domain/repositories/auth_repository.dart';
+import 'package:marketplace_app_member/core/domain/repositories/transaction_repositories.dart';
+import 'package:marketplace_app_member/core/domain/repositories/catalog_repository.dart';
+import 'package:marketplace_app_member/core/domain/repositories/reference_repository.dart';
+import 'package:marketplace_app_member/core/services/token_store.dart';
+import 'package:marketplace_app_member/di/injector.dart';
 
 /// Pendaftaran seluruh `*RepositoryImpl`.
 ///

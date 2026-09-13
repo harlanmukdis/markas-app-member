@@ -9,11 +9,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project identity
 
-Flutter e-commerce **UI kit** (a purchased template being rebranded). Three names are in play and all are load-bearing:
+Buyer app for a **multi-vendor marketplace**, built on a purchased Flutter UI kit. All three names were unified on 13 September 2026:
 
-- Directory: `markas-app`
-- Dart package name (`pubspec.yaml`): **`navy_wear`** — absolute imports are `package:navy_wear/...`. Renaming this breaks every absolute import plus `test/widget_test.dart`.
-- Product name / bundle id: **Shopapay** / `com.Shopapay.Shopapay` (Android `namespace` + `applicationId`, iOS `PRODUCT_BUNDLE_IDENTIFIER`), and `MaterialApp.title`.
+- Directory / GitHub repo: `marketplace-app-member`
+- Dart package name (`pubspec.yaml`): **`marketplace_app_member`** — absolute imports are `package:marketplace_app_member/...`. Renaming this breaks every absolute import plus `test/widget_test.dart`.
+- Bundle id: `com.marketplace.member` (Android `namespace` + `applicationId`, iOS/macOS `PRODUCT_BUNDLE_IDENTIFIER`, Linux `CMakeLists.txt`). The Android `MainActivity.kt` package **must** match the namespace — the manifest resolves `.MainActivity` against it — so the file lives at `android/app/src/main/kotlin/com/marketplace/member/`.
+
+`MaterialApp.title` and the visible product copy still say Shopapay/Markas in places; those are product decisions, not identifiers.
 
 ---
 
@@ -302,4 +304,4 @@ Derived from the gap between Part 1 and Part 2; no step is started yet.
 ## Follow-ups when starting a new project from this base
 
 - **Firebase**: this repo has no Firebase at all today. If it is adopted (or if this project is duplicated from one that has it), run `flutterfire configure` rather than inheriting another project's `firebase.json`, `lib/firebase_options.dart`, and platform config files — a copied config points at the origin project.
-- **App identifier**: Android `applicationId` / iOS bundle identifier are still `com.Shopapay.Shopapay` from the purchased UI kit, and `name:` in `pubspec.yaml` is still `navy_wear`. Update both before shipping this as a separate app — especially if the origin app and this one may be installed on the same device.
+- **App identifier**: Android `applicationId` / iOS bundle identifier are still `com.Shopapay.Shopapay` from the purchased UI kit, and `name:` in `pubspec.yaml` is still `marketplace_app_member`. Update both before shipping this as a separate app — especially if the origin app and this one may be installed on the same device.

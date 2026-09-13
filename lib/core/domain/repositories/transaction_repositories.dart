@@ -1,12 +1,12 @@
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/address/address_model.dart';
-import 'package:navy_wear/core/domain/model/cart/cart_add_result.dart';
-import 'package:navy_wear/core/domain/model/cart/cart_model.dart';
-import 'package:navy_wear/core/domain/model/order/order_models.dart';
-import 'package:navy_wear/core/domain/model/payment/payment_model.dart';
-import 'package:navy_wear/core/domain/model/voucher/voucher_models.dart';
-import 'package:navy_wear/core/domain/model/wallet/wallet_models.dart';
-import 'package:navy_wear/core/domain/model/wishlist/wishlist_item_model.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/address/address_model.dart';
+import 'package:marketplace_app_member/core/domain/model/cart/cart_add_result.dart';
+import 'package:marketplace_app_member/core/domain/model/cart/cart_model.dart';
+import 'package:marketplace_app_member/core/domain/model/order/order_models.dart';
+import 'package:marketplace_app_member/core/domain/model/payment/payment_model.dart';
+import 'package:marketplace_app_member/core/domain/model/voucher/voucher_models.dart';
+import 'package:marketplace_app_member/core/domain/model/wallet/wallet_models.dart';
+import 'package:marketplace_app_member/core/domain/model/wishlist/wishlist_item_model.dart';
 
 /// Buku alamat.
 abstract interface class AddressRepository {

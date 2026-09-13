@@ -1,4 +1,4 @@
-package com.Shopapay.Shopapay
+package com.marketplace.member
 
 import io.flutter.embedding.android.FlutterActivity
 

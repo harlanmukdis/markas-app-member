@@ -23,13 +23,13 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
-import 'package:navy_wear/config/env/env.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/config/network/dio_client.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/catalog_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/reference_service.dart';
-import 'package:navy_wear/core/domain/model/reference/reference_models.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
+import 'package:marketplace_app_member/config/env/env.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/config/network/dio_client.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/catalog_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/reference_service.dart';
+import 'package:marketplace_app_member/core/domain/model/reference/reference_models.dart';
 
 void main() {
   late CatalogService catalog;

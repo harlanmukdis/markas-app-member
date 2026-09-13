@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
-import 'package:navy_wear/core/function/components.dart';
-import 'package:navy_wear/core/utils/app_styles.dart';
-import 'package:navy_wear/core/utils/constant.dart';
-import 'package:navy_wear/core/utils/extensions.dart';
-import 'package:navy_wear/util/format_helper.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/offer_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/sku_model.dart';
+import 'package:marketplace_app_member/core/function/components.dart';
+import 'package:marketplace_app_member/core/utils/app_styles.dart';
+import 'package:marketplace_app_member/core/utils/constant.dart';
+import 'package:marketplace_app_member/core/utils/extensions.dart';
+import 'package:marketplace_app_member/util/format_helper.dart';
 
 /// Kotak berbingkai, meniru kartu deskripsi di `product_details` kit.
 class DetailCard extends StatelessWidget {

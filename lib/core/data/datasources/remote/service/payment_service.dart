@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/domain/model/payment/payment_model.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/domain/model/payment/payment_model.dart';
 
 /// Pembayaran.
 ///

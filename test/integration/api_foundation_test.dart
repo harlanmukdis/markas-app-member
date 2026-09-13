@@ -14,12 +14,12 @@ library;
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:navy_wear/config/env/env.dart';
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/config/network/dio_client.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/util/json_converters.dart';
+import 'package:marketplace_app_member/config/env/env.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/config/network/dio_client.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/util/json_converters.dart';
 
 void main() {
   late Dio dio;

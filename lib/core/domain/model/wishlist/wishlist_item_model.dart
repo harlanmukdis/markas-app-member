@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:navy_wear/core/domain/model/catalog/photo_model.dart';
-import 'package:navy_wear/util/json_converters.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/photo_model.dart';
+import 'package:marketplace_app_member/util/json_converters.dart';
 
 part 'wishlist_item_model.freezed.dart';
 part 'wishlist_item_model.g.dart';

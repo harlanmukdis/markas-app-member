@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/local_network.dart';
 import '../../../favorites/favorites_view.dart';
-import 'package:navy_wear/ui/main/home/screens/catalog_home_screen.dart';
-import 'package:navy_wear/ui/main/cart/screens/cart_screen.dart';
+import 'package:marketplace_app_member/ui/main/home/screens/catalog_home_screen.dart';
+import 'package:marketplace_app_member/ui/main/cart/screens/cart_screen.dart';
 import '../../../profile/presentaion/views/profile_view.dart';
 import '../../../trending/trending_view.dart';
 

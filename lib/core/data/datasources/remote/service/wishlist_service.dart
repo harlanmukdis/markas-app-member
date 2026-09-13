@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/domain/model/wishlist/wishlist_item_model.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/domain/model/wishlist/wishlist_item_model.dart';
 
 /// Wishlist, **tersimpan di server** sejak backend v2.2.
 ///

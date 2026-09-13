@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/auth/auth_session_model.dart';
-import 'package:navy_wear/core/domain/model/auth/user_model.dart';
-import 'package:navy_wear/core/domain/repositories/auth_repository.dart';
-import 'package:navy_wear/core/services/auth_events.dart';
-import 'package:navy_wear/di/injector.dart';
-import 'package:navy_wear/ui/main/auth/cubit/auth_cubit.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/auth_session_model.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
+import 'package:marketplace_app_member/core/domain/repositories/auth_repository.dart';
+import 'package:marketplace_app_member/core/services/auth_events.dart';
+import 'package:marketplace_app_member/di/injector.dart';
+import 'package:marketplace_app_member/ui/main/auth/cubit/auth_cubit.dart';
 
 const _user = UserModel(
   id: 3,

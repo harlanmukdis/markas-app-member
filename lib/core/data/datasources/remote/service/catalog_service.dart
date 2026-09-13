@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:navy_wear/config/network/api_envelope.dart';
-import 'package:navy_wear/config/network/api_exception.dart';
-import 'package:navy_wear/core/domain/model/catalog/brand_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/category_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/offer_model.dart';
-import 'package:navy_wear/core/domain/model/catalog/sku_model.dart';
-import 'package:navy_wear/core/domain/model/review/review_model.dart';
-import 'package:navy_wear/util/json_converters.dart';
+import 'package:marketplace_app_member/config/network/api_envelope.dart';
+import 'package:marketplace_app_member/config/network/api_exception.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/brand_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/category_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/offer_model.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/sku_model.dart';
+import 'package:marketplace_app_member/core/domain/model/review/review_model.dart';
+import 'package:marketplace_app_member/util/json_converters.dart';
 
 /// Panggilan HTTP untuk katalog: kategori, SKU master, penawaran, pencarian.
 /// Urutan hasil `GET /offers` (parameter `sort`, backend v2.2).

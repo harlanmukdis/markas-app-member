@@ -1,6 +1,6 @@
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/catalog/seller_model.dart';
-import 'package:navy_wear/core/domain/model/reference/reference_models.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/catalog/seller_model.dart';
+import 'package:marketplace_app_member/core/domain/model/reference/reference_models.dart';
 
 /// Data referensi + direktori toko.
 abstract interface class ReferenceRepository {

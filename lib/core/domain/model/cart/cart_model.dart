@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:navy_wear/core/domain/model/voucher/voucher_models.dart';
-import 'package:navy_wear/util/json_converters.dart';
+import 'package:marketplace_app_member/core/domain/model/voucher/voucher_models.dart';
+import 'package:marketplace_app_member/util/json_converters.dart';
 
 part 'cart_model.freezed.dart';
 part 'cart_model.g.dart';

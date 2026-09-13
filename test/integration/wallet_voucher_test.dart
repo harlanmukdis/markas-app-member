@@ -14,14 +14,14 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:navy_wear/config/env/env.dart';
-import 'package:navy_wear/config/network/dio_client.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/auth_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/cart_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/order_service.dart';
-import 'package:navy_wear/core/data/datasources/remote/service/wallet_service.dart';
-import 'package:navy_wear/core/domain/model/payment/payment_model.dart';
-import 'package:navy_wear/core/domain/model/wallet/wallet_models.dart';
+import 'package:marketplace_app_member/config/env/env.dart';
+import 'package:marketplace_app_member/config/network/dio_client.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/auth_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/cart_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/order_service.dart';
+import 'package:marketplace_app_member/core/data/datasources/remote/service/wallet_service.dart';
+import 'package:marketplace_app_member/core/domain/model/payment/payment_model.dart';
+import 'package:marketplace_app_member/core/domain/model/wallet/wallet_models.dart';
 
 const _phone = '081100000001';
 const _password = 'password123';

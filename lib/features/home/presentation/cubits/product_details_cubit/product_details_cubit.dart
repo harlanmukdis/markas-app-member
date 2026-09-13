@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:navy_wear/features/home/presentation/cubits/product_details_cubit/product_details_state.dart';
+import 'package:marketplace_app_member/features/home/presentation/cubits/product_details_cubit/product_details_state.dart';
 
 import '../../../../../core/function/components.dart';
 import '../../../../../core/utils/app_images.dart';

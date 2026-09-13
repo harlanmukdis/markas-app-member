@@ -1,6 +1,6 @@
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/core/domain/model/auth/auth_session_model.dart';
-import 'package:navy_wear/core/domain/model/auth/user_model.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/auth_session_model.dart';
+import 'package:marketplace_app_member/core/domain/model/auth/user_model.dart';
 
 /// Kontrak autentikasi yang dikonsumsi `AuthCubit`.
 ///

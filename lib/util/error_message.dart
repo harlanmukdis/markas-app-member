@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:navy_wear/core/data_state.dart';
-import 'package:navy_wear/generated/l10n.dart';
+import 'package:marketplace_app_member/core/data_state.dart';
+import 'package:marketplace_app_member/generated/l10n.dart';
 
 /// Menerjemahkan [DataError] jadi pesan yang layak dibaca user.
 ///

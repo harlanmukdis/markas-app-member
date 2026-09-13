@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:navy_wear/core/utils/extensions.dart';
+import 'package:marketplace_app_member/core/utils/extensions.dart';
 
 import '../../../../core/function/custom_app_bar.dart';
 import '../../../../core/utils/app_styles.dart';
